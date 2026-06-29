@@ -30,23 +30,26 @@ function renderKPIGrid(rows) {
   `).join('');
 }
 
-// ── 그라디언트 생성 헬퍼
-function makeGrad(ctx, color1, color2) {
-  const g = ctx.createLinearGradient(0, 0, 0, 320);
-  g.addColorStop(0, color1);
-  g.addColorStop(1, color2);
-  return g;
+// ── 그라디언트 헬퍼
+function makeGrad(ctx, c1, c2, h=300) {
+  const g = ctx.createLinearGradient(0, 0, 0, h);
+  g.addColorStop(0, c1); g.addColorStop(1, c2); return g;
 }
 
-// ── 범례 HTML 렌더
-function renderLegend(datasets) {
+// ── 범례 HTML
+function renderLegend(items) {
   const el = document.getElementById('chartLegend');
   if (!el) return;
-  el.innerHTML = datasets.map(d => {
-    const color = typeof d.borderColor === 'string' ? d.borderColor : '#888';
-    const dash = d.borderDash ? 'border-top: 2px dashed ' + color : 'border-top: 3px solid ' + color;
-    return `<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#444;margin-right:12px">
-      <span style="display:inline-block;width:22px;height:0;${dash}"></span>${d.label}</span>`;
+  el.innerHTML = items.map(({color, label, dash, type}) => {
+    let mark;
+    if (type === 'bar') {
+      mark = `<span style="display:inline-block;width:12px;height:12px;border-radius:3px;background:${color}"></span>`;
+    } else if (dash) {
+      mark = `<span style="display:inline-block;width:22px;height:0;border-top:2.5px dashed ${color}"></span>`;
+    } else {
+      mark = `<span style="display:inline-block;width:22px;height:0;border-top:3px solid ${color}"></span>`;
+    }
+    return `<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#444;margin-right:14px">${mark}${label}</span>`;
   }).join('');
 }
 
@@ -54,160 +57,235 @@ function renderChart(rows, type) {
   currentChartType = type;
   const canvas = document.getElementById('mainChart');
   const ctx = canvas.getContext('2d');
-  const labels = rows.map(r => r.age + '세');
-
-  // 10년 구간 배경 플러그인
-  const decadeBands = {
-    id: 'decadeBands',
-    beforeDraw(chart) {
-      const {ctx: c, chartArea: {left, right, top, bottom}, scales: {x}} = chart;
-      if (!x) return;
-      const bands = [
-        {from:0,  to:9,  color:'rgba(21,88,160,.04)'},
-        {from:10, to:19, color:'rgba(13,112,101,.04)'},
-        {from:20, to:29, color:'rgba(181,113,26,.04)'},
-        {from:30, to:40, color:'rgba(74,58,167,.04)'},
-      ];
-      bands.forEach(b => {
-        const x0 = x.getPixelForIndex(b.from);
-        const x1 = x.getPixelForIndex(Math.min(b.to, labels.length-1));
-        c.fillStyle = b.color;
-        c.fillRect(x0, top, x1-x0, bottom-top);
-      });
-    }
-  };
-
-  // 현재 나이 수직선 플러그인 (60세 = 현재)
-  const nowLine = {
-    id: 'nowLine',
-    afterDraw(chart) {
-      const {ctx: c, chartArea: {top, bottom}, scales: {x}} = chart;
-      if (!x) return;
-      const px = x.getPixelForIndex(0);
-      c.save();
-      c.strokeStyle = 'rgba(201,168,76,.8)';
-      c.lineWidth = 1.5;
-      c.setLineDash([4,3]);
-      c.beginPath(); c.moveTo(px, top); c.lineTo(px, bottom); c.stroke();
-      c.fillStyle = '#C9A84C';
-      c.font = 'bold 9px sans-serif';
-      c.fillText('현재', px+3, top+12);
-      c.restore();
-    }
-  };
-
-  let datasets, yLabel, yUnit;
-
-  if (type === 'asset') {
-    yLabel = '억원'; yUnit = 1e8;
-    const g1 = makeGrad(ctx,'rgba(21,88,160,.18)','rgba(21,88,160,.01)');
-    const g2 = makeGrad(ctx,'rgba(13,112,101,.14)','rgba(13,112,101,.01)');
-    datasets = [
-      { label: 'SCHD 자산',  data: rows.map(r=>+(r.sAsset/1e8).toFixed(2)),
-        borderColor:'#1558A0', backgroundColor: g1,
-        fill:true, tension:.4, borderWidth:2.5, pointRadius:0,
-        pointHoverRadius:6, pointHoverBackgroundColor:'#1558A0', pointHoverBorderColor:'#fff', pointHoverBorderWidth:2 },
-      { label: 'TLTW 자산',  data: rows.map(r=>+(r.tAsset/1e8).toFixed(2)),
-        borderColor:'#0D7065', backgroundColor: g2,
-        fill:true, tension:.4, borderWidth:2.5, pointRadius:0,
-        pointHoverRadius:6, pointHoverBackgroundColor:'#0D7065', pointHoverBorderColor:'#fff', pointHoverBorderWidth:2 },
-      { label: '법인 총자산', data: rows.map(r=>+(r.corpAsset/1e8).toFixed(2)),
-        borderColor:'#B5711A', backgroundColor:'transparent',
-        fill:false, tension:.4, borderWidth:3, borderDash:[7,3], pointRadius:0,
-        pointHoverRadius:6, pointHoverBackgroundColor:'#B5711A', pointHoverBorderColor:'#fff', pointHoverBorderWidth:2 },
-    ];
-  } else if (type === 'dividend') {
-    yLabel = '만원'; yUnit = 1e4;
-    const g3 = makeGrad(ctx,'rgba(74,58,167,.18)','rgba(74,58,167,.01)');
-    const g4 = makeGrad(ctx,'rgba(13,112,101,.14)','rgba(13,112,101,.01)');
-    datasets = [
-      { label: 'SCHD 월배당', data: rows.map(r=>Math.round(r.sDiv_net/12/1e4)),
-        borderColor:'#4A3AA7', backgroundColor: g3,
-        fill:true, tension:.45, borderWidth:2.5, pointRadius:0,
-        pointHoverRadius:6, pointHoverBackgroundColor:'#4A3AA7', pointHoverBorderColor:'#fff', pointHoverBorderWidth:2 },
-      { label: 'TLTW 월배당', data: rows.map(r=>Math.round(r.tDiv_net/12/1e4)),
-        borderColor:'#0D7065', backgroundColor: g4,
-        fill:true, tension:.45, borderWidth:2.5, pointRadius:0,
-        pointHoverRadius:6, pointHoverBackgroundColor:'#0D7065', pointHoverBorderColor:'#fff', pointHoverBorderWidth:2 },
-      { label: '합계 월배당', data: rows.map(r=>Math.round(r.monthlyDiv/1e4)),
-        borderColor:'#B5711A', backgroundColor:'transparent',
-        fill:false, tension:.45, borderWidth:3, borderDash:[7,3], pointRadius:0,
-        pointHoverRadius:7, pointHoverBackgroundColor:'#B5711A', pointHoverBorderColor:'#fff', pointHoverBorderWidth:2 },
-    ];
-  } else {
-    yLabel = '억원'; yUnit = 1e8;
-    const g5 = makeGrad(ctx,'rgba(168,48,48,.22)','rgba(168,48,48,.01)');
-    datasets = [
-      { label: '가수금 잔액', data: rows.map(r=>+(r.loanBal/1e8).toFixed(2)),
-        borderColor:'#A83030', backgroundColor: g5,
-        fill:true, tension:.35, borderWidth:2.5, pointRadius:0,
-        pointHoverRadius:6, pointHoverBackgroundColor:'#A83030', pointHoverBorderColor:'#fff', pointHoverBorderWidth:2 },
-    ];
-  }
-
-  renderLegend(datasets);
 
   if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
 
-  chartInstance = new Chart(ctx, {
-    type: 'line',
-    data: { labels, datasets },
-    plugins: [decadeBands, nowLine],
-    options: {
-      responsive: true,
-      maintainAspectRatio: false,
-      animation: {
-        duration: 900,
-        easing: 'easeInOutCubic',
-        x: { type: 'number', easing: 'easeInOutCubic', duration: 800, from: 0 },
-        y: { type: 'number', easing: 'easeInOutCubic', duration: 900, from: NaN }
+  // ── 공통 10년 구간 레이블 (60·70·80·90·100)
+  const AGE_MILESTONES = [60,65,70,75,80,85,90,95,100];
+
+  if (type === 'asset') {
+    // ── 자산 성장: 연대별 그룹 누적 막대 + 법인자산 라인
+    const AGE_GROUPS = ['60대','65','70대','75','80대','85','90대','95','100세'];
+    const groupRows = AGE_MILESTONES.map(a => rows.find(r => r.age === a));
+
+    const g1 = makeGrad(ctx,'rgba(21,88,160,.85)','rgba(21,88,160,.55)');
+    const g2 = makeGrad(ctx,'rgba(13,112,101,.85)','rgba(13,112,101,.55)');
+    const g3 = makeGrad(ctx,'rgba(74,58,167,.85)','rgba(74,58,167,.55)');
+
+    renderLegend([
+      {color:'#1558A0', label:'SCHD 자산', type:'bar'},
+      {color:'#0D7065', label:'TLTW 자산', type:'bar'},
+      {color:'#4A3AA7', label:'유보금', type:'bar'},
+      {color:'#B5711A', label:'법인 총자산', dash:true, type:'line'},
+    ]);
+
+    chartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: AGE_GROUPS,
+        datasets: [
+          { label: 'SCHD 자산', type:'bar',
+            data: groupRows.map(r => r ? +(r.sAsset/1e8).toFixed(1) : 0),
+            backgroundColor: g1, borderRadius:4, borderSkipped:false,
+            order: 2 },
+          { label: 'TLTW 자산', type:'bar',
+            data: groupRows.map(r => r ? +(r.tAsset/1e8).toFixed(1) : 0),
+            backgroundColor: g2, borderRadius:4, borderSkipped:false,
+            order: 2 },
+          { label: '유보금', type:'bar',
+            data: groupRows.map(r => r ? +(r.reserve/1e8).toFixed(1) : 0),
+            backgroundColor: g3, borderRadius:4, borderSkipped:false,
+            order: 2 },
+          { label: '법인 총자산', type:'line',
+            data: groupRows.map(r => r ? +(r.corpAsset/1e8).toFixed(1) : 0),
+            borderColor:'#B5711A', backgroundColor:'transparent',
+            borderWidth:3, borderDash:[8,4], tension:0.4,
+            pointRadius:6, pointBackgroundColor:'#B5711A',
+            pointBorderColor:'#fff', pointBorderWidth:2,
+            order: 1 },
+        ]
       },
-      interaction: { mode: 'index', intersect: false },
-      plugins: {
-        legend: { display: false },
-        tooltip: {
-          backgroundColor: 'rgba(0,31,91,.88)',
-          titleColor: '#C9A84C',
-          bodyColor: '#fff',
-          borderColor: 'rgba(201,168,76,.3)',
-          borderWidth: 1,
-          padding: 12,
-          cornerRadius: 10,
-          titleFont: { size: 12, weight: 'bold' },
-          bodyFont: { size: 11 },
-          callbacks: {
-            title: items => `만 ${items[0].label}`,
-            label: c => {
-              const val = c.parsed.y;
-              return `  ${c.dataset.label}: ${val.toLocaleString()}${yLabel}`;
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        animation:{ duration:900, easing:'easeInOutQuart' },
+        scales: {
+          x: { stacked:true,
+            ticks:{ font:{size:11}, color:'#666' },
+            grid:{ display:false } },
+          y: { stacked:true,
+            ticks:{ font:{size:10}, color:'#888',
+              callback: v => v + '억' },
+            grid:{ color:'rgba(0,0,0,.05)' },
+            border:{ display:false } }
+        },
+        plugins: {
+          legend:{ display:false },
+          tooltip:{
+            mode:'index', intersect:false,
+            backgroundColor:'rgba(0,31,91,.9)',
+            titleColor:'#C9A84C', bodyColor:'#fff',
+            borderColor:'rgba(201,168,76,.3)', borderWidth:1,
+            padding:12, cornerRadius:10,
+            callbacks:{
+              title: items => `만 ${items[0].label}`,
+              label: c => `  ${c.dataset.label}: ${c.parsed.y.toLocaleString()}억원`
             }
           }
         }
+      }
+    });
+
+  } else if (type === 'dividend') {
+    // ── 배당 추이: TLTW=누적막대, SCHD=우상향 라인, 합계=굵은라인
+    const labels = rows.map(r => r.age % 5 === 0 ? r.age+'세' : '');
+
+    const barGradT = makeGrad(ctx,'rgba(13,112,101,.75)','rgba(13,112,101,.35)');
+    const barGradS = makeGrad(ctx,'rgba(21,88,160,.75)','rgba(21,88,160,.35)');
+
+    renderLegend([
+      {color:'#0D7065', label:'TLTW 월배당', type:'bar'},
+      {color:'#1558A0', label:'SCHD 월배당', type:'bar'},
+      {color:'#B5711A', label:'합계 월배당', dash:false, type:'line'},
+      {color:'#A83030', label:'가수금 상환', dash:true, type:'line'},
+    ]);
+
+    chartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels,
+        datasets: [
+          { label:'TLTW 월배당', type:'bar',
+            data: rows.map(r => Math.round(r.tDiv_net/12/1e4)),
+            backgroundColor: barGradT, borderRadius:2, borderSkipped:false,
+            order:3 },
+          { label:'SCHD 월배당', type:'bar',
+            data: rows.map(r => Math.round(r.sDiv_net/12/1e4)),
+            backgroundColor: barGradS, borderRadius:2, borderSkipped:false,
+            order:3 },
+          { label:'합계 월배당', type:'line',
+            data: rows.map(r => Math.round(r.monthlyDiv/1e4)),
+            borderColor:'#B5711A', backgroundColor:'transparent',
+            borderWidth:3, tension:.45,
+            pointRadius:0, pointHoverRadius:7,
+            pointHoverBackgroundColor:'#B5711A', pointHoverBorderColor:'#fff',
+            pointHoverBorderWidth:2,
+            order:1 },
+          { label:'가수금 상환', type:'line',
+            data: rows.map((r,i) => {
+              const prev = i===0 ? 1.1e9 : rows[i-1].loanBal;
+              return Math.round(Math.max(prev - r.loanBal, 0)/1e4/12);
+            }),
+            borderColor:'rgba(168,48,48,.7)',
+            backgroundColor:'transparent',
+            borderWidth:1.5, borderDash:[5,3], tension:.3,
+            pointRadius:0, pointHoverRadius:5,
+            order:2 },
+        ]
       },
-      scales: {
-        x: {
-          ticks: {
-            maxRotation: 0, autoSkip: true, maxTicksLimit: 9,
-            font: { size: 10 }, color: '#999',
-            callback: (v, i) => {
-              const age = 60 + i;
-              return age % 10 === 0 ? age + '세' : '';
-            }
-          },
-          grid: { display: false },
-          border: { color: '#E0DFD8' }
+      options: {
+        responsive:true, maintainAspectRatio:false,
+        animation:{ duration:900, easing:'easeInOutQuart' },
+        interaction:{ mode:'index', intersect:false },
+        scales: {
+          x: { stacked:true,
+            ticks:{
+              font:{size:10}, color:'#888', autoSkip:false, maxRotation:0,
+              callback:(v,i) => rows[i]?.age % 10 === 0 ? rows[i].age+'세' : ''
+            },
+            grid:{ display:false } },
+          y: { stacked:true,
+            ticks:{ font:{size:10}, color:'#888',
+              callback: v => v + '만' },
+            grid:{ color:'rgba(0,0,0,.05)' },
+            border:{ display:false } }
         },
-        y: {
-          ticks: {
-            font: { size: 10 }, color: '#999',
-            callback: v => v.toLocaleString() + yLabel
-          },
-          grid: { color: 'rgba(0,0,0,.05)', drawBorder: false },
-          border: { display: false }
+        plugins: {
+          legend:{ display:false },
+          tooltip:{
+            backgroundColor:'rgba(0,31,91,.9)',
+            titleColor:'#C9A84C', bodyColor:'#fff',
+            borderColor:'rgba(201,168,76,.3)', borderWidth:1,
+            padding:12, cornerRadius:10,
+            callbacks:{
+              title: (items) => {
+                const i = items[0].dataIndex;
+                return `만 ${rows[i].age}세 (${rows[i].yr}년)`;
+              },
+              label: c => `  ${c.dataset.label}: ${c.parsed.y.toLocaleString()}만원/월`
+            }
+          }
         }
       }
-    }
-  });
+    });
+
+  } else {
+    // ── 가수금: 수평 감소 막대 (남은 잔액 vs 상환완료)
+    const AGE_LABELS = AGE_MILESTONES.map(a => `만${a}세`);
+    const groupRows = AGE_MILESTONES.map(a => rows.find(r => r.age === a));
+    const INIT = 11; // 억
+
+    const remainData = groupRows.map(r => r ? +(r.loanBal/1e8).toFixed(2) : 0);
+    const repaidData = groupRows.map(r => r ? +(Math.max(INIT - r.loanBal/1e8, 0)).toFixed(2) : INIT);
+
+    renderLegend([
+      {color:'#A83030', label:'잔여 가수금', type:'bar'},
+      {color:'#1A6B3C', label:'상환 완료', type:'bar'},
+    ]);
+
+    const gR = makeGrad(ctx,'rgba(168,48,48,.8)','rgba(168,48,48,.4)',20);
+    const gP = makeGrad(ctx,'rgba(26,107,60,.8)','rgba(26,107,60,.4)',20);
+
+    chartInstance = new Chart(ctx, {
+      type: 'bar',
+      data: {
+        labels: AGE_LABELS,
+        datasets: [
+          { label:'상환 완료', data: repaidData,
+            backgroundColor: gP, borderRadius:4, borderSkipped:false },
+          { label:'잔여 가수금', data: remainData,
+            backgroundColor: gR, borderRadius:4, borderSkipped:false },
+        ]
+      },
+      options: {
+        indexAxis:'y',
+        responsive:true, maintainAspectRatio:false,
+        animation:{ duration:900, easing:'easeInOutQuart' },
+        scales: {
+          x: { stacked:true, max:12,
+            ticks:{ font:{size:10}, color:'#888',
+              callback: v => v + '억' },
+            grid:{ color:'rgba(0,0,0,.05)' },
+            border:{ display:false } },
+          y: { stacked:true,
+            ticks:{ font:{size:11,weight:'600'}, color:'#444' },
+            grid:{ display:false } }
+        },
+        plugins: {
+          legend:{ display:false },
+          tooltip:{
+            backgroundColor:'rgba(0,31,91,.9)',
+            titleColor:'#C9A84C', bodyColor:'#fff',
+            borderColor:'rgba(201,168,76,.3)', borderWidth:1,
+            padding:12, cornerRadius:10,
+            callbacks:{
+              title: items => items[0].label,
+              label: c => {
+                if (c.dataset.label === '잔여 가수금')
+                  return `  잔여: ₩${c.parsed.x.toFixed(1)}억`;
+                return `  상환: ₩${c.parsed.x.toFixed(1)}억`;
+              },
+              afterBody: (items) => {
+                const i = items[0].dataIndex;
+                const remain = remainData[i];
+                const pct = ((INIT - remain)/INIT*100).toFixed(0);
+                return [`  상환율: ${pct}%`];
+              }
+            }
+          }
+        }
+      }
+    });
+  }
 }
 
 function toggleChart(type, el) {
