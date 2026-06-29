@@ -204,3 +204,6 @@ body{font-family:var(--font);background:#F0F2F7;color:#1A1A1A;min-height:100vh}
 #chartLegend { padding: 2px 0; }
 #chartLegend span { cursor: default; }
 .chart-section { padding-bottom: 12px; }
+
+/* 차트 높이 동적 조정 */
+#mainChart { display: block; }
