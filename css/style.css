@@ -199,3 +199,8 @@ body{font-family:var(--font);background:#F0F2F7;color:#1A1A1A;min-height:100vh}
   #manualModal{align-items:center}
   .manual-box{border-radius:22px;max-height:90vh}
 }
+
+/* 차트 개선 */
+#chartLegend { padding: 2px 0; }
+#chartLegend span { cursor: default; }
+.chart-section { padding-bottom: 12px; }
