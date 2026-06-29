@@ -1,0 +1,13 @@
+{
+  "name": "법인 ETF 100세 시뮬레이터",
+  "short_name": "U&K 시뮬레이터",
+  "description": "유앤김 자산관리 법인 ETF 투자 시뮬레이터",
+  "start_url": ".",
+  "display": "standalone",
+  "background_color": "#001F5B",
+  "theme_color": "#001F5B",
+  "icons": [
+    { "src": "https://placehold.co/192x192/001F5B/C9A84C?text=U%26K", "sizes": "192x192", "type": "image/png" },
+    { "src": "https://placehold.co/512x512/001F5B/C9A84C?text=U%26K", "sizes": "512x512", "type": "image/png" }
+  ]
+}
