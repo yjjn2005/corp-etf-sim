@@ -80,7 +80,10 @@
           <button class="ctog" onclick="toggleChart('loan',this)">가수금</button>
         </div>
       </div>
-      <canvas id="mainChart" height="240"></canvas>
+      <div id="chartLegend" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;min-height:18px"></div>
+      <div style="position:relative;width:100%;height:260px">
+        <canvas id="mainChart"></canvas>
+      </div>
     </div>
 
     <!-- 핵심 이정표 -->
