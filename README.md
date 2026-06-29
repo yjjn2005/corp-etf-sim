@@ -35,3 +35,5 @@ corp-sim-app/
 │   └── app.js        # 앱 메인
 └── .github/workflows/deploy.yml  # 자동 배포
 ```
+
+<!-- deploy trigger -->
