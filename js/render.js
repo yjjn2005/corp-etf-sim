@@ -30,39 +30,181 @@ function renderKPIGrid(rows) {
   `).join('');
 }
 
+// ── 그라디언트 생성 헬퍼
+function makeGrad(ctx, color1, color2) {
+  const g = ctx.createLinearGradient(0, 0, 0, 320);
+  g.addColorStop(0, color1);
+  g.addColorStop(1, color2);
+  return g;
+}
+
+// ── 범례 HTML 렌더
+function renderLegend(datasets) {
+  const el = document.getElementById('chartLegend');
+  if (!el) return;
+  el.innerHTML = datasets.map(d => {
+    const color = typeof d.borderColor === 'string' ? d.borderColor : '#888';
+    const dash = d.borderDash ? 'border-top: 2px dashed ' + color : 'border-top: 3px solid ' + color;
+    return `<span style="display:inline-flex;align-items:center;gap:5px;font-size:11px;color:#444;margin-right:12px">
+      <span style="display:inline-block;width:22px;height:0;${dash}"></span>${d.label}</span>`;
+  }).join('');
+}
+
 function renderChart(rows, type) {
   currentChartType = type;
-  const ctx = document.getElementById('mainChart').getContext('2d');
+  const canvas = document.getElementById('mainChart');
+  const ctx = canvas.getContext('2d');
   const labels = rows.map(r => r.age + '세');
 
-  let datasets;
+  // 10년 구간 배경 플러그인
+  const decadeBands = {
+    id: 'decadeBands',
+    beforeDraw(chart) {
+      const {ctx: c, chartArea: {left, right, top, bottom}, scales: {x}} = chart;
+      if (!x) return;
+      const bands = [
+        {from:0,  to:9,  color:'rgba(21,88,160,.04)'},
+        {from:10, to:19, color:'rgba(13,112,101,.04)'},
+        {from:20, to:29, color:'rgba(181,113,26,.04)'},
+        {from:30, to:40, color:'rgba(74,58,167,.04)'},
+      ];
+      bands.forEach(b => {
+        const x0 = x.getPixelForIndex(b.from);
+        const x1 = x.getPixelForIndex(Math.min(b.to, labels.length-1));
+        c.fillStyle = b.color;
+        c.fillRect(x0, top, x1-x0, bottom-top);
+      });
+    }
+  };
+
+  // 현재 나이 수직선 플러그인 (60세 = 현재)
+  const nowLine = {
+    id: 'nowLine',
+    afterDraw(chart) {
+      const {ctx: c, chartArea: {top, bottom}, scales: {x}} = chart;
+      if (!x) return;
+      const px = x.getPixelForIndex(0);
+      c.save();
+      c.strokeStyle = 'rgba(201,168,76,.8)';
+      c.lineWidth = 1.5;
+      c.setLineDash([4,3]);
+      c.beginPath(); c.moveTo(px, top); c.lineTo(px, bottom); c.stroke();
+      c.fillStyle = '#C9A84C';
+      c.font = 'bold 9px sans-serif';
+      c.fillText('현재', px+3, top+12);
+      c.restore();
+    }
+  };
+
+  let datasets, yLabel, yUnit;
+
   if (type === 'asset') {
+    yLabel = '억원'; yUnit = 1e8;
+    const g1 = makeGrad(ctx,'rgba(21,88,160,.18)','rgba(21,88,160,.01)');
+    const g2 = makeGrad(ctx,'rgba(13,112,101,.14)','rgba(13,112,101,.01)');
     datasets = [
-      { label: 'SCHD 자산', data: rows.map(r => Math.round(r.sAsset / 1e8)), borderColor: '#1558A0', backgroundColor: 'rgba(21,88,160,.08)', fill: true, tension: .35, borderWidth: 2, pointRadius: 0 },
-      { label: 'TLTW 자산', data: rows.map(r => Math.round(r.tAsset / 1e8)), borderColor: '#0D7065', backgroundColor: 'rgba(13,112,101,.08)', fill: true, tension: .35, borderWidth: 2, pointRadius: 0 },
-      { label: '법인총자산', data: rows.map(r => Math.round(r.corpAsset / 1e8)), borderColor: '#B5711A', backgroundColor: 'transparent', fill: false, tension: .35, borderWidth: 2.5, borderDash: [5, 3], pointRadius: 0 },
+      { label: 'SCHD 자산',  data: rows.map(r=>+(r.sAsset/1e8).toFixed(2)),
+        borderColor:'#1558A0', backgroundColor: g1,
+        fill:true, tension:.4, borderWidth:2.5, pointRadius:0,
+        pointHoverRadius:6, pointHoverBackgroundColor:'#1558A0', pointHoverBorderColor:'#fff', pointHoverBorderWidth:2 },
+      { label: 'TLTW 자산',  data: rows.map(r=>+(r.tAsset/1e8).toFixed(2)),
+        borderColor:'#0D7065', backgroundColor: g2,
+        fill:true, tension:.4, borderWidth:2.5, pointRadius:0,
+        pointHoverRadius:6, pointHoverBackgroundColor:'#0D7065', pointHoverBorderColor:'#fff', pointHoverBorderWidth:2 },
+      { label: '법인 총자산', data: rows.map(r=>+(r.corpAsset/1e8).toFixed(2)),
+        borderColor:'#B5711A', backgroundColor:'transparent',
+        fill:false, tension:.4, borderWidth:3, borderDash:[7,3], pointRadius:0,
+        pointHoverRadius:6, pointHoverBackgroundColor:'#B5711A', pointHoverBorderColor:'#fff', pointHoverBorderWidth:2 },
     ];
   } else if (type === 'dividend') {
+    yLabel = '만원'; yUnit = 1e4;
+    const g3 = makeGrad(ctx,'rgba(74,58,167,.18)','rgba(74,58,167,.01)');
+    const g4 = makeGrad(ctx,'rgba(13,112,101,.14)','rgba(13,112,101,.01)');
     datasets = [
-      { label: 'SCHD 월배당', data: rows.map(r => Math.round(r.sDiv_net / 12 / 1e4)), borderColor: '#1558A0', backgroundColor: 'rgba(21,88,160,.1)', fill: true, tension: .35, borderWidth: 2, pointRadius: 0 },
-      { label: 'TLTW 월배당', data: rows.map(r => Math.round(r.tDiv_net / 12 / 1e4)), borderColor: '#0D7065', backgroundColor: 'rgba(13,112,101,.1)', fill: true, tension: .35, borderWidth: 2, pointRadius: 0 },
+      { label: 'SCHD 월배당', data: rows.map(r=>Math.round(r.sDiv_net/12/1e4)),
+        borderColor:'#4A3AA7', backgroundColor: g3,
+        fill:true, tension:.45, borderWidth:2.5, pointRadius:0,
+        pointHoverRadius:6, pointHoverBackgroundColor:'#4A3AA7', pointHoverBorderColor:'#fff', pointHoverBorderWidth:2 },
+      { label: 'TLTW 월배당', data: rows.map(r=>Math.round(r.tDiv_net/12/1e4)),
+        borderColor:'#0D7065', backgroundColor: g4,
+        fill:true, tension:.45, borderWidth:2.5, pointRadius:0,
+        pointHoverRadius:6, pointHoverBackgroundColor:'#0D7065', pointHoverBorderColor:'#fff', pointHoverBorderWidth:2 },
+      { label: '합계 월배당', data: rows.map(r=>Math.round(r.monthlyDiv/1e4)),
+        borderColor:'#B5711A', backgroundColor:'transparent',
+        fill:false, tension:.45, borderWidth:3, borderDash:[7,3], pointRadius:0,
+        pointHoverRadius:7, pointHoverBackgroundColor:'#B5711A', pointHoverBorderColor:'#fff', pointHoverBorderWidth:2 },
     ];
   } else {
+    yLabel = '억원'; yUnit = 1e8;
+    const g5 = makeGrad(ctx,'rgba(168,48,48,.22)','rgba(168,48,48,.01)');
     datasets = [
-      { label: '가수금 잔액', data: rows.map(r => Math.round(r.loanBal / 1e8)), borderColor: '#A83030', backgroundColor: 'rgba(168,48,48,.1)', fill: true, tension: .35, borderWidth: 2, pointRadius: 0 },
+      { label: '가수금 잔액', data: rows.map(r=>+(r.loanBal/1e8).toFixed(2)),
+        borderColor:'#A83030', backgroundColor: g5,
+        fill:true, tension:.35, borderWidth:2.5, pointRadius:0,
+        pointHoverRadius:6, pointHoverBackgroundColor:'#A83030', pointHoverBorderColor:'#fff', pointHoverBorderWidth:2 },
     ];
   }
 
-  const yLabel = type === 'dividend' ? '만원' : '억원';
-  if (chartInstance) chartInstance.destroy();
+  renderLegend(datasets);
+
+  if (chartInstance) { chartInstance.destroy(); chartInstance = null; }
+
   chartInstance = new Chart(ctx, {
-    type: 'line', data: { labels, datasets },
+    type: 'line',
+    data: { labels, datasets },
+    plugins: [decadeBands, nowLine],
     options: {
-      responsive: true, maintainAspectRatio: false,
-      plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${c.dataset.label}: ${c.parsed.y.toLocaleString()}${yLabel}` } } },
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: {
+        duration: 900,
+        easing: 'easeInOutCubic',
+        x: { type: 'number', easing: 'easeInOutCubic', duration: 800, from: 0 },
+        y: { type: 'number', easing: 'easeInOutCubic', duration: 900, from: NaN }
+      },
+      interaction: { mode: 'index', intersect: false },
+      plugins: {
+        legend: { display: false },
+        tooltip: {
+          backgroundColor: 'rgba(0,31,91,.88)',
+          titleColor: '#C9A84C',
+          bodyColor: '#fff',
+          borderColor: 'rgba(201,168,76,.3)',
+          borderWidth: 1,
+          padding: 12,
+          cornerRadius: 10,
+          titleFont: { size: 12, weight: 'bold' },
+          bodyFont: { size: 11 },
+          callbacks: {
+            title: items => `만 ${items[0].label}`,
+            label: c => {
+              const val = c.parsed.y;
+              return `  ${c.dataset.label}: ${val.toLocaleString()}${yLabel}`;
+            }
+          }
+        }
+      },
       scales: {
-        x: { ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 10, font: { size: 10 }, color: '#888' }, grid: { display: false } },
-        y: { ticks: { font: { size: 10 }, color: '#888', callback: v => v.toLocaleString() + yLabel }, grid: { color: 'rgba(0,0,0,.06)' } }
+        x: {
+          ticks: {
+            maxRotation: 0, autoSkip: true, maxTicksLimit: 9,
+            font: { size: 10 }, color: '#999',
+            callback: (v, i) => {
+              const age = 60 + i;
+              return age % 10 === 0 ? age + '세' : '';
+            }
+          },
+          grid: { display: false },
+          border: { color: '#E0DFD8' }
+        },
+        y: {
+          ticks: {
+            font: { size: 10 }, color: '#999',
+            callback: v => v.toLocaleString() + yLabel
+          },
+          grid: { color: 'rgba(0,0,0,.05)', drawBorder: false },
+          border: { display: false }
+        }
       }
     }
   });
