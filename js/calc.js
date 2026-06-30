@@ -8,10 +8,10 @@
 const DEFAULT_PARAMS = {
   schdPrincipal: 1_000_000_000,
   tltwPrincipal: 400_000_000,
-  schdGrowth: 0.09,
+  schdGrowth: 0.05,
   schdDivRate: 0.033,
-  schdDivGrowth: 0.07,
-  schdDivCap: 0.16,
+  schdDivGrowth: 0.05,
+  schdDivCap: 0.12,
   tltwGrowth: 0.00,
   tltwDivRate: 0.12,
   tltwDivChange: -0.015,
