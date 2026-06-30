@@ -297,11 +297,11 @@ function toggleChart(type, el) {
 function renderMilestones(rows) {
   const loanPaidAge = rows.find(r => r.loanBal === 0)?.age || '완납 미도달';
   const items = [
-    { age: '만60세', yr: '2026', title: '투자 시작', val: fw2(rows[0].monthlyDiv) + '/월', color: '#1558A0' },
+    { age: '만60세', yr: '2026', title: '투자 시작 (원금 기준 첫해 배당)', val: fw2(rows[0].monthlyDiv) + '/월', color: '#1558A0' },
     { age: '만70세', yr: '2036', title: '월배당', val: fw2(rows[10].monthlyDiv) + '/월', color: '#0D7065' },
     { age: typeof loanPaidAge === 'number' ? `만${loanPaidAge}세` : '가수금', yr: typeof loanPaidAge === 'number' ? String(2026 + loanPaidAge - 60) : '', title: '가수금 완납', val: '₩11억 상환 완료', color: '#1A6B3C' },
     { age: '만80세', yr: '2046', title: '월배당', val: fw2(rows[20].monthlyDiv) + '/월', color: '#B5711A' },
-    { age: '만100세', yr: '2065', title: '최종 기업가치', val: fw2(rows[40].corpValue), color: '#4A3AA7' },
+    { age: '만100세', yr: '2066', title: '최종 기업가치', val: fw2(rows[40].corpValue), color: '#4A3AA7' },
   ];
   document.getElementById('milestoneList').innerHTML = items.map(m => `
     <div class="milestone-item">
@@ -532,4 +532,35 @@ function renderTransferMemo() {
       <div class="memo-text"><strong>${m.title}</strong>${m.desc}</div>
     </div>
   `).join('');
+}
+
+// ── 세무 반영 범위 고지 (수정 #6: 투명성 강화)
+function renderTaxDisclosure() {
+  const el = document.getElementById('taxDisclosure');
+  if (!el) return;
+  el.innerHTML = `
+    <div style="background:#FFF7E6;border:1px solid #E8C87A;border-radius:10px;padding:13px 14px;margin-bottom:14px">
+      <div style="font-size:12px;font-weight:700;color:#7A4800;margin-bottom:8px">⚠️ 이 시뮬레이션이 반영하는 세금 / 반영하지 않는 세금</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:11px;line-height:1.6">
+        <div>
+          <div style="font-weight:600;color:#145C2A;margin-bottom:4px">✓ 반영됨</div>
+          <div style="color:#444">• 미국 배당 원천징수세 15%</div>
+        </div>
+        <div>
+          <div style="font-weight:600;color:#8A1818;margin-bottom:4px">✗ 미반영 (별도 검토 필요)</div>
+          <div style="color:#444">
+            • 법인세 (법인세율 구간, 익금불산입 비율)<br>
+            • 가수금 인정이자 (국세청 고시이율 4.6%) 과세<br>
+            • 배당소득 종합과세 (금융소득 2천만원 초과 시)<br>
+            • 비상장주식 평가 (보충적평가법, 자녀 증여·상속세)<br>
+            • 환율 변동 (원/달러 변동에 따른 평가손익)<br>
+            • ETF 실제 분배금 변동 (가정치와 실제 배당 차이)
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:9px;padding-top:8px;border-top:1px solid #E8C87A;font-size:10.5px;color:#7A4800">
+        본 화면의 모든 수치는 <strong>참고용 추정치</strong>이며, 법인세·증여세·상속세 등 실제 세무 판단은 반드시 세무사·회계사 확인을 거쳐야 합니다.
+      </div>
+    </div>
+  `;
 }
