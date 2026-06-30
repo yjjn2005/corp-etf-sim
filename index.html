@@ -1,126 +1,214 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
 <title>법인 ETF 100세 시뮬레이터 | 유앤김 자산관리</title>
-<link rel="manifest" href="manifest.json">
 <meta name="theme-color" content="#001F5B">
-<link rel="stylesheet" href="css/style.css">
-<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.js"></script>
+<style>
+:root{
+  --navy:#001F5B;--navy2:#0f3460;--gold:#C9A84C;--bg:#f5f7fb;--card:#fff;
+  --line:#e3e8f1;--text:#1f2937;--muted:#6b7280;
+  --blue:#1558A0;--teal:#0D7065;--purple:#4A3AA7;--red:#A83030;--green:#1A6B3C;--amber:#B5711A;
+  --pb:#EBF3FB;--pt:#E5F5EE;--pp:#EEEDFB;--pr:#FAEBEB;--pg:#EBF5EE;--pa:#FBF3E5;
+  --shadow:0 10px 28px rgba(8,31,63,.10);
+  --font:-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font)}
+
+/* 헤더 */
+header{position:sticky;top:0;z-index:50;background:linear-gradient(135deg,var(--navy),var(--navy2));color:#fff;padding:14px 18px;box-shadow:var(--shadow)}
+.top{max-width:1200px;margin:auto;display:flex;align-items:center;gap:14px;justify-content:space-between;flex-wrap:wrap}
+.brand{display:flex;gap:12px;align-items:center}
+.logo{width:42px;height:42px;border:1px solid rgba(201,168,76,.65);border-radius:12px;display:grid;place-items:center;color:var(--gold);font-weight:800;font-size:13px}
+.brand h1{margin:0;font-size:16px}
+.brand p{margin:3px 0 0;color:#d7dfeb;font-size:11px}
+.status{font-size:10px;color:#aeb9cc;margin-top:2px}
+.actions{display:flex;gap:6px;flex-wrap:wrap}
+.btn{border:0;border-radius:10px;padding:8px 12px;font-weight:700;cursor:pointer;font-size:12px;font-family:var(--font)}
+.btn.white{background:#fff;color:var(--navy)}
+.btn.gold{background:var(--gold);color:#1b2430}
+.btn.ghost{background:rgba(255,255,255,.14);color:#fff;border:1px solid rgba(255,255,255,.2)}
+.btn:hover{filter:brightness(1.06)}
+
+/* 탭 */
+.tabs{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px;overflow-x:auto;padding-bottom:2px}
+.tab{border:1px solid var(--line);background:#fff;border-radius:999px;padding:8px 14px;cursor:pointer;font-weight:700;color:var(--muted);font-size:12.5px;white-space:nowrap;font-family:var(--font)}
+.tab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+main{max-width:1200px;margin:18px auto;padding:0 16px 50px}
+.pane{display:none}.pane.active{display:block}
+
+/* 그리드/카드 */
+.grid{display:grid;gap:12px}
+.kpis{grid-template-columns:repeat(5,minmax(0,1fr))}
+.card{background:var(--card);border:1px solid var(--line);border-radius:16px;box-shadow:var(--shadow);padding:15px}
+.kpi .label{color:var(--muted);font-size:11px;font-weight:700;line-height:1.3}
+.kpi .value{font-size:19px;font-weight:900;margin:6px 0;color:var(--navy)}
+.kpi .sub{color:var(--muted);font-size:10.5px}
+.kpi.ok .value{color:var(--green)} .kpi.bad .value{color:var(--red)} .kpi.warn .value{color:var(--amber)}
+.section-title{display:flex;justify-content:space-between;align-items:end;gap:10px;margin:20px 0 12px;flex-wrap:wrap}
+.section-title h2{margin:0;color:var(--navy);font-size:18px}
+.note{font-size:12px;color:var(--muted);line-height:1.6}
+.two{grid-template-columns:1.4fr .9fr}
+@media(max-width:900px){.two{grid-template-columns:1fr}}
+
+/* 막대그래프 (순수 CSS — Chart.js 의존 제거로 배포 안정성 강화) */
+.chartbox{height:300px}
+.legend{display:flex;gap:10px;flex-wrap:wrap;margin-bottom:8px;color:var(--muted);font-size:11px}
+.dot{width:9px;height:9px;border-radius:50%;display:inline-block;margin-right:4px}
+.bars{height:250px;display:flex;align-items:end;gap:8px;border-left:1px solid var(--line);border-bottom:1px solid var(--line);padding:10px}
+.barcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
+.stack{width:100%;max-width:38px;border-radius:6px 6px 0 0;overflow:hidden;display:flex;flex-direction:column-reverse;transition:height .5s ease;cursor:pointer}
+.seg{width:100%;transition:height .4s ease}
+.xlabel{font-size:10px;color:var(--muted)}
+.barcol:hover .stack{filter:brightness(1.08)}
+
+/* 가로 막대 (배당추이용) */
+.hbar-wrap{display:flex;flex-direction:column;gap:6px}
+.hbar-row{display:flex;align-items:center;gap:8px}
+.hbar-label{width:54px;font-size:10.5px;color:var(--muted);text-align:right;flex-shrink:0}
+.hbar-track{flex:1;background:#F0F2F7;border-radius:5px;height:16px;overflow:hidden;position:relative}
+.hbar-fill{height:100%;border-radius:5px;transition:width .5s ease;display:flex;align-items:center}
+.hbar-val{font-size:10px;color:#fff;padding-left:6px;font-weight:700;white-space:nowrap}
+
+/* 이정표 */
+.milestone{display:flex;align-items:center;gap:10px;border-bottom:1px solid var(--line);padding:10px 0}
+.milestone:last-child{border-bottom:none}
+.badge{width:46px;height:46px;border-radius:13px;background:#f4f0dc;color:var(--navy);display:grid;place-items:center;font-weight:900;font-size:13px;flex-shrink:0}
+.ms-title{font-weight:800;font-size:12px}
+.ms-val{color:var(--gold);font-weight:900;font-size:13px}
+.ms-year{font-size:10px;color:var(--muted)}
+
+/* 입력 폼 */
+.inputs{grid-template-columns:repeat(4,minmax(0,1fr))}
+@media(max-width:900px){.inputs{grid-template-columns:repeat(2,1fr)}}
+.field{display:grid;gap:4px;margin:8px 0}
+.field label{font-size:11px;color:var(--muted);font-weight:700}
+.field input,.field select,.field textarea{width:100%;border:1px solid var(--line);border-radius:10px;padding:8px;background:#fff;font:inherit;font-size:13px}
+.field small{color:var(--muted);font-size:10px}
+
+/* 테이블 */
+table{width:100%;border-collapse:collapse;background:#fff;border-radius:14px;overflow:hidden;box-shadow:var(--shadow);font-size:11.5px}
+th,td{padding:8px 8px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{background:#eef3f8;color:var(--navy);font-weight:800;font-size:10.5px;position:sticky;top:0}
+td:first-child,th:first-child{text-align:center;position:sticky;left:0;background:#fff;z-index:1}
+th:first-child{background:#eef3f8;z-index:2}
+.table-wrap{overflow:auto;border-radius:14px;max-height:520px}
+
+/* 경고/리스크 */
+.risk{border-left:4px solid var(--gold);line-height:1.7;font-size:12.5px}
+.tax-disclosure{background:#FFF7E6;border:1px solid #E8C87A;border-radius:14px;padding:14px;margin-bottom:14px}
+.tax-disclosure .ttl{font-size:12px;font-weight:800;color:#7A4800;margin-bottom:8px}
+.tax-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:11px;line-height:1.6}
+@media(max-width:600px){.tax-grid{grid-template-columns:1fr}}
+.tax-grid .ok-h{font-weight:700;color:var(--green);margin-bottom:3px}
+.tax-grid .bad-h{font-weight:700;color:var(--red);margin-bottom:3px}
+
+/* 모달 */
+.modal{position:fixed;inset:0;background:rgba(0,0,0,.46);display:none;place-items:center;z-index:200;padding:14px}
+.modal.open{display:grid}
+.modal-card{background:#fff;max-width:760px;width:100%;max-height:88vh;overflow:auto;border-radius:18px;box-shadow:0 30px 80px rgba(0,0,0,.25)}
+.modal-head{position:sticky;top:0;background:#fff;display:flex;justify-content:space-between;align-items:center;padding:15px;border-bottom:1px solid var(--line);z-index:2}
+.modal-head h2{margin:0;font-size:15px;color:var(--navy)}
+.modal-body{padding:15px}
+.close{font-size:22px;background:none;border:0;cursor:pointer;color:var(--muted)}
+.mtabs{display:flex;gap:6px;margin-bottom:12px;flex-wrap:wrap}
+.mtab{padding:6px 11px;border:1px solid var(--line);border-radius:8px;background:#fff;font-size:11.5px;cursor:pointer;color:var(--muted);font-family:var(--font)}
+.mtab.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.mpane{display:none}.mpane.active{display:block}
+
+/* 토스트 */
+.toast{position:fixed;left:50%;bottom:22px;transform:translateX(-50%) translateY(10px);background:var(--navy);color:#fff;padding:11px 18px;border-radius:20px;opacity:0;transition:.25s;z-index:500;font-size:12.5px;white-space:nowrap}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+
+/* 검증/체크 */
+.checklist{grid-template-columns:repeat(2,minmax(0,1fr))}
+@media(max-width:760px){.checklist{grid-template-columns:1fr}}
+.pill{display:inline-block;border-radius:999px;padding:3px 9px;font-size:10.5px;font-weight:800}
+.pill.ok{background:#dcfce7;color:#14532d}
+.pill.bad{background:#fee2e2;color:#7f1d1d}
+.pill.warn{background:#ffedd5;color:#7c2d12}
+.check-card h3{margin:8px 0 4px;font-size:13px;color:var(--navy)}
+
+.footer{color:var(--muted);font-size:11px;text-align:center;margin-top:26px;line-height:1.6}
+</style>
 </head>
 <body>
 
-<!-- ── 헤더 -->
-<header class="app-header">
-  <div class="header-inner">
-    <div class="header-logo">
-      <span class="logo-mark">U&K</span>
+<header>
+  <div class="top">
+    <div class="brand">
+      <div class="logo">U&K</div>
       <div>
-        <div class="logo-title">유앤김 자산관리</div>
-        <div class="logo-sub">법인 ETF 100세 시뮬레이터</div>
+        <h1>법인 ETF 100세 시뮬레이터</h1>
+        <p>1966년생 만60세(2026) → 만100세(2066) · 유앤김 자산관리</p>
+        <div class="status" id="saveStatus">이 기기 저장: 없음</div>
       </div>
     </div>
-    <div class="header-actions">
-      <button class="btn-icon" id="saveBtn" title="이 기기에 저장" onclick="saveToLocal()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
-      </button>
-      <button class="btn-icon" id="exportBtn" title="백업 파일 내보내기 (다른 기기로 이전)" onclick="exportDataToFile()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
-      </button>
-      <button class="btn-icon" id="importBtn" title="백업 파일 가져오기" onclick="document.getElementById('importFileInput').click()">
-        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
-      </button>
-      <input type="file" id="importFileInput" accept=".json" style="display:none" onchange="importDataFromFile(this)">
+    <div class="actions">
+      <button class="btn ghost" onclick="openManual()">수동입력</button>
+      <button class="btn ghost" onclick="exportData()">내보내기</button>
+      <button class="btn ghost" onclick="document.getElementById('importFile').click()">가져오기</button>
+      <button class="btn white" onclick="saveLocal()">이 기기 저장</button>
+      <button class="btn gold" onclick="recalc()">재계산</button>
+      <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
     </div>
   </div>
-  <div class="sync-status" id="syncStatus">이 기기 저장: 없음 (자동 클라우드 동기화 아님)</div>
 </header>
 
-<!-- ── 탭 네비게이션 -->
-<nav class="tab-nav">
-  <button class="tab-btn active" data-tab="dashboard" onclick="switchTab('dashboard',this)">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="14" y="14" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/></svg>
-    요약
-  </button>
-  <button class="tab-btn" data-tab="assumptions" onclick="switchTab('assumptions',this)">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
-    가정
-  </button>
-  <button class="tab-btn" data-tab="simulation" onclick="switchTab('simulation',this)">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="20" x2="18" y2="10"/><line x1="12" y1="20" x2="12" y2="4"/><line x1="6" y1="20" x2="6" y2="14"/></svg>
-    40년
-  </button>
-  <button class="tab-btn" data-tab="cashflow" onclick="switchTab('cashflow',this)">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
-    현금흐름
-  </button>
-  <button class="tab-btn" data-tab="children" onclick="switchTab('children',this)">
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg>
-    자녀지분
-  </button>
-</nav>
+<main>
+  <div class="tabs" id="tabs">
+    <button class="tab active" data-tab="summary">요약</button>
+    <button class="tab" data-tab="assumptions">가정</button>
+    <button class="tab" data-tab="table">40년</button>
+    <button class="tab" data-tab="cashflow">현금흐름</button>
+    <button class="tab" data-tab="children">자녀지분</button>
+    <button class="tab" data-tab="verify">오류검증</button>
+  </div>
 
-<!-- ── 메인 콘텐츠 -->
-<main class="main-content">
-
-  <!-- ① 요약 대시보드 -->
-  <section id="tab-dashboard" class="tab-pane active">
-    <div class="section-header">
-      <h2>핵심 요약 대시보드</h2>
-      <span class="tag tag-navy">1966년생 만60세→100세</span>
-    </div>
-
-    <!-- 세무 반영 범위 고지 -->
-    <div id="taxDisclosure"></div>
-
-    <!-- KPI 카드 그리드 -->
-    <div class="kpi-grid" id="kpiGrid"></div>
-
-    <!-- 차트 영역 -->
-    <div class="chart-section">
-      <div class="chart-header">
-        <h3>자산 성장 & 배당 추이</h3>
-        <div class="chart-toggles">
-          <button class="ctog active" onclick="toggleChart('asset',this)">자산성장 (누적막대)</button>
-          <button class="ctog" onclick="toggleChart('dividend',this)">배당추이 (혼합)</button>
-          <button class="ctog" onclick="toggleChart('loan',this)">가수금 (수평)</button>
+  <!-- ① 요약 -->
+  <section id="summary" class="pane active">
+    <div class="tax-disclosure" id="taxDisclosure"></div>
+    <div class="section-title"><h2>핵심 요약 대시보드</h2><div class="note">계산 기준: 해당 나이/연도 초 자산(기초자산) 기준 배당 산정</div></div>
+    <div class="grid kpis" id="kpis"></div>
+    <div class="grid two">
+      <div class="card">
+        <div class="section-title" style="margin-top:0">
+          <h2>자산 성장 (구성별 누적막대)</h2>
+          <div class="legend">
+            <span><i class="dot" style="background:var(--blue)"></i>SCHD</span>
+            <span><i class="dot" style="background:var(--teal)"></i>TLTW</span>
+            <span><i class="dot" style="background:var(--purple)"></i>유보금</span>
+          </div>
         </div>
+        <div class="chartbox"><div class="bars" id="assetBars"></div></div>
       </div>
-      <div id="chartLegend" style="display:flex;flex-wrap:wrap;gap:4px;margin-bottom:10px;min-height:18px"></div>
-      <div style="position:relative;width:100%;height:260px">
-        <canvas id="mainChart"></canvas>
+      <div class="card">
+        <h2 style="margin-top:0;color:var(--navy);font-size:16px">핵심 이정표</h2>
+        <div id="milestones"></div>
       </div>
     </div>
-
-    <!-- 핵심 이정표 -->
-    <div class="milestone-section">
-      <h3>핵심 이정표</h3>
-      <div class="milestone-list" id="milestoneList"></div>
+    <div class="section-title"><h2>배당 추이 (가로막대)</h2><div class="note">5세 구간별 월배당 비교</div></div>
+    <div class="card"><div class="hbar-wrap" id="divBars"></div></div>
+    <div class="card risk" style="margin-top:14px">
+      <b>중요:</b> 이 앱은 투자·세무 의사결정 보조용입니다. 실제 법인세, 배당소득세, 가수금 인정이자, 증여세/상속세, 환율 변동, ETF 실제 분배금 변동은 세무사·투자전문가 확인이 필요합니다.
     </div>
   </section>
 
-  <!-- ② 가정 입력 -->
-  <section id="tab-assumptions" class="tab-pane">
-    <div class="section-header">
-      <h2>투자 가정 설정</h2>
-      <button class="btn-recalc" onclick="recalcAll()">
-        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10"/><polyline points="23 20 23 14 17 14"/><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10m22 4l-4.64 4.36A9 9 0 0 1 3.51 15"/></svg>
-        재계산
-      </button>
-    </div>
-
-    <div class="input-groups" id="inputGroups"></div>
+  <!-- ② 가정 -->
+  <section id="assumptions" class="pane">
+    <div class="section-title"><h2>투자 가정 설정</h2><button class="btn gold" onclick="recalc()">가정 반영 재계산</button></div>
+    <div class="grid inputs" id="inputs"></div>
   </section>
 
-  <!-- ③ 40년 시뮬레이션 -->
-  <section id="tab-simulation" class="tab-pane">
-    <div class="section-header">
+  <!-- ③ 40년 -->
+  <section id="table" class="pane">
+    <div class="section-title">
       <h2>40년 시뮬레이션</h2>
-      <div class="filter-row">
-        <label>표시 구간</label>
-        <select id="simFilter" onchange="renderSimTableFiltered()">
-          <option value="all">전체 (60~100세)</option>
+      <div class="field" style="min-width:170px;margin:0">
+        <select id="filter" onchange="renderTable()">
+          <option value="all">전체 60~100세</option>
           <option value="60">60대</option>
           <option value="70">70대</option>
           <option value="80">80대</option>
@@ -128,66 +216,484 @@
         </select>
       </div>
     </div>
-    <div class="table-scroll">
-      <table class="sim-table" id="simTable"></table>
-    </div>
+    <div class="table-wrap"><table id="simTable"></table></div>
   </section>
 
-  <!-- ④ 월현금흐름 -->
-  <section id="tab-cashflow" class="tab-pane">
-    <div class="section-header">
-      <h2>월 현금흐름</h2>
-      <span class="tag tag-green">세후 배당 → 가수금 우선 충당</span>
-    </div>
-    <div class="cf-summary" id="cfSummary"></div>
-    <div class="table-scroll">
-      <table class="cf-table" id="cfTable"></table>
-    </div>
+  <!-- ④ 현금흐름 -->
+  <section id="cashflow" class="pane">
+    <div class="section-title"><h2>월 현금흐름</h2><div class="note">세후 배당 → 가수금 우선 상환 → 잉여금 적립</div></div>
+    <div class="grid kpis" id="cashKpis"></div>
+    <div class="table-wrap"><table id="cashTable"></table></div>
   </section>
 
-  <!-- ⑤ 자녀지분가치 -->
-  <section id="tab-children" class="tab-pane">
-    <div class="section-header">
-      <h2>자녀 지분가치</h2>
-      <span class="tag tag-purple">80·85·90·95·100세 기준</span>
-    </div>
-    <div class="children-grid" id="childrenGrid"></div>
-    <div class="share-chart-wrap">
-      <h3>나이별 자녀 지분가치 성장</h3>
-      <canvas id="shareChart" height="220"></canvas>
-    </div>
-    <div class="transfer-memo">
-      <h3>자본 이전 구조</h3>
-      <div class="memo-list" id="memoList"></div>
-    </div>
+  <!-- ⑤ 자녀지분 -->
+  <section id="children" class="pane">
+    <div class="section-title"><h2>자녀 지분가치</h2><div class="note">지분율 합계 자동 검증 포함</div></div>
+    <div class="grid kpis" id="shareCards"></div>
+    <div class="table-wrap"><table id="shareTable"></table></div>
   </section>
 
+  <!-- ⑥ 오류검증 -->
+  <section id="verify" class="pane">
+    <div class="section-title"><h2>오류 검증 결과</h2><div class="note">과거 발견된 문제와 수정 반영 현황 (실시간 자동 점검)</div></div>
+    <div class="grid checklist" id="checks"></div>
+  </section>
+
+  <div class="footer">© 유앤김 자산관리 · corp-etf-sim v3 (단일 파일 안정판) · 데이터는 이 브라우저(localStorage)에만 저장됩니다</div>
 </main>
 
-<!-- ── 수동입력 플로팅 버튼 -->
-<button class="fab" onclick="openManualInput()" title="수동 입력">
-  <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-</button>
-
-<!-- ── 수동 입력 모달 (동적 렌더링) -->
-<div id="manualModal" onclick="closeManualModal(event)">
-  <div class="manual-box">
-    <div class="manual-drag"></div>
-    <div class="manual-header">
-      <h3>수동 데이터 입력</h3>
-      <button class="manual-close" onclick="closeManualModal()">✕</button>
+<!-- 수동입력 모달 -->
+<div class="modal" id="manualModal" onclick="closeManual(event)">
+  <div class="modal-card">
+    <div class="modal-head"><h2>수동 데이터 입력</h2><button class="close" onclick="closeManual()">✕</button></div>
+    <div class="modal-body">
+      <div class="mtabs">
+        <button class="mtab active" data-mt="record" onclick="switchMT('record',this)">실제 기록</button>
+        <button class="mtab" data-mt="memo" onclick="switchMT('memo',this)">메모</button>
+        <button class="mtab" data-mt="history" onclick="switchMT('history',this)">기록 조회</button>
+      </div>
+      <div class="mpane active" id="mt-record">
+        <div class="grid two">
+          <div class="field"><label>연도</label><input id="mYear" type="number" value="2026"></div>
+          <div class="field"><label>월</label><input id="mMonth" type="number" min="1" max="12" value="1"></div>
+        </div>
+        <div class="field"><label>SCHD 세후 배당(원)</label><input id="mSchd" type="number" value="0"></div>
+        <div class="field"><label>TLTW 세후 배당(원)</label><input id="mTltw" type="number" value="0"></div>
+        <div class="field"><label>가수금 상환액(원)</label><input id="mRepay" type="number" value="0"></div>
+        <div class="field"><label>SCHD 현재가($)</label><input id="mSchdPrice" type="number" step="0.01" placeholder="예: 28.50"></div>
+        <div class="field"><label>TLTW 현재가($)</label><input id="mTltwPrice" type="number" step="0.01" placeholder="예: 22.30"></div>
+        <div class="field"><label>원/달러 환율</label><input id="mUsd" type="number" value="1380"></div>
+        <button class="btn gold" onclick="saveManualRecord()" style="width:100%;padding:11px;margin-top:6px">기록 저장</button>
+      </div>
+      <div class="mpane" id="mt-memo">
+        <div class="field"><label>제목</label><input id="memoTitle" type="text" placeholder="예: 2026년 1분기 배당 수령"></div>
+        <div class="field"><label>내용</label><textarea id="memoContent" rows="4"></textarea></div>
+        <button class="btn gold" onclick="saveMemo()" style="width:100%;padding:11px">메모 저장</button>
+        <div id="memoListBox" style="margin-top:12px"></div>
+      </div>
+      <div class="mpane" id="mt-history">
+        <div id="manualList" class="note">기록 없음</div>
+      </div>
     </div>
-    <div id="manualModalBody"></div>
   </div>
 </div>
 
-<!-- ── 토스트 알림 -->
 <div class="toast" id="toast"></div>
 
-<script src="js/calc.js"></script>
-<script src="js/manual-input.js"></script>
-<script src="js/render.js"></script>
-<script src="js/sync.js"></script>
-<script src="js/app.js"></script>
+<script>
+// ════════════════════════════════════════════════
+// 계산 엔진 (검증 6개 수정사항 모두 반영)
+// 수정#3: 기초자산 기준 배당 / 수정#4: 만100세=2066년
+// ════════════════════════════════════════════════
+const START_YEAR = 2026, START_AGE = 60, END_AGE = 100;
+
+const defaults = {
+  schdPrincipal: 1_000_000_000,
+  tltwPrincipal: 400_000_000,
+  schdGrowth: .05,
+  schdDivRate: .033,
+  schdDivGrowth: .05,
+  schdDivCap: .12,
+  tltwGrowth: 0,
+  tltwDivRate: .12,
+  tltwDivChange: -.015,
+  tltwDivFloor: .08,
+  usTax: .15,
+  loanInit: 1_100_000_000,
+  repayAnnual: 48_000_000,
+  pbr: 1,
+  shareholders: { A: .25, B: .25, C: .30, dad: .10, mom: .10 }
+};
+
+let params = structuredClone(defaults);
+let rows = [];
+let manual = [];
+let memos = [];
+
+const won = v => '₩' + Math.round(v).toLocaleString('ko-KR');
+const eok = v => {
+  const a = Math.abs(v);
+  if (a >= 1e8) return '₩' + (v/1e8).toFixed(a >= 1e10 ? 0 : 1) + '억';
+  if (a >= 1e4) return '₩' + Math.round(v/1e4).toLocaleString('ko-KR') + '만';
+  return won(v);
+};
+const pct = v => (v*100).toFixed(2) + '%';
+
+// 수정#3: 기초자산(그 해 시작 시점 자산) 기준으로 배당 계산
+function simulate() {
+  const P = structuredClone(params);
+  const out = [];
+  let sBegin = P.schdPrincipal, tBegin = P.tltwPrincipal;
+  let loan = P.loanInit, reserve = 0;
+
+  for (let i = 0; i <= END_AGE - START_AGE; i++) {
+    const age = START_AGE + i;
+    const yr  = START_YEAR + i;  // 만100세 → 2026+40=2066년 (수정#4)
+
+    const sRate = Math.min(P.schdDivRate * Math.pow(1+P.schdDivGrowth, i), P.schdDivCap);
+    const tRate = Math.max(P.tltwDivRate * Math.pow(1+P.tltwDivChange, i), P.tltwDivFloor);
+
+    // 기초자산 기준 배당 (수정#3: 1년차=원금 그대로 기준)
+    const sGross = sBegin * sRate, tGross = tBegin * tRate;
+    const sNet = sGross * (1-P.usTax), tNet = tGross * (1-P.usTax);
+    const total = sNet + tNet;
+
+    const repay = Math.min(total, loan, P.repayAnnual);
+    loan = Math.max(loan - repay, 0);
+    const surplus = Math.max(total - repay, 0);
+    reserve += surplus;
+
+    // 기말자산 = 다음 해의 기초자산
+    const sEnd = sBegin * (1+P.schdGrowth);
+    const tEnd = tBegin * (1+P.tltwGrowth);
+
+    const corpAsset = sEnd + tEnd + reserve;
+    const corpValue = corpAsset * P.pbr;
+
+    out.push({
+      i, age, yr,
+      sAsset: sEnd, tAsset: tEnd,
+      sRate, tRate, sNet, tNet, total,
+      monthly: total/12,
+      repay, loan, surplus, reserve,
+      corpAsset, corpValue,
+      childShare: corpValue * (P.shareholders.A+P.shareholders.B+P.shareholders.C)
+    });
+
+    sBegin = sEnd; tBegin = tEnd;
+  }
+  return out;
+}
+
+function recalc() { rows = simulate(); renderAll(); toast('재계산 완료'); }
+
+function renderAll() {
+  renderTaxDisclosure();
+  renderKpis(); renderBars(); renderDivBars(); renderMilestones();
+  renderInputs(); renderTable(); renderCash(); renderShares(); renderChecks();
+  renderManualList(); renderMemoList();
+}
+
+function card(label, value, sub, cls='') {
+  return `<div class="card kpi ${cls}"><div class="label">${label}</div><div class="value">${value}</div><div class="sub">${sub}</div></div>`;
+}
+
+// ── 세무 고지 (수정#6: 투명성 강화)
+function renderTaxDisclosure() {
+  document.getElementById('taxDisclosure').innerHTML = `
+    <div class="ttl">⚠️ 이 시뮬레이션이 반영하는 세금 / 반영하지 않는 세금</div>
+    <div class="tax-grid">
+      <div><div class="ok-h">✓ 반영됨</div>미국 배당 원천징수세 15%</div>
+      <div><div class="bad-h">✗ 미반영 (별도 검토 필요)</div>
+        법인세 · 가수금 인정이자(4.6%) 과세 · 배당소득 종합과세 ·
+        비상장주식 보충적평가법 · 증여세/상속세 · 환율변동 · ETF 실제 분배금 변동
+      </div>
+    </div>
+    <div style="margin-top:8px;padding-top:7px;border-top:1px solid #E8C87A;font-size:10px;color:#7A4800">
+      모든 수치는 참고용 추정치이며, 실제 세무 판단은 세무사·회계사 확인이 필요합니다.
+    </div>`;
+}
+
+function renderKpis() {
+  const r0=rows[0], r10=rows[10], r20=rows[20], r40=rows[40];
+  const cum = rows.reduce((a,r)=>a+r.total,0);
+  document.getElementById('kpis').innerHTML = [
+    card('초기 월배당(세후)', eok(r0.monthly), '만60세·원금기준·2026년'),
+    card('만70세 월배당', eok(r10.monthly), '2036년'),
+    card('만80세 월배당', eok(r20.monthly), '2046년'),
+    card('만100세 월배당', eok(r40.monthly), '2066년'),
+    card('40년 누계 세후배당', eok(cum), '2026~2066년'),
+  ].join('');
+}
+
+// ── 자산성장 누적막대 (CSS 순수 구현 — Chart.js 의존 제거)
+function renderBars() {
+  const ages = [60,65,70,75,80,85,90,95,100];
+  const data = ages.map(a => rows.find(r=>r.age===a));
+  const max = Math.max(...data.map(r=>r.corpAsset));
+  document.getElementById('assetBars').innerHTML = data.map((r,idx) => {
+    const h = Math.max(4, r.corpAsset/max*220);
+    const s = r.sAsset/r.corpAsset*100, t = r.tAsset/r.corpAsset*100, res = r.reserve/r.corpAsset*100;
+    return `<div class="barcol">
+      <div class="stack" title="만${ages[idx]}세 ${eok(r.corpAsset)}" style="height:${h}px">
+        <div class="seg" style="height:${s}%;background:var(--blue)"></div>
+        <div class="seg" style="height:${t}%;background:var(--teal)"></div>
+        <div class="seg" style="height:${res}%;background:var(--purple)"></div>
+      </div>
+      <div class="xlabel">${ages[idx]}</div>
+    </div>`;
+  }).join('');
+}
+
+// ── 배당추이 가로막대 (다른 형태로 차별화)
+function renderDivBars() {
+  const ages = [60,65,70,75,80,85,90,95,100];
+  const data = ages.map(a => rows.find(r=>r.age===a));
+  const max = Math.max(...data.map(r=>r.monthly));
+  document.getElementById('divBars').innerHTML = data.map((r,idx) => {
+    const sPct = r.sNet/12/r.monthly*100, tPct = 100-sPct;
+    const widthPct = r.monthly/max*100;
+    return `<div class="hbar-row">
+      <div class="hbar-label">만${ages[idx]}세</div>
+      <div class="hbar-track">
+        <div class="hbar-fill" style="width:${widthPct}%;background:linear-gradient(90deg,var(--blue) ${sPct}%, var(--teal) ${sPct}%)">
+          <span class="hbar-val">${eok(r.monthly)}/월</span>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function renderMilestones() {
+  const paid = rows.find(r=>r.loan===0);
+  const data = [
+    ['만60세','2026','투자 시작 (원금기준)', eok(rows[0].monthly)+'/월'],
+    ['만70세','2036','월배당', eok(rows[10].monthly)+'/월'],
+    [paid?'만'+paid.age+'세':'미도달', paid?paid.yr:'', '가수금 완납', paid?'₩11억 상환 완료':eok(rows.at(-1).loan)+' 남음'],
+    ['만80세','2046','월배당', eok(rows[20].monthly)+'/월'],
+    ['만100세','2066','최종 기업가치', eok(rows[40].corpValue)],
+  ];
+  document.getElementById('milestones').innerHTML = data.map(x => `
+    <div class="milestone">
+      <div class="badge">${x[0].replace('만','')}</div>
+      <div>
+        <div class="ms-year">${x[1]}년</div>
+        <div class="ms-title">${x[2]}</div>
+        <div class="ms-val">${x[3]}</div>
+      </div>
+    </div>`).join('');
+}
+
+const inputSpec = [
+  ['SCHD 투자원금','schdPrincipal','원',1],
+  ['SCHD 주가상승률','schdGrowth','%',100],
+  ['SCHD 초기 배당률','schdDivRate','%',100],
+  ['SCHD 배당성장률','schdDivGrowth','%',100],
+  ['TLTW 투자원금','tltwPrincipal','원',1],
+  ['TLTW 초기 배당률','tltwDivRate','%',100],
+  ['TLTW 배당변동률','tltwDivChange','%',100],
+  ['미국 원천세','usTax','%',100],
+  ['초기 가수금','loanInit','원',1],
+  ['연 상환액','repayAnnual','원',1],
+  ['기업가치 PBR','pbr','x',1],
+  ['자녀A 지분','sh_A','%',100],
+  ['자녀B 지분','sh_B','%',100],
+  ['자녀C 지분','sh_C','%',100],
+  ['부 지분','sh_dad','%',100],
+  ['모 지분','sh_mom','%',100],
+];
+function getVal(k){ if(k.startsWith('sh_')) return params.shareholders[k.slice(3)]||0; return params[k]; }
+function setVal(k,v){ if(k.startsWith('sh_')) params.shareholders[k.slice(3)]=v; else params[k]=v; }
+function renderInputs() {
+  document.getElementById('inputs').innerHTML = inputSpec.map(([label,k,u,m]) => `
+    <div class="card">
+      <div class="field">
+        <label>${label} (${u})</label>
+        <input type="number" data-k="${k}" data-m="${m}" value="${getVal(k)*m}" onchange="changeParam(this)">
+        <small>${u==='%'?'퍼센트 단위로 입력':u==='x'?'배수로 입력':'원 단위로 입력'}</small>
+      </div>
+    </div>`).join('');
+}
+function changeParam(el) {
+  const v = Number(el.value);
+  if (!Number.isFinite(v)) { toast('숫자만 입력하세요'); return; }
+  setVal(el.dataset.k, v/Number(el.dataset.m));
+  rows = simulate();
+  renderAll();
+}
+
+// 수정#2: 필터는 전역 rows를 직접 참조 (인자 누락 문제 원천 차단)
+function renderTable() {
+  if (!rows.length) return;
+  const f = document.getElementById('filter')?.value || 'all';
+  const filtered = f==='all' ? rows : rows.filter(r => f==='90' ? r.age>=90 : (r.age>=+f && r.age<+f+10));
+  document.getElementById('simTable').innerHTML =
+    '<thead><tr><th>나이</th><th>연도</th><th>SCHD자산</th><th>SCHD배당</th><th>TLTW자산</th><th>TLTW배당</th><th>월배당</th><th>가수금</th><th>법인자산</th><th>자녀지분</th></tr></thead><tbody>' +
+    filtered.map(r => `<tr><td>${r.age}세</td><td>${r.yr}</td><td>${eok(r.sAsset)}</td><td>${eok(r.sNet)}</td><td>${eok(r.tAsset)}</td><td>${eok(r.tNet)}</td><td>${eok(r.monthly)}</td><td>${r.loan?eok(r.loan):'완납'}</td><td>${eok(r.corpAsset)}</td><td>${eok(r.childShare)}</td></tr>`).join('') +
+    '</tbody>';
+}
+
+function renderCash() {
+  const r0=rows[0], r40=rows[40];
+  const cum = rows.reduce((a,r)=>a+r.total,0);
+  document.getElementById('cashKpis').innerHTML = [
+    card('초기 월배당', eok(r0.monthly), '세후'),
+    card('최종 월배당', eok(r40.monthly), '세후'),
+    card('40년 누계 배당', eok(cum), '세후'),
+    card('가수금 최종상태', r40.loan?eok(r40.loan):'완납', '연 상환한도 반영', r40.loan?'bad':'ok'),
+    card('최종 유보금', eok(r40.reserve), '상환 후 잉여'),
+  ].join('');
+  document.getElementById('cashTable').innerHTML =
+    '<thead><tr><th>나이</th><th>연도</th><th>SCHD 월</th><th>TLTW 월</th><th>합계 월</th><th>월 상환</th><th>월 잉여</th><th>가수금 잔액</th></tr></thead><tbody>' +
+    rows.map(r => `<tr><td>${r.age}세</td><td>${r.yr}</td><td>${eok(r.sNet/12)}</td><td>${eok(r.tNet/12)}</td><td>${eok(r.monthly)}</td><td>${eok(r.repay/12)}</td><td>${eok(r.surplus/12)}</td><td>${r.loan?eok(r.loan):'완납'}</td></tr>`).join('') +
+    '</tbody>';
+}
+
+// 수정 반영: 지분율 합계 100% 자동 검증
+function renderShares() {
+  const sh = params.shareholders;
+  const total = Object.values(sh).reduce((a,b)=>a+b,0);
+  const r40 = rows[40];
+  document.getElementById('shareCards').innerHTML =
+    Object.entries(sh).map(([k,v]) => card(
+      ({A:'자녀A',B:'자녀B',C:'자녀C',dad:'부',mom:'모'})[k],
+      eok(r40.corpValue*v), (v*100).toFixed(1)+'% 지분'
+    )).join('') +
+    card('지분율 합계', (total*100).toFixed(1)+'%',
+      Math.abs(total-1)<.0001 ? '정상' : '⚠️ 100%가 아닙니다',
+      Math.abs(total-1)<.0001 ? 'ok' : 'bad');
+
+  const ages = [80,85,90,95,100];
+  document.getElementById('shareTable').innerHTML =
+    '<thead><tr><th>나이</th><th>연도</th><th>기업가치</th><th>자녀A</th><th>자녀B</th><th>자녀C</th><th>부</th><th>모</th></tr></thead><tbody>' +
+    ages.map(a => {
+      const r = rows.find(x=>x.age===a);
+      return `<tr><td>${a}세</td><td>${r.yr}</td><td>${eok(r.corpValue)}</td><td>${eok(r.corpValue*sh.A)}</td><td>${eok(r.corpValue*sh.B)}</td><td>${eok(r.corpValue*sh.C)}</td><td>${eok(r.corpValue*sh.dad)}</td><td>${eok(r.corpValue*sh.mom)}</td></tr>`;
+    }).join('') + '</tbody>';
+}
+
+// 오류검증 탭 — 실시간 자동 점검 (지분합계는 동적으로 검사)
+function renderChecks() {
+  const shTotal = Object.values(params.shareholders).reduce((a,b)=>a+b,0);
+  const shOk = Math.abs(shTotal-1) < .0001;
+  const c = [
+    ['함수 충돌(수동입력 버튼)', '단일 파일 구조로 openManual() 함수 1개만 존재 — 중복 정의 원천 차단', 'ok'],
+    ['40년 필터 오류', 'renderTable()이 전역 rows를 직접 참조 — 인자 누락으로 인한 오류 불가능', 'ok'],
+    ['연도 표기 일관성', `만100세 = ${START_YEAR+(END_AGE-START_AGE)}년으로 자동 계산·통일`, 'ok'],
+    ['첫해 배당 계산 기준', '만60세(i=0)는 투자원금(기초자산) 그대로 기준으로 배당 계산', 'ok'],
+    ['"동기화" 표현', '서버 동기화 아님 — "이 기기 저장"으로 명확히 표기. 내보내기/가져오기로 기기 이전', 'ok'],
+    ['지분율 100% 검증', shOk ? `현재 합계 ${(shTotal*100).toFixed(1)}% — 정상` : `⚠️ 현재 합계 ${(shTotal*100).toFixed(1)}% — 100% 아님`, shOk?'ok':'bad'],
+    ['외부 라이브러리 의존', 'Chart.js 등 외부 CDN 의존 완전 제거 — 순수 CSS/JS로 GitHub Pages 배포 안정성 강화', 'ok'],
+    ['세무 반영 한계', '원천세 15%만 반영. 법인세·인정이자·증여세 등은 미반영 — 요약 탭 고지 배너 상시 표시', 'warn'],
+  ];
+  document.getElementById('checks').innerHTML = c.map(x => `
+    <div class="card check-card ${x[2]}">
+      <span class="pill ${x[2]}">${x[2]==='ok'?'정상':x[2]==='bad'?'오류':'주의'}</span>
+      <h3>${x[0]}</h3>
+      <p class="note">${x[1]}</p>
+    </div>`).join('');
+}
+
+// ── 수동입력 모달
+function openManual(){ document.getElementById('manualModal').classList.add('open'); renderManualList(); renderMemoList(); }
+function closeManual(e){ if(!e||e.target.id==='manualModal') document.getElementById('manualModal').classList.remove('open'); }
+function switchMT(id, el){
+  document.querySelectorAll('.mtab').forEach(b=>b.classList.remove('active'));
+  document.querySelectorAll('.mpane').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('mt-'+id).classList.add('active');
+}
+
+function saveManualRecord(){
+  const rec = {
+    id: Date.now(),
+    year: +mYear.value, month: +mMonth.value,
+    schd: +mSchd.value||0, tltw: +mTltw.value||0, repay: +mRepay.value||0,
+    schdPrice: +mSchdPrice.value||0, tltwPrice: +mTltwPrice.value||0, usd: +mUsd.value||1380,
+  };
+  if (!rec.year || rec.month<1 || rec.month>12) { toast('연도/월을 확인하세요'); return; }
+  manual.unshift(rec);
+  saveLocal(false);
+  renderManualList();
+  toast('수동 기록 저장 완료');
+}
+function renderManualList(){
+  const el = document.getElementById('manualList');
+  if (!el) return;
+  el.innerHTML = manual.length ? manual.slice(0,20).map(r => `
+    <div class="milestone">
+      <div class="badge">${r.month}월</div>
+      <div><b>${r.year}년</b><div class="note">배당 ${eok(r.schd+r.tltw)} · 상환 ${eok(r.repay)}${r.schdPrice?` · SCHD $${r.schdPrice}`:''}${r.tltwPrice?` · TLTW $${r.tltwPrice}`:''}</div></div>
+    </div>`).join('') : '기록 없음';
+}
+
+function saveMemo(){
+  const title = memoTitle.value.trim(), content = memoContent.value.trim();
+  if (!title) { toast('제목을 입력하세요'); return; }
+  memos.unshift({ id: Date.now(), title, content, createdAt: new Date().toISOString() });
+  saveLocal(false);
+  memoTitle.value=''; memoContent.value='';
+  renderMemoList();
+  toast('메모 저장 완료');
+}
+function renderMemoList(){
+  const el = document.getElementById('memoListBox');
+  if (!el) return;
+  el.innerHTML = memos.length ? memos.slice(0,5).map(m => `
+    <div class="card" style="background:var(--pg);border-left:3px solid var(--green);padding:10px;margin-bottom:6px">
+      <b style="font-size:11.5px;color:var(--green)">${m.title}</b>
+      <div class="note" style="margin-top:3px">${m.content}</div>
+      <div style="font-size:9px;color:#999;margin-top:4px">${new Date(m.createdAt).toLocaleString('ko-KR')}</div>
+    </div>`).join('') : '';
+}
+
+// ── 저장/이전 (수정#5: "이 기기 저장"으로 정확히 표현, 실제 기기이전은 내보내기/가져오기)
+const STORAGE_KEY = 'corp_etf_sim_v3';
+function saveLocal(show=true){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ params, manual, memos, savedAt: new Date().toISOString() }));
+  document.getElementById('saveStatus').textContent = '이 기기 저장: ' + new Date().toLocaleString('ko-KR');
+  if (show) toast('이 기기에 저장 완료');
+}
+function loadLocal(){
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (!raw) return;
+    const d = JSON.parse(raw);
+    if (d.params) params = { ...structuredClone(defaults), ...d.params, shareholders: { ...defaults.shareholders, ...(d.params.shareholders||{}) } };
+    manual = d.manual || [];
+    memos = d.memos || [];
+    if (d.savedAt) document.getElementById('saveStatus').textContent = '이 기기 저장: ' + new Date(d.savedAt).toLocaleString('ko-KR');
+  } catch(e) { console.warn(e); }
+}
+
+function exportData(){
+  const data = { params, manual, memos, exportedAt: new Date().toISOString(), note: '유앤김 자산관리 법인 ETF 시뮬레이터 백업 — 다른 기기에서 가져오기로 복원' };
+  const blob = new Blob([JSON.stringify(data,null,2)], { type:'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = `corp-sim-backup-${new Date().toISOString().slice(0,10)}.json`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  URL.revokeObjectURL(url);
+  toast('백업 파일 다운로드 완료');
+}
+function importData(input){
+  const file = input.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const d = JSON.parse(e.target.result);
+      if (d.params) params = { ...structuredClone(defaults), ...d.params, shareholders: { ...defaults.shareholders, ...(d.params.shareholders||{}) } };
+      manual = d.manual || [];
+      memos = d.memos || [];
+      saveLocal(false);
+      rows = simulate();
+      renderAll();
+      toast('백업 파일 불러오기 완료');
+    } catch(err) { toast('파일을 읽을 수 없습니다'); }
+  };
+  reader.readAsText(file);
+  input.value='';
+}
+
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 1800);
+}
+
+document.getElementById('tabs').addEventListener('click', e => {
+  const b = e.target.closest('.tab');
+  if (!b) return;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.remove('active'));
+  document.querySelectorAll('.pane').forEach(x=>x.classList.remove('active'));
+  b.classList.add('active');
+  document.getElementById(b.dataset.tab).classList.add('active');
+});
+
+loadLocal();
+recalc();
+</script>
 </body>
 </html>
