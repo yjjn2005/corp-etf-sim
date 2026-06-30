@@ -3,9 +3,8 @@ window.APP_PARAMS = { ...DEFAULT_PARAMS };
 window.APP_ROWS   = [];
 
 function init() {
-  // 새 통합 저장소에서 복구 (manual-input.js)
+  // manual-input.js의 통합 저장소에서 복구
   if (typeof loadAllPersisted === 'function') loadAllPersisted();
-
   recalcAll();
 }
 
@@ -13,6 +12,7 @@ function recalcAll() {
   const rows = runSimulation(window.APP_PARAMS);
   window.APP_ROWS = rows;
 
+  if (typeof renderTaxDisclosure === 'function') renderTaxDisclosure();
   renderKPIGrid(rows);
   renderChart(rows, currentChartType || 'asset');
   renderMilestones(rows);
@@ -20,7 +20,7 @@ function recalcAll() {
   renderSimTable(rows, document.getElementById('simFilter')?.value || 'all');
   renderCashflow(rows);
   renderChildren(rows, window.APP_PARAMS);
-  renderMemoHistory();
+  if (typeof renderMemoHistory === 'function') renderMemoHistory();
 }
 
 // ── 탭 전환
@@ -31,7 +31,7 @@ function switchTab(id, el) {
   el.classList.add('active');
 }
 
-// ── 가정값 변경 핸들러
+// ── 가정값 변경 핸들러 (가정 탭 직접 입력)
 function onParamChange(input) {
   const key = input.dataset.key;
   const val = parseFloat(input.value);
@@ -61,52 +61,12 @@ function onParamChange(input) {
   }
 }
 
-// ── 모달
-function openManualInput() {
-  document.getElementById('modalOverlay').classList.add('open');
-  initAdjustInputs();
-}
-function closeModal(e) {
-  if (!e || e.target === document.getElementById('modalOverlay'))
-    document.getElementById('modalOverlay').classList.remove('open');
-}
-function switchMTab(id, el) {
-  document.querySelectorAll('.modal-content').forEach(c => c.style.display = 'none');
-  document.querySelectorAll('.mtab').forEach(b => b.classList.remove('active'));
-  document.getElementById('mtab-' + id).style.display = 'block';
-  el.classList.add('active');
-}
-
-function initAdjustInputs() {
-  const p = window.APP_PARAMS;
-  const f = (id, v) => { const el = document.getElementById(id); if (el) el.value = v; };
-  f('adj_schdGrowth',    (p.schdGrowth * 100).toFixed(1));
-  f('adj_schdDivGrowth', (p.schdDivGrowth * 100).toFixed(1));
-  f('adj_tltwDivRate',   (p.tltwDivRate * 100).toFixed(1));
-  f('adj_repayMonthly',  Math.round(p.repayAnnual / 12 / 10000));
-  f('adj_pbr',           p.pbr.toFixed(1));
-}
-
-function applyAdjust() {
-  const g = id => parseFloat(document.getElementById(id).value);
-  window.APP_PARAMS = {
-    ...window.APP_PARAMS,
-    schdGrowth:    g('adj_schdGrowth') / 100,
-    schdDivGrowth: g('adj_schdDivGrowth') / 100,
-    tltwDivRate:   g('adj_tltwDivRate') / 100,
-    repayAnnual:   g('adj_repayMonthly') * 10000 * 12,
-    pbr:           g('adj_pbr'),
-  };
-  recalcAll();
-  showToast('재계산 완료 ✓');
-  closeModal();
-}
-
-// ── 40년 테이블 필터
+// ── 40년 테이블 필터 (수정 #2: HTML onchange와 시그니처 일치)
 function renderSimTableFiltered() {
   const filter = document.getElementById('simFilter').value;
   renderSimTable(window.APP_ROWS, filter);
 }
+
 document.addEventListener('DOMContentLoaded', () => {
   document.getElementById('simFilter')?.addEventListener('change', renderSimTableFiltered);
   init();
