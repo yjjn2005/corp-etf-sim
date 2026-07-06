@@ -506,7 +506,9 @@ function simulate() {
     const eNet = eB * eRate * (1-P.usTax);
     const total = sNet + jNet + eNet;
 
-    const repay = Math.min(total, loan);
+    const monthlyDiv = total / 12;
+    const monthlyRepay = Math.floor(monthlyDiv / 1_000_000) * 1_000_000;
+    const repay = Math.min(monthlyRepay * 12, loan);
     loan = Math.max(loan - repay, 0);
     const surplus = Math.max(total - repay, 0);
     reserve += surplus;
@@ -833,7 +835,7 @@ function renderRepayPlan() {
     let bal = loanBal;
     for (let m = 1; m <= 12; m++) {
       if (bal <= 0) break;
-      const mRepay = Math.min(mTotal, bal);
+      const mRepay = Math.min(Math.floor(mTotal / 1_000_000) * 1_000_000, bal);
       bal = Math.max(bal - mRepay, 0);
       yearRepay += mRepay;
       if (bal === 0 && paidMonth === null) paidMonth = m;
