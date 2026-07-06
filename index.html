@@ -140,6 +140,7 @@ th:first-child{background:#eef3f8;z-index:2}
       </div>
     </div>
     <div class="actions">
+      <button class="btn ghost" onclick="openRepayPlan()">월별 상환계획</button>
       <button class="btn ghost" onclick="openManual()">수동입력</button>
       <button class="btn ghost" onclick="exportData()">내보내기</button>
       <button class="btn ghost" onclick="document.getElementById('importFile').click()">가져오기</button>
@@ -264,6 +265,28 @@ th:first-child{background:#eef3f8;z-index:2}
       <div class="mpane" id="mt-history">
         <div id="manualList" class="note">기록 없음</div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- 월별 상환계획 모달 -->
+<div class="modal" id="repayModal" onclick="closeRepayModal(event)">
+  <div class="modal-card" style="max-width:920px">
+    <div class="modal-head">
+      <h2>가수금 월별 상환계획 (2027~완납)</h2>
+      <button class="close" onclick="closeRepayModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:#EBF3FB;border-radius:10px;padding:12px 15px;font-size:11.5px;color:#1558A0;line-height:1.9;margin-bottom:14px">
+        <b>운용 구조</b><br>
+        <span style="background:#EBF3FB;border:1px solid #b5d4f4;border-radius:5px;padding:1px 7px;font-weight:800;margin-right:4px">SCHD</span>분기 수령(3·6·9·12월) → 전분기 배당금을 3개월 균등 배분하여 매월 활용<br>
+        <span style="background:#E5F5EE;border:1px solid #9fe1cb;border-radius:5px;padding:1px 7px;font-weight:800;margin-right:4px">JEPQ</span><span style="background:#FBF3E5;border:1px solid #fac775;border-radius:5px;padding:1px 7px;font-weight:800;margin-right:4px">JEPI</span>매월 수령 → 당월 즉시 상환 재원 활용<br>
+        <span style="background:#dcfce7;border:1px solid #a7f3d0;border-radius:5px;padding:1px 7px;font-weight:800;margin-right:4px">세금</span>법인세 미적용 · 외국납부세액 공제(15%)로 상쇄 예정 · 월 상환 한도 <b id="rpLimitLabel"></b>
+      </div>
+      <div class="table-wrap" style="max-height:500px">
+        <table id="repayTable"></table>
+      </div>
+      <div id="repayResult" style="margin-top:10px"></div>
     </div>
   </div>
 </div>
@@ -632,6 +655,91 @@ function renderChecks() {
       <h3>${x[0]}</h3>
       <p class="note">${x[1]}</p>
     </div>`).join('');
+}
+
+// ── 월별 상환계획 모달
+function openRepayPlan() {
+  document.getElementById('repayModal').classList.add('open');
+  renderRepayPlan();
+}
+function closeRepayModal(e) {
+  if (!e || e.target.id === 'repayModal') document.getElementById('repayModal').classList.remove('open');
+}
+function renderRepayPlan() {
+  if (!rows.length) return;
+  const MONTHLY_LIMIT = params.repayAnnual / 12;
+  document.getElementById('rpLimitLabel').textContent = eok(MONTHLY_LIMIT) + '/월';
+
+  // 2026년 연말 가수금 잔액(= 2027년 시작 잔액)
+  let loanBal = rows[0].loan;
+
+  const planRows = [];
+  for (let idx = 1; idx < rows.length; idx++) {
+    const r = rows[idx];
+    if (loanBal <= 0) break;
+
+    const mSchd  = r.sNet / 12;
+    const mJepq  = r.jNet / 12;
+    const mJepi  = r.eNet / 12;
+    const mTotal = mSchd + mJepq + mJepi;
+
+    // 해당 연도 12개월 월별 상환 시뮬레이션
+    let yearRepay = 0, paidMonth = null;
+    let bal = loanBal;
+    for (let m = 1; m <= 12; m++) {
+      if (bal <= 0) break;
+      const mRepay = Math.min(mTotal, bal, MONTHLY_LIMIT);
+      bal = Math.max(bal - mRepay, 0);
+      yearRepay += mRepay;
+      if (bal === 0 && paidMonth === null) paidMonth = m;
+    }
+    loanBal = bal;
+
+    planRows.push({
+      yr: r.yr, age: r.age,
+      mSchd, mJepq, mJepi, mTotal,
+      mRepay: yearRepay / 12,
+      mSurplus: mTotal - yearRepay / 12,
+      yearRepay, loanBal, paidMonth
+    });
+  }
+
+  const paidRow = planRows.find(r => r.loanBal === 0);
+
+  // SCHD 분기 수령월 표시용
+  const schdMonths = '3·6·9·12월';
+
+  document.getElementById('repayTable').innerHTML =
+    `<thead><tr>
+      <th>연도</th><th>나이</th>
+      <th>SCHD 월평균<br><small style="font-weight:400;color:#6b7280">(${schdMonths} 분기수령)</small></th>
+      <th>JEPQ 월</th><th>JEPI 월</th>
+      <th>월 현금흐름</th><th>월 상환</th><th>월 잉여</th><th>연말 가수금 잔액</th>
+    </tr></thead><tbody>` +
+    planRows.map(r => {
+      const done = r.loanBal === 0;
+      const bg = done ? 'style="background:#dcfce7"' : '';
+      const balCell = done
+        ? `<b style="color:#14532d">완납 ✓ (${r.paidMonth}월)</b>`
+        : eok(r.loanBal);
+      return `<tr ${bg}>
+        <td>${r.yr}</td><td>${r.age}세</td>
+        <td>${eok(r.mSchd)}</td>
+        <td>${eok(r.mJepq)}</td>
+        <td>${eok(r.mJepi)}</td>
+        <td><b>${eok(r.mTotal)}</b></td>
+        <td>${eok(r.mRepay)}</td>
+        <td>${eok(r.mSurplus)}</td>
+        <td>${balCell}</td>
+      </tr>`;
+    }).join('') + '</tbody>';
+
+  document.getElementById('repayResult').innerHTML = paidRow
+    ? `<div style="background:#dcfce7;border:1px solid #a7f3d0;border-radius:10px;padding:11px 15px;font-size:12.5px;color:#14532d;font-weight:700">
+        🎉 가수금 완납 예상: ${paidRow.yr}년 ${paidRow.paidMonth}월 (만${paidRow.age}세)
+        &nbsp;·&nbsp; 2027년 1월부터 ${Math.round((paidRow.yr - 2027)*12 + paidRow.paidMonth)}개월 소요
+       </div>`
+    : `<div style="background:#fee2e2;border-radius:10px;padding:10px 14px;font-size:12px;color:#7f1d1d">⚠️ 시뮬레이션 기간 내 완납 미도달 — 상환액 또는 투자원금을 조정하세요.</div>`;
 }
 
 function openManual(){ document.getElementById('manualModal').classList.add('open'); renderManualList(); renderMemoList(); }
