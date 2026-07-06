@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>법인 ETF 100세 시뮬레이터 | 유앤김 자산관리</title>
+<title>유앤김 법인 자금운용 시뮬레이터</title>
 <meta name="theme-color" content="#001F5B">
 <style>
 :root{
@@ -135,9 +135,8 @@ th:first-child{background:#eef3f8;z-index:2}
     <div class="brand">
       <div class="logo">U&K</div>
       <div>
-        <h1>법인 ETF 100세 시뮬레이터</h1>
+        <h1>유앤김 법인 자금운용 시뮬레이터</h1>
         <p>1966년생 만60세(2026) → 만100세(2066) · SCHD + JEPQ + JEPI</p>
-        <div class="status" id="saveStatus">이 기기 저장: 없음</div>
       </div>
     </div>
     <div class="actions">
@@ -706,7 +705,6 @@ function renderMemoList(){
 const STORAGE_KEY = 'corp_etf_sim_v4';
 function saveLocal(show=true){
   localStorage.setItem(STORAGE_KEY, JSON.stringify({ params, manual, memos, savedAt: new Date().toISOString() }));
-  document.getElementById('saveStatus').textContent = '이 기기 저장: ' + new Date().toLocaleString('ko-KR');
   if (show) toast('이 기기에 저장 완료');
 }
 function loadLocal(){
