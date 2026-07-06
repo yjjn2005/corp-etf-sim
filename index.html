@@ -155,7 +155,7 @@ th:first-child{background:#eef3f8;z-index:2}
   <div class="tabs" id="tabs">
     <button class="tab active" data-tab="summary">요약</button>
     <button class="tab" data-tab="assumptions">가정</button>
-    <button class="tab" data-tab="table">40년</button>
+    <button class="tab" data-tab="table">연도별(41개년)</button>
     <button class="tab" data-tab="cashflow">현금흐름</button>
     <button class="tab" data-tab="children">자녀지분</button>
   </div>
@@ -199,7 +199,7 @@ th:first-child{background:#eef3f8;z-index:2}
   <!-- ③ 40년 -->
   <section id="table" class="pane">
     <div class="section-title">
-      <h2>40년 시뮬레이션</h2>
+      <h2>만60~100세 시뮬레이션 (41개년)</h2>
       <div class="field" style="min-width:170px;margin:0">
         <select id="filter" onchange="renderTable()">
           <option value="all">전체 60~100세</option>
@@ -215,7 +215,7 @@ th:first-child{background:#eef3f8;z-index:2}
 
   <!-- ④ 현금흐름 -->
   <section id="cashflow" class="pane">
-    <div class="section-title"><h2>월 현금흐름</h2><div class="note">세후 배당 → 가수금 우선 상환 → 잉여금 적립</div></div>
+    <div class="section-title"><h2>월 현금흐름</h2><div class="note">세후 배당 → 가수금 우선 상환(연 4,800만원 한도) → 잉여금 적립</div></div>
     <div class="grid kpis" id="cashKpis"></div>
     <div class="table-wrap"><table id="cashTable"></table></div>
   </section>
@@ -410,7 +410,7 @@ function renderKpis() {
     card('만70세 월배당', eok(r10.monthly), '2036년'),
     card('만80세 월배당', eok(r20.monthly), '2046년'),
     card('만100세 월배당', eok(r40.monthly), '2066년'),
-    card('40년 누계 세후배당', eok(cum), '2026~2066년'),
+    card('누계 세후배당(60~100세)', eok(cum), '41개년 합산 · 2026~2066'),
     paidCard,
   ].join('');
 }
@@ -571,7 +571,7 @@ function renderCash() {
   document.getElementById('cashKpis').innerHTML = [
     card('초기 월배당', eok(r0.monthly), '세후 합산'),
     card('최종 월배당', eok(r40.monthly), '세후 합산'),
-    card('40년 누계 배당', eok(cum), '세후'),
+    card('누계 세후배당(60~100세)', eok(cum), '41개년 합산'),
     card('가수금 최종상태', r40.loan?eok(r40.loan):'완납', '연 상환한도 반영', r40.loan?'bad':'ok'),
     card('최종 유보금', eok(r40.reserve), '상환 후 잉여'),
   ].join('');
