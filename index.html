@@ -977,12 +977,18 @@ function loadLocal(){
 
 async function copyFullCode(){
   try {
-    const res = await fetch(location.href);
-    const text = await res.text();
-    await navigator.clipboard.writeText(text);
+    const html = '<!doctype html>\n' + document.documentElement.outerHTML;
+    await navigator.clipboard.writeText(html);
     toast('전체 코드 복사 완료 ✓');
   } catch(e) {
-    toast('복사 실패 — 브라우저 권한을 확인하세요');
+    const ta = document.createElement('textarea');
+    ta.value = '<!doctype html>\n' + document.documentElement.outerHTML;
+    ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    toast('전체 코드 복사 완료 ✓');
   }
 }
 
