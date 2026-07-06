@@ -290,6 +290,7 @@ th:first-child{background:linear-gradient(180deg,#f0f4fb,#e8eef8);z-index:2}
     </div>
     <div class="actions">
       <button class="btn ghost" onclick="openManual()">수동입력</button>
+      <button class="btn ghost" onclick="copyFullCode()">전체코드 복사</button>
       <button class="btn ghost" onclick="exportData()">내보내기</button>
       <button class="btn ghost" onclick="document.getElementById('importFile').click()">가져오기</button>
       <button class="btn white" onclick="saveLocal()">이 기기 저장</button>
@@ -972,6 +973,17 @@ function loadLocal(){
     memos  = d.memos  || [];
     if (d.savedAt) document.getElementById('saveStatus').textContent = '이 기기 저장: ' + new Date(d.savedAt).toLocaleString('ko-KR');
   } catch(e) { console.warn(e); }
+}
+
+async function copyFullCode(){
+  try {
+    const res = await fetch(location.href);
+    const text = await res.text();
+    await navigator.clipboard.writeText(text);
+    toast('전체 코드 복사 완료 ✓');
+  } catch(e) {
+    toast('복사 실패 — 브라우저 권한을 확인하세요');
+  }
 }
 
 function exportData(){
