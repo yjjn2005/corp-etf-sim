@@ -453,7 +453,8 @@ function simulate() {
       monthly: total/12,
       repay, loan, surplus,
       corpAsset, corpValue,
-      childShare: corpValue * (P.shareholders.A+P.shareholders.B+P.shareholders.C)
+      netCorpValue: Math.max(corpValue - loan, 0),
+      childShare: Math.max(corpValue - loan, 0) * (P.shareholders.A+P.shareholders.B+P.shareholders.C)
     });
 
     sB=sEnd; kB=kEnd; jqB=jqEnd; jiB=jiEnd; qqB=qqEnd; tlB=tlEnd;
@@ -715,7 +716,7 @@ function renderTable() {
       <th>JEPI자산</th><th>JEPI배당</th>
       <th>QQQ자산</th><th>QQQ배당</th>
       <th>TLT자산</th><th>TLT배당</th>
-      <th>월배당</th><th>가수금</th><th>법인자산</th><th>자녀지분</th>
+      <th>월배당</th><th>가수금</th><th>법인자산</th><th>자녀지분(가수금공제)</th>
     </tr></thead><tbody>` +
     filtered.map(r => {
       const is5yr = r.age % 5 === 0;
@@ -784,7 +785,7 @@ function renderShares() {
   document.getElementById('shareCards').innerHTML =
     Object.entries(sh).map(([k,v]) => card(
       ({A:'자녀A',B:'자녀B',C:'자녀C',dad:'본인',mom:'배우자'})[k],
-      eok(rLast.corpValue*v), (v*100).toFixed(1)+'% 지분'
+      eok(rLast.netCorpValue*v), (v*100).toFixed(1)+'% 지분 (가수금 공제)'
     )).join('') +
     card('지분율 합계', (total*100).toFixed(1)+'%',
       Math.abs(total-1)<.0001 ? '정상' : '⚠️ 100%가 아닙니다',
@@ -792,22 +793,24 @@ function renderShares() {
 
   // 2026~2065 전체 (40년) 표시, 5년 단위 강조
   document.getElementById('shareTable').innerHTML =
-    '<thead><tr><th>나이</th><th>연도</th><th>가수금</th><th>기업가치</th><th>자녀A (30%)</th><th>자녀B (25%)</th><th>자녀C (25%)</th><th>본인 (10%)</th><th>배우자 (10%)</th></tr></thead><tbody>' +
+    '<thead><tr><th>나이</th><th>연도</th><th>가수금</th><th>기업가치</th><th>순자산(공제후)</th><th>자녀A (30%)</th><th>자녀B (25%)</th><th>자녀C (25%)</th><th>본인 (10%)</th><th>배우자 (10%)</th></tr></thead><tbody>' +
     rows.map(r => {
       const is5yr = r.age % 5 === 0;
-      const isPaid = r.loan === 0 && rows[r.i > 0 ? r.i-1 : 0].loan > 0;
-      const bg = is5yr ? 'background:#EBF3FB;font-weight:700' : '';
+      const rowBg = is5yr ? 'background:#EBF3FB' : '';
+      const bTop  = is5yr ? 'border-top:2px solid #1558A0' : '';
+      const fw    = is5yr ? 'font-weight:800' : '';
       const loanCell = r.loan ? eok(r.loan) : '<b style="color:var(--green)">완납</b>';
-      return `<tr style="${bg}">
-        <td>${is5yr?`<b>${r.age}세</b>`:r.age+'세'}</td>
-        <td>${is5yr?`<b>${r.yr}</b>`:r.yr}</td>
+      return `<tr style="${rowBg};${bTop}">
+        <td style="${fw}">${is5yr?`<b>${r.age}세</b>`:r.age+'세'}</td>
+        <td style="${fw}">${is5yr?`<b>${r.yr}</b>`:r.yr}</td>
         <td>${loanCell}</td>
         <td>${eok(r.corpValue)}</td>
-        <td>${eok(r.corpValue*sh.A)}</td>
-        <td>${eok(r.corpValue*sh.B)}</td>
-        <td>${eok(r.corpValue*sh.C)}</td>
-        <td>${eok(r.corpValue*sh.dad)}</td>
-        <td>${eok(r.corpValue*sh.mom)}</td>
+        <td style="${fw}"><b>${eok(r.netCorpValue)}</b></td>
+        <td>${eok(r.netCorpValue*sh.A)}</td>
+        <td>${eok(r.netCorpValue*sh.B)}</td>
+        <td>${eok(r.netCorpValue*sh.C)}</td>
+        <td>${eok(r.netCorpValue*sh.dad)}</td>
+        <td>${eok(r.netCorpValue*sh.mom)}</td>
       </tr>`;
     }).join('') + '</tbody>';
 }
