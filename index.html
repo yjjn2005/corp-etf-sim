@@ -717,18 +717,27 @@ function renderTable() {
       <th>TLT자산</th><th>TLT배당</th>
       <th>월배당</th><th>가수금</th><th>법인자산</th><th>자녀지분</th>
     </tr></thead><tbody>` +
-    filtered.map(r => `<tr>
-      <td>${r.age}세</td><td>${r.yr}</td>
-      <td>${eok(r.sAsset)}</td><td>${eok(r.sNet)}</td>
-      <td>${eok(r.kAsset)}</td><td>${eok(r.kNet)}</td>
-      <td>${eok(r.jqAsset)}</td><td>${eok(r.jqNet)}</td>
-      <td>${eok(r.jiAsset)}</td><td>${eok(r.jiNet)}</td>
-      <td>${eok(r.qqAsset)}</td><td>${eok(r.qqNet)}</td>
-      <td>${eok(r.tlAsset)}</td><td>${eok(r.tlNet)}</td>
-      <td><b>${eok(r.monthly)}</b></td>
-      <td>${r.loan?eok(r.loan):'완납'}</td>
-      <td>${eok(r.corpAsset)}</td><td>${eok(r.childShare)}</td>
-    </tr>`).join('') +
+    filtered.map(r => {
+      const is5yr = r.age % 5 === 0;
+      const rowBg = is5yr ? 'background:#EBF3FB' : '';
+      const bTop  = is5yr ? 'border-top:2px solid #1558A0' : '';
+      const fw    = is5yr ? 'font-weight:800' : '';
+      const loanCell = r.loan ? eok(r.loan) : '<b style="color:var(--green)">완납</b>';
+      return `<tr style="${rowBg};${bTop}">
+        <td style="${fw}">${is5yr?`<b>${r.age}세</b>`:r.age+'세'}</td>
+        <td style="${fw}">${is5yr?`<b>${r.yr}</b>`:r.yr}</td>
+        <td>${eok(r.sAsset)}</td><td>${eok(r.sNet)}</td>
+        <td>${eok(r.kAsset)}</td><td>${eok(r.kNet)}</td>
+        <td>${eok(r.jqAsset)}</td><td>${eok(r.jqNet)}</td>
+        <td>${eok(r.jiAsset)}</td><td>${eok(r.jiNet)}</td>
+        <td>${eok(r.qqAsset)}</td><td>${eok(r.qqNet)}</td>
+        <td>${eok(r.tlAsset)}</td><td>${eok(r.tlNet)}</td>
+        <td style="${fw}"><b>${eok(r.monthly)}</b></td>
+        <td>${loanCell}</td>
+        <td style="${fw}">${eok(r.corpAsset)}</td>
+        <td>${eok(r.childShare)}</td>
+      </tr>`;
+    }).join('') +
     '</tbody>';
 }
 
@@ -748,14 +757,23 @@ function renderCash() {
       <th>SCHD 월</th><th>0052D0 월</th><th>JEPQ 월</th><th>JEPI 월</th><th>QQQ 월</th><th>TLT 월</th>
       <th>합계 월</th><th>월 상환</th><th>월 잉여</th><th>가수금 잔액</th>
     </tr></thead><tbody>` +
-    rows.map(r => `<tr>
-      <td>${r.age}세</td><td>${r.yr}</td>
-      <td>${eok(r.sNet/12)}</td><td>${eok(r.kNet/12)}</td><td>${eok(r.jqNet/12)}</td>
-      <td>${eok(r.jiNet/12)}</td><td>${eok(r.qqNet/12)}</td><td>${eok(r.tlNet/12)}</td>
-      <td><b>${eok(r.monthly)}</b></td>
-      <td>${eok(r.repay/12)}</td><td>${eok(r.surplus/12)}</td>
-      <td>${r.loan?eok(r.loan):'완납'}</td>
-    </tr>`).join('') +
+    rows.map(r => {
+      const is5yr = r.age % 5 === 0;
+      const rowBg = is5yr ? 'background:#EBF3FB' : '';
+      const bTop  = is5yr ? 'border-top:2px solid #1558A0' : '';
+      const fw    = is5yr ? 'font-weight:800' : '';
+      const loanCell = r.loan ? eok(r.loan) : '<b style="color:var(--green)">완납</b>';
+      return `<tr style="${rowBg};${bTop}">
+        <td style="${fw}">${is5yr?`<b>${r.age}세</b>`:r.age+'세'}</td>
+        <td style="${fw}">${is5yr?`<b>${r.yr}</b>`:r.yr}</td>
+        <td>${eok(r.sNet/12)}</td><td>${eok(r.kNet/12)}</td>
+        <td>${eok(r.jqNet/12)}</td><td>${eok(r.jiNet/12)}</td>
+        <td>${eok(r.qqNet/12)}</td><td>${eok(r.tlNet/12)}</td>
+        <td style="${fw}"><b>${eok(r.monthly)}</b></td>
+        <td>${eok(r.repay/12)}</td><td>${eok(r.surplus/12)}</td>
+        <td>${loanCell}</td>
+      </tr>`;
+    }).join('') +
     '</tbody>';
 }
 
