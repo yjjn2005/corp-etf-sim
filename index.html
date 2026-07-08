@@ -428,10 +428,8 @@ function simulate() {
     const tlNet = tlB * tlRate * (1-P.usTax);
     const total = sNet + kNet + jqNet + jiNet + qqNet + tlNet;
 
-    // 가수금 상환 (월 단위 천만원 절사)
-    const monthlyDiv    = total / 12;
-    const monthlyRepay  = Math.floor(monthlyDiv / 1_000_000) * 1_000_000;
-    const repay = Math.min(monthlyRepay * 12, loan);
+    // 가수금 상환 — 세후 배당 전액 상환 (잉여 없음, 완납 후 재투자)
+    const repay = Math.min(total, loan);
     loan = Math.max(loan - repay, 0);
     const surplus = total - repay;
 
@@ -807,11 +805,12 @@ function renderRepayPlan() {
     const mTlt   = r.tlNet / 12;
     const mTotal = mSchd + mTiger + mJepq + mJepi + mQqq + mTlt;
 
+    // 세후 배당 전액 상환 — 월별 시뮬레이션
     let yearRepay = 0, paidMonth = null;
     let bal = loanBal;
     for (let m = 1; m <= 12; m++) {
       if (bal <= 0) break;
-      const mRepay = Math.min(Math.floor(mTotal / 1_000_000) * 1_000_000, bal);
+      const mRepay = Math.min(mTotal, bal);
       bal = Math.max(bal - mRepay, 0);
       yearRepay += mRepay;
       if (bal === 0 && paidMonth === null) paidMonth = m;
