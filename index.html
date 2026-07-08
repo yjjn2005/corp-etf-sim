@@ -426,6 +426,21 @@ const eok = v => {
 };
 const pct = v => (v*100).toFixed(2) + '%';
 
+// ── 5년 단위 행 스타일 헬퍼 (모든 테이블 공통)
+// 연령대별 색상: 60대=파랑, 70대=초록, 80대=황금, 90대=보라
+function get5yr(age) {
+  if (age % 5 !== 0) return { row:'', lbl:'' };
+  const P = {
+    60:['#EBF3FB','#1558A0'], 65:['#C8DFF7','#0A3D8F'],
+    70:['#E5F5EE','#1A6B3C'], 75:['#BFE8D0','#0F5A2F'],
+    80:['#FBF3E5','#B5711A'], 85:['#F5E5C0','#8B4E0C'],
+    90:['#EEEDFB','#4A3AA7'], 95:['#D4C9F7','#2E228C'],
+    99:['#F5F5F5','#555555'],
+  };
+  const [bg, bc] = P[age] || ['#EBF3FB','#1558A0'];
+  return { row:`background:${bg};border-top:2.5px solid ${bc}`, lbl:'font-weight:800' };
+}
+
 function simulate() {
   const P = structuredClone(params);
   const out = [];
@@ -746,23 +761,20 @@ function renderTable() {
       <th>월배당</th><th>가수금</th><th>법인자산</th><th>자녀지분(가수금공제)</th>
     </tr></thead><tbody>` +
     filtered.map(r => {
-      const is5yr = r.age % 5 === 0;
-      const rowBg = is5yr ? 'background:#EBF3FB' : '';
-      const bTop  = is5yr ? 'border-top:2px solid #1558A0' : '';
-      const fw    = is5yr ? 'font-weight:800' : '';
+      const {row, lbl} = get5yr(r.age);
       const loanCell = r.loan ? eok(r.loan) : '<b style="color:var(--green)">완납</b>';
-      return `<tr style="${rowBg};${bTop}">
-        <td style="${fw}">${is5yr?`<b>${r.age}세</b>`:r.age+'세'}</td>
-        <td style="${fw}">${is5yr?`<b>${r.yr}</b>`:r.yr}</td>
+      return `<tr style="${row}">
+        <td style="${lbl}">${lbl?`<b>${r.age}세</b>`:r.age+'세'}</td>
+        <td style="${lbl}">${lbl?`<b>${r.yr}</b>`:r.yr}</td>
         <td>${eok(r.sAsset)}</td><td>${eok(r.sNet)}</td>
         <td>${eok(r.kAsset)}</td><td>${eok(r.kNet)}</td>
         <td>${eok(r.jqAsset)}</td><td>${eok(r.jqNet)}</td>
         <td>${eok(r.jiAsset)}</td><td>${eok(r.jiNet)}</td>
         <td>${eok(r.qqAsset)}</td><td>${eok(r.qqNet)}</td>
         <td>${eok(r.tlAsset)}</td><td>${eok(r.tlNet)}</td>
-        <td style="${fw}"><b>${eok(r.monthly)}</b></td>
+        <td style="${lbl}"><b>${eok(r.monthly)}</b></td>
         <td>${loanCell}</td>
-        <td style="${fw}">${eok(r.corpAsset)}</td>
+        <td style="${lbl}">${eok(r.corpAsset)}</td>
         <td>${eok(r.childShare)}</td>
       </tr>`;
     }).join('') +
@@ -786,18 +798,15 @@ function renderCash() {
       <th>합계 월</th><th>월 상환</th><th>월 잉여</th><th>가수금 잔액</th>
     </tr></thead><tbody>` +
     rows.map(r => {
-      const is5yr = r.age % 5 === 0;
-      const rowBg = is5yr ? 'background:#EBF3FB' : '';
-      const bTop  = is5yr ? 'border-top:2px solid #1558A0' : '';
-      const fw    = is5yr ? 'font-weight:800' : '';
+      const {row, lbl} = get5yr(r.age);
       const loanCell = r.loan ? eok(r.loan) : '<b style="color:var(--green)">완납</b>';
-      return `<tr style="${rowBg};${bTop}">
-        <td style="${fw}">${is5yr?`<b>${r.age}세</b>`:r.age+'세'}</td>
-        <td style="${fw}">${is5yr?`<b>${r.yr}</b>`:r.yr}</td>
+      return `<tr style="${row}">
+        <td style="${lbl}">${lbl?`<b>${r.age}세</b>`:r.age+'세'}</td>
+        <td style="${lbl}">${lbl?`<b>${r.yr}</b>`:r.yr}</td>
         <td>${eok(r.sNet/12)}</td><td>${eok(r.kNet/12)}</td>
         <td>${eok(r.jqNet/12)}</td><td>${eok(r.jiNet/12)}</td>
         <td>${eok(r.qqNet/12)}</td><td>${eok(r.tlNet/12)}</td>
-        <td style="${fw}"><b>${eok(r.monthly)}</b></td>
+        <td style="${lbl}"><b>${eok(r.monthly)}</b></td>
         <td>${eok(r.repay/12)}</td><td>${eok(r.surplus/12)}</td>
         <td>${loanCell}</td>
       </tr>`;
@@ -822,20 +831,17 @@ function renderShares() {
   document.getElementById('shareTable').innerHTML =
     '<thead><tr><th>나이</th><th>연도</th><th>가수금 잔액</th><th>총 기업가치</th><th>순 기업가치<br><small style="font-weight:400;color:#888">(가수금 공제)</small></th><th>자녀A<br><small>30%</small></th><th>자녀B<br><small>25%</small></th><th>자녀C<br><small>25%</small></th><th>본인<br><small>10%</small></th><th>배우자<br><small>10%</small></th></tr></thead><tbody>' +
     rows.map(r => {
-      const is5yr = r.age % 5 === 0;
-      const rowBg = is5yr ? 'background:#EBF3FB' : '';
-      const bTop  = is5yr ? 'border-top:2px solid #1558A0' : '';
-      const fw    = is5yr ? 'font-weight:800' : '';
+      const {row, lbl} = get5yr(r.age);
       const loanCell = r.loan ? eok(r.loan) : '<b style="color:var(--green)">완납</b>';
-      return `<tr style="${rowBg};${bTop}">
-        <td style="${fw}">${is5yr?`<b>${r.age}세</b>`:r.age+'세'}</td>
-        <td style="${fw}">${is5yr?`<b>${r.yr}</b>`:r.yr}</td>
+      return `<tr style="${row}">
+        <td style="${lbl}">${lbl?`<b>${r.age}세</b>`:r.age+'세'}</td>
+        <td style="${lbl}">${lbl?`<b>${r.yr}</b>`:r.yr}</td>
         <td>${loanCell}</td>
         <td style="color:#888">${eok(r.corpValue)}</td>
-        <td style="${fw};color:var(--navy)"><b>${eok(r.netCorpValue)}</b></td>
-        <td style="${fw}">${eok(r.netCorpValue*sh.A)}</td>
-        <td style="${fw}">${eok(r.netCorpValue*sh.B)}</td>
-        <td style="${fw}">${eok(r.netCorpValue*sh.C)}</td>
+        <td style="${lbl};color:var(--navy)"><b>${eok(r.netCorpValue)}</b></td>
+        <td style="${lbl}">${eok(r.netCorpValue*sh.A)}</td>
+        <td style="${lbl}">${eok(r.netCorpValue*sh.B)}</td>
+        <td style="${lbl}">${eok(r.netCorpValue*sh.C)}</td>
         <td>${eok(r.netCorpValue*sh.dad)}</td>
         <td>${eok(r.netCorpValue*sh.mom)}</td>
       </tr>`;
@@ -886,8 +892,6 @@ function renderRepayPlan() {
   }
   const paidRow = planRows.find(r => r.loanBal === 0);
 
-  // 5년 단위(65·70·75세) 강조 — 배경+굵게
-  const DECADE_COLORS = { 60:'#EBF3FB', 65:'#C8DFF7', 70:'#E5F5EE', 75:'#BFE8D0' };
   document.getElementById('repayTable').innerHTML =
     `<thead><tr>
       <th>나이</th><th>연도</th>
@@ -895,30 +899,22 @@ function renderRepayPlan() {
       <th>월 배당합계</th><th>월 상환</th><th>연말 가수금 잔액</th>
     </tr></thead><tbody>` +
     planRows.map(r => {
-      const done  = r.loanBal === 0;
-      const is5yr = r.age % 5 === 0;
-      const accentBg = DECADE_COLORS[r.age] || '';
-      let rowStyle = '';
-      if (done)       rowStyle = 'background:#dcfce7';
-      else if (is5yr) rowStyle = `background:${accentBg}`;
-      const ageCell  = is5yr
-        ? `<b style="font-size:13px">${r.age}세</b>`
-        : `${r.age}세`;
-      const yrCell   = is5yr ? `<b>${r.yr}</b>` : r.yr;
+      const done = r.loanBal === 0;
+      const {row, lbl} = get5yr(r.age);
+      const rowStyle = done ? 'background:#dcfce7' : row;
+      const ageCell  = lbl ? `<b style="font-size:13px">${r.age}세</b>` : r.age+'세';
+      const yrCell   = lbl ? `<b>${r.yr}</b>` : r.yr;
       const balCell  = done
         ? `<b style="color:#14532d;font-size:12px">완납 ✓ ${r.paidMonth}월</b>`
         : eok(r.loanBal);
-      const divStyle = is5yr ? 'font-weight:800' : '';
-      // 5년 단위에는 구분선(border-top) 추가
-      const borderTop = is5yr ? 'border-top:2px solid #1558A0' : '';
-      return `<tr style="${rowStyle};${borderTop}">
-        <td style="${divStyle}">${ageCell}</td>
-        <td style="${divStyle}">${yrCell}</td>
+      return `<tr style="${rowStyle}">
+        <td style="${lbl}">${ageCell}</td>
+        <td style="${lbl}">${yrCell}</td>
         <td>${eok(r.mSchd)}</td>
         <td>${eok(r.mTiger)}</td>
         <td>${eok(r.mJepq+r.mJepi)}</td>
         <td>${eok(r.mQqq+r.mTlt)}</td>
-        <td style="font-weight:800;font-size:12px">${eok(r.mTotal)}</td>
+        <td style="${lbl};font-size:12px">${eok(r.mTotal)}</td>
         <td>${eok(r.mRepay)}</td>
         <td>${balCell}</td>
       </tr>`;
