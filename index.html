@@ -772,13 +772,25 @@ function renderShares() {
       Math.abs(total-1)<.0001 ? '정상' : '⚠️ 100%가 아닙니다',
       Math.abs(total-1)<.0001 ? 'ok' : 'bad');
 
-  const ages = [80,85,90,95,99];
+  // 2026~2065 전체 (40년) 표시, 5년 단위 강조
   document.getElementById('shareTable').innerHTML =
-    '<thead><tr><th>나이</th><th>연도</th><th>기업가치</th><th>자녀A(30%)</th><th>자녀B(25%)</th><th>자녀C(25%)</th><th>본인(10%)</th><th>배우자(10%)</th></tr></thead><tbody>' +
-    ages.map(a => {
-      const r = rows.find(x=>x.age===a);
-      if (!r) return '';
-      return `<tr><td>${a}세</td><td>${r.yr}</td><td>${eok(r.corpValue)}</td><td>${eok(r.corpValue*sh.A)}</td><td>${eok(r.corpValue*sh.B)}</td><td>${eok(r.corpValue*sh.C)}</td><td>${eok(r.corpValue*sh.dad)}</td><td>${eok(r.corpValue*sh.mom)}</td></tr>`;
+    '<thead><tr><th>나이</th><th>연도</th><th>가수금</th><th>기업가치</th><th>자녀A (30%)</th><th>자녀B (25%)</th><th>자녀C (25%)</th><th>본인 (10%)</th><th>배우자 (10%)</th></tr></thead><tbody>' +
+    rows.map(r => {
+      const is5yr = r.age % 5 === 0;
+      const isPaid = r.loan === 0 && rows[r.i > 0 ? r.i-1 : 0].loan > 0;
+      const bg = is5yr ? 'background:#EBF3FB;font-weight:700' : '';
+      const loanCell = r.loan ? eok(r.loan) : '<b style="color:var(--green)">완납</b>';
+      return `<tr style="${bg}">
+        <td>${is5yr?`<b>${r.age}세</b>`:r.age+'세'}</td>
+        <td>${is5yr?`<b>${r.yr}</b>`:r.yr}</td>
+        <td>${loanCell}</td>
+        <td>${eok(r.corpValue)}</td>
+        <td>${eok(r.corpValue*sh.A)}</td>
+        <td>${eok(r.corpValue*sh.B)}</td>
+        <td>${eok(r.corpValue*sh.C)}</td>
+        <td>${eok(r.corpValue*sh.dad)}</td>
+        <td>${eok(r.corpValue*sh.mom)}</td>
+      </tr>`;
     }).join('') + '</tbody>';
 }
 
@@ -826,25 +838,40 @@ function renderRepayPlan() {
   }
   const paidRow = planRows.find(r => r.loanBal === 0);
 
+  // 5년 단위(65·70·75세) 강조 — 배경+굵게
+  const DECADE_COLORS = { 60:'#EBF3FB', 65:'#C8DFF7', 70:'#E5F5EE', 75:'#BFE8D0' };
   document.getElementById('repayTable').innerHTML =
     `<thead><tr>
-      <th>연도</th><th>나이</th>
-      <th>SCHD 월</th><th>0052D0 월</th><th>JEPQ 월</th><th>JEPI 월</th><th>QQQ+TLT 월</th>
-      <th>월 현금흐름</th><th>월 상환</th><th>월 잉여</th><th>연말 가수금 잔액</th>
+      <th>나이</th><th>연도</th>
+      <th>SCHD 월</th><th>0052D0 월</th><th>JEPQ+JEPI 월</th><th>QQQ+TLT 월</th>
+      <th>월 배당합계</th><th>월 상환</th><th>연말 가수금 잔액</th>
     </tr></thead><tbody>` +
     planRows.map(r => {
-      const done = r.loanBal === 0;
-      const bg = done ? 'style="background:#dcfce7"' : '';
-      const balCell = done
-        ? `<b style="color:#14532d">완납 ✓ (${r.paidMonth}월)</b>`
+      const done  = r.loanBal === 0;
+      const is5yr = r.age % 5 === 0;
+      const accentBg = DECADE_COLORS[r.age] || '';
+      let rowStyle = '';
+      if (done)       rowStyle = 'background:#dcfce7';
+      else if (is5yr) rowStyle = `background:${accentBg}`;
+      const ageCell  = is5yr
+        ? `<b style="font-size:13px">${r.age}세</b>`
+        : `${r.age}세`;
+      const yrCell   = is5yr ? `<b>${r.yr}</b>` : r.yr;
+      const balCell  = done
+        ? `<b style="color:#14532d;font-size:12px">완납 ✓ ${r.paidMonth}월</b>`
         : eok(r.loanBal);
-      return `<tr ${bg}>
-        <td>${r.yr}</td><td>${r.age}세</td>
-        <td>${eok(r.mSchd)}</td><td>${eok(r.mTiger)}</td>
-        <td>${eok(r.mJepq)}</td><td>${eok(r.mJepi)}</td>
+      const divStyle = is5yr ? 'font-weight:800' : '';
+      // 5년 단위에는 구분선(border-top) 추가
+      const borderTop = is5yr ? 'border-top:2px solid #1558A0' : '';
+      return `<tr style="${rowStyle};${borderTop}">
+        <td style="${divStyle}">${ageCell}</td>
+        <td style="${divStyle}">${yrCell}</td>
+        <td>${eok(r.mSchd)}</td>
+        <td>${eok(r.mTiger)}</td>
+        <td>${eok(r.mJepq+r.mJepi)}</td>
         <td>${eok(r.mQqq+r.mTlt)}</td>
-        <td><b>${eok(r.mTotal)}</b></td>
-        <td>${eok(r.mRepay)}</td><td>${eok(r.mSurplus)}</td>
+        <td style="font-weight:800;font-size:12px">${eok(r.mTotal)}</td>
+        <td>${eok(r.mRepay)}</td>
         <td>${balCell}</td>
       </tr>`;
     }).join('') + '</tbody>';
