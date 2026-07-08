@@ -820,7 +820,7 @@ function renderShares() {
 
   // 2026~2065 전체 (40년) 표시, 5년 단위 강조
   document.getElementById('shareTable').innerHTML =
-    '<thead><tr><th>나이</th><th>연도</th><th>가수금</th><th>기업가치</th><th>순자산(공제후)</th><th>자녀A (30%)</th><th>자녀B (25%)</th><th>자녀C (25%)</th><th>본인 (10%)</th><th>배우자 (10%)</th></tr></thead><tbody>' +
+    '<thead><tr><th>나이</th><th>연도</th><th>가수금 잔액</th><th>총 기업가치</th><th>순 기업가치<br><small style="font-weight:400;color:#888">(가수금 공제)</small></th><th>자녀A<br><small>30%</small></th><th>자녀B<br><small>25%</small></th><th>자녀C<br><small>25%</small></th><th>본인<br><small>10%</small></th><th>배우자<br><small>10%</small></th></tr></thead><tbody>' +
     rows.map(r => {
       const is5yr = r.age % 5 === 0;
       const rowBg = is5yr ? 'background:#EBF3FB' : '';
@@ -831,11 +831,11 @@ function renderShares() {
         <td style="${fw}">${is5yr?`<b>${r.age}세</b>`:r.age+'세'}</td>
         <td style="${fw}">${is5yr?`<b>${r.yr}</b>`:r.yr}</td>
         <td>${loanCell}</td>
-        <td>${eok(r.corpValue)}</td>
-        <td style="${fw}"><b>${eok(r.netCorpValue)}</b></td>
-        <td>${eok(r.netCorpValue*sh.A)}</td>
-        <td>${eok(r.netCorpValue*sh.B)}</td>
-        <td>${eok(r.netCorpValue*sh.C)}</td>
+        <td style="color:#888">${eok(r.corpValue)}</td>
+        <td style="${fw};color:var(--navy)"><b>${eok(r.netCorpValue)}</b></td>
+        <td style="${fw}">${eok(r.netCorpValue*sh.A)}</td>
+        <td style="${fw}">${eok(r.netCorpValue*sh.B)}</td>
+        <td style="${fw}">${eok(r.netCorpValue*sh.C)}</td>
         <td>${eok(r.netCorpValue*sh.dad)}</td>
         <td>${eok(r.netCorpValue*sh.mom)}</td>
       </tr>`;
