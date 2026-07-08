@@ -285,6 +285,8 @@ th:first-child{background:linear-gradient(180deg,#f0f4fb,#e8eef8);z-index:2}
       <h3 style="margin:0 0 12px;font-size:14px;color:var(--navy)">보유 수량 입력 <span style="font-weight:400;font-size:12px;color:var(--muted)">(변경 후 저장 버튼 클릭)</span></h3>
       <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px" id="acctInputs"></div>
     </div>
+    <!-- 요약 바 -->
+    <div id="acctSummaryBar"></div>
     <!-- 비교 테이블 -->
     <div class="table-wrap"><table id="acctTable"></table></div>
     <div class="card risk" style="margin-top:12px;font-size:12px">
@@ -1068,206 +1070,253 @@ document.getElementById('tabs').addEventListener('click', e => {
 // 실제 계좌현황 탭
 // ══════════════════════════════════════════════
 const ACCT_ETFS = [
-  { key:'schd',  label:'SCHD',         ticker:'SCHD',       currency:'USD', simKey:'schdPrincipal' },
-  { key:'tiger', label:'TIGER(0052D0)',  ticker:'458730.KS',  currency:'KRW', simKey:'tigerPrincipal' },
-  { key:'jepq',  label:'JEPQ',         ticker:'JEPQ',       currency:'USD', simKey:'jepqPrincipal' },
-  { key:'jepi',  label:'JEPI',         ticker:'JEPI',       currency:'USD', simKey:'jepiPrincipal' },
-  { key:'qqq',   label:'QQQ',          ticker:'QQQ',        currency:'USD', simKey:'qqqPrincipal' },
-  { key:'tlt',   label:'TLT',          ticker:'TLT',        currency:'USD', simKey:'tltPrincipal' },
+  { key:'schd',  label:'SCHD',          ticker:'SCHD',      currency:'USD', simAsset:'sAsset',  simDiv:'sNet',  divRate: params.schdDivRate  },
+  { key:'tiger', label:'TIGER(0052D0)', ticker:'458730.KS', currency:'KRW', simAsset:'kAsset',  simDiv:'kNet',  divRate: params.tigerDivRate },
+  { key:'jepq',  label:'JEPQ',          ticker:'JEPQ',      currency:'USD', simAsset:'jqAsset', simDiv:'jqNet', divRate: params.jepqDivRate  },
+  { key:'jepi',  label:'JEPI',          ticker:'JEPI',      currency:'USD', simAsset:'jiAsset', simDiv:'jiNet', divRate: params.jepiDivRate  },
+  { key:'qqq',   label:'QQQ',           ticker:'QQQ',       currency:'USD', simAsset:'qqAsset', simDiv:'qqNet', divRate: params.qqqDivRate   },
+  { key:'tlt',   label:'TLT',           ticker:'TLT',       currency:'USD', simAsset:'tlAsset', simDiv:'tlNet', divRate: params.tltDivRate   },
 ];
 
-let acctHoldings = JSON.parse(localStorage.getItem('acctHoldings') || 'null') || {
-  schd:0, tiger:0, jepq:0, jepi:0, qqq:0, tlt:0,
-  schdAvg:0, tigerAvg:0, jepqAvg:0, jepiAvg:0, qqqAvg:0, tltAvg:0
+// 링크 정보 (외부 시세 조회 바로가기)
+const ACCT_LINKS = {
+  SCHD:      { yf:'https://finance.yahoo.com/quote/SCHD',  naver:'https://finance.naver.com/world/sise.naver?symbol=SCHD.O', gf:'https://www.google.com/finance/quote/SCHD:NASDAQ' },
+  '458730.KS':{ yf:'https://finance.yahoo.com/quote/458730.KS', naver:'https://finance.naver.com/item/main.naver?code=458730', gf:'https://www.google.com/finance/quote/458730:KRX' },
+  JEPQ:      { yf:'https://finance.yahoo.com/quote/JEPQ',  naver:'https://finance.naver.com/world/sise.naver?symbol=JEPQ.O', gf:'https://www.google.com/finance/quote/JEPQ:NASDAQ' },
+  JEPI:      { yf:'https://finance.yahoo.com/quote/JEPI',  naver:'https://finance.naver.com/world/sise.naver?symbol=JEPI.O', gf:'https://www.google.com/finance/quote/JEPI:NYSEARCA' },
+  QQQ:       { yf:'https://finance.yahoo.com/quote/QQQ',   naver:'https://finance.naver.com/world/sise.naver?symbol=QQQ.O',  gf:'https://www.google.com/finance/quote/QQQ:NASDAQ' },
+  TLT:       { yf:'https://finance.yahoo.com/quote/TLT',   naver:'https://finance.naver.com/world/sise.naver?symbol=TLT.O',  gf:'https://www.google.com/finance/quote/TLT:NASDAQ' },
 };
-let livePrices = {}; // { SCHD: price, ... }
-let liveRate = 0;    // USD/KRW
+
+let acctHoldings = JSON.parse(localStorage.getItem('acctHoldings_v2') || 'null') || {};
+let livePrices = {};
+let liveRate = 0;
+let lastFetchTime = null;
+
+function _acctGet(key, field) {
+  const el = document.getElementById('acct_'+field+'_'+key);
+  if (el) return +el.value || 0;
+  return acctHoldings[key]?.[field] || 0;
+}
 
 function saveAccountHoldings() {
   ACCT_ETFS.forEach(e => {
-    const q = document.getElementById('acct_qty_'+e.key);
-    const p = document.getElementById('acct_avg_'+e.key);
-    if (q) acctHoldings[e.key] = +q.value || 0;
-    if (p) acctHoldings[e.key+'Avg'] = +p.value || 0;
+    if (!acctHoldings[e.key]) acctHoldings[e.key] = {};
+    acctHoldings[e.key].qty    = _acctGet(e.key,'qty');
+    acctHoldings[e.key].avg    = _acctGet(e.key,'avg');
+    acctHoldings[e.key].manual = _acctGet(e.key,'manual');
   });
-  localStorage.setItem('acctHoldings', JSON.stringify(acctHoldings));
+  localStorage.setItem('acctHoldings_v2', JSON.stringify(acctHoldings));
   toast('보유 수량 저장 완료 ✓');
   renderAccountTable();
 }
 
 function renderAccountInputs() {
-  document.getElementById('acctInputs').innerHTML = ACCT_ETFS.map(e => `
-    <div style="background:#f7f9fc;border-radius:10px;padding:12px 14px;border:1px solid var(--line)">
-      <div style="font-weight:800;color:var(--navy);font-size:13px;margin-bottom:8px">${e.label}
-        <span style="font-weight:400;font-size:11px;color:var(--muted)">${e.currency}</span>
+  const COLORS = { schd:'var(--blue)', tiger:'var(--green)', jepq:'var(--teal)', jepi:'#eda100', qqq:'var(--purple)', tlt:'var(--muted2)' };
+  document.getElementById('acctInputs').innerHTML = ACCT_ETFS.map(e => {
+    const h = acctHoldings[e.key] || {};
+    const lnk = ACCT_LINKS[e.ticker] || {};
+    const liveP = livePrices[e.ticker];
+    const liveBadge = liveP
+      ? `<span style="font-size:10px;color:${liveP.chg>=0?'#16a34a':'#dc2626'};font-weight:700">${liveP.chg>=0?'▲':'▼'}${Math.abs(liveP.chg).toFixed(2)}% 실시간</span>`
+      : `<span style="font-size:10px;color:var(--muted)">미조회</span>`;
+    return `
+    <div style="background:#f7f9ff;border-radius:12px;padding:14px 15px;border:2px solid ${COLORS[e.key]}22;border-top:3px solid ${COLORS[e.key]}">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <b style="color:${COLORS[e.key]};font-size:13px">${e.label}</b>
+        <div style="display:flex;gap:5px">
+          ${lnk.yf?`<a href="${lnk.yf}" target="_blank" style="font-size:10px;color:#1558A0;text-decoration:none;border:1px solid #1558A022;border-radius:4px;padding:2px 5px">YF</a>`:''}
+          ${lnk.naver?`<a href="${lnk.naver}" target="_blank" style="font-size:10px;color:#03c75a;text-decoration:none;border:1px solid #03c75a22;border-radius:4px;padding:2px 5px">네이버</a>`:''}
+          ${lnk.gf?`<a href="${lnk.gf}" target="_blank" style="font-size:10px;color:#ea4335;text-decoration:none;border:1px solid #ea433522;border-radius:4px;padding:2px 5px">구글</a>`:''}
+        </div>
       </div>
-      <div style="font-size:11px;color:var(--muted);margin-bottom:3px">보유수량</div>
-      <input id="acct_qty_${e.key}" type="number" min="0" step="0.001" value="${acctHoldings[e.key]||0}"
-        style="width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;box-sizing:border-box"
+      ${liveBadge}
+      <div style="font-size:11px;color:var(--muted);margin:8px 0 3px">보유수량 (주)</div>
+      <input id="acct_qty_${e.key}" type="number" min="0" step="0.001" value="${h.qty||0}"
+        style="width:100%;padding:6px 9px;border:1px solid var(--line);border-radius:6px;font-size:13px;font-family:var(--font);box-sizing:border-box;margin-bottom:6px"
         oninput="renderAccountTable()">
-      <div style="font-size:11px;color:var(--muted);margin:6px 0 3px">평균매입가 (${e.currency==='USD'?'$':'₩'})</div>
-      <input id="acct_avg_${e.key}" type="number" min="0" step="0.01" value="${acctHoldings[e.key+'Avg']||0}"
-        style="width:100%;padding:6px 8px;border:1px solid var(--line);border-radius:6px;font-size:13px;box-sizing:border-box"
+      <div style="font-size:11px;color:var(--muted);margin-bottom:3px">평균매입가 (${e.currency==='USD'?'$':'₩'})</div>
+      <input id="acct_avg_${e.key}" type="number" min="0" step="0.01" value="${h.avg||0}"
+        style="width:100%;padding:6px 9px;border:1px solid var(--line);border-radius:6px;font-size:13px;font-family:var(--font);box-sizing:border-box;margin-bottom:6px"
         oninput="renderAccountTable()">
-    </div>
-  `).join('');
+      <div style="font-size:11px;color:#f59e0b;margin-bottom:3px">현재가 수동입력 (자동조회 실패 시)</div>
+      <input id="acct_manual_${e.key}" type="number" min="0" step="0.01" value="${h.manual||''}" placeholder="자동조회 우선"
+        style="width:100%;padding:6px 9px;border:1px solid #f59e0b55;border-radius:6px;font-size:13px;font-family:var(--font);box-sizing:border-box"
+        oninput="renderAccountTable()">
+    </div>`;
+  }).join('');
   renderAccountTable();
 }
 
 async function fetchLivePrices() {
   const st = document.getElementById('priceStatus');
-  st.textContent = '⏳ 시세 조회 중...';
+  st.innerHTML = '⏳ 시세 조회 중...';
   st.style.color = 'var(--muted)';
-  const tickers = [...ACCT_ETFS.map(e=>e.ticker), 'USDKRW=X'].join(',');
 
-  // 1차: Yahoo Finance v7 (CORS 허용)
-  const YF_FIELDS = 'regularMarketPrice,regularMarketChangePercent,regularMarketPreviousClose,currency';
-  const yUrl = `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${tickers}&fields=${YF_FIELDS}&lang=ko-KR`;
+  const tickers = [...ACCT_ETFS.map(e=>e.ticker), 'USDKRW=X'].join(',');
+  const YF_FIELDS = 'regularMarketPrice,regularMarketChangePercent,regularMarketPreviousClose,regularMarketTime,currency';
   let fetched = false;
-  try {
-    const res = await fetch(yUrl, { headers:{ 'Accept':'application/json' } });
-    if (res.ok) {
+
+  // 1차: Yahoo Finance query1
+  for (const host of ['query1','query2']) {
+    if (fetched) break;
+    try {
+      const url = `https://${host}.finance.yahoo.com/v7/finance/quote?symbols=${tickers}&fields=${YF_FIELDS}&lang=ko-KR&region=KR`;
+      const res = await fetch(url, { headers:{ 'Accept':'application/json' } });
+      if (!res.ok) continue;
       const json = await res.json();
       const quotes = json?.quoteResponse?.result || [];
+      if (!quotes.length) continue;
       quotes.forEach(q => {
         if (q.symbol === 'USDKRW=X') { liveRate = q.regularMarketPrice; return; }
-        livePrices[q.symbol] = { price: q.regularMarketPrice, chg: q.regularMarketChangePercent, prev: q.regularMarketPreviousClose };
+        livePrices[q.symbol] = {
+          price: q.regularMarketPrice,
+          chg:   q.regularMarketChangePercent || 0,
+          prev:  q.regularMarketPreviousClose,
+          time:  q.regularMarketTime,
+        };
       });
-      fetched = quotes.length > 0;
-    }
-  } catch(e) { /* fallthrough */ }
-
-  // 2차: Yahoo Finance v8 (backup endpoint)
-  if (!fetched) {
-    try {
-      const r2 = await fetch(`https://query2.finance.yahoo.com/v7/finance/quote?symbols=${tickers}&fields=${YF_FIELDS}`);
-      if (r2.ok) {
-        const j2 = await r2.json();
-        const q2 = j2?.quoteResponse?.result || [];
-        q2.forEach(q => {
-          if (q.symbol === 'USDKRW=X') { liveRate = q.regularMarketPrice; return; }
-          livePrices[q.symbol] = { price: q.regularMarketPrice, chg: q.regularMarketChangePercent, prev: q.regularMarketPreviousClose };
-        });
-        fetched = q2.length > 0;
-      }
-    } catch(e2) { /* fallthrough */ }
+      fetched = Object.keys(livePrices).length > 0;
+    } catch(e) { /* try next */ }
   }
 
-  if (fetched) {
-    const priceCount = Object.keys(livePrices).length;
-    st.textContent = `✅ ${priceCount}개 종목 조회 완료 · 환율 ${liveRate ? liveRate.toLocaleString('ko-KR',{maximumFractionDigits:1})+'원' : '조회실패'}`;
+  // 2차: Yahoo Finance v8/chart fallback (개별 종목)
+  if (!fetched || !liveRate) {
+    try {
+      const rateRes = await fetch('https://query1.finance.yahoo.com/v8/finance/chart/USDKRW=X?range=1d&interval=1m');
+      if (rateRes.ok) {
+        const rateJson = await rateRes.json();
+        const meta = rateJson?.chart?.result?.[0]?.meta;
+        if (meta?.regularMarketPrice) liveRate = meta.regularMarketPrice;
+      }
+    } catch(e) {}
+  }
+
+  lastFetchTime = new Date();
+  const timeStr = `${lastFetchTime.getHours()}:${String(lastFetchTime.getMinutes()).padStart(2,'0')}`;
+
+  if (fetched || liveRate) {
+    const cnt = Object.keys(livePrices).length;
+    st.innerHTML = `✅ ${cnt}종목 조회 · 환율 ${liveRate ? liveRate.toLocaleString('ko-KR',{maximumFractionDigits:1})+'원' : '—'} · ${timeStr} <span style="font-size:10px;color:var(--muted)">(Yahoo Finance)</span>`;
     st.style.color = '#16a34a';
     renderAccountKpis();
-    renderAccountTable();
+    renderAccountInputs(); // 배지 갱신
   } else {
-    st.textContent = '❌ 자동 조회 실패 — 평균매입가 칸에 현재가를 직접 입력하세요';
+    st.innerHTML = '❌ 자동 조회 실패 — 수동입력란에 현재가를 직접 입력하세요 (아래 YF/네이버/구글 링크 참고)';
     st.style.color = '#dc2626';
+    renderAccountInputs();
   }
+  renderAccountTable();
 }
 
 function renderAccountKpis() {
-  const now = new Date();
-  const timeStr = `${now.getHours()}:${String(now.getMinutes()).padStart(2,'0')}`;
-  document.getElementById('acctKpis').innerHTML = [
-    card('USD/KRW', liveRate ? liveRate.toLocaleString('ko-KR',{maximumFractionDigits:1})+'원' : '—', `조회시각 ${timeStr}`),
-    ...ACCT_ETFS.filter(e=>e.currency==='USD').map(e => {
-      const p = livePrices[e.ticker];
-      if (!p) return card(e.label, '—', '조회 중');
-      const chgClass = p.chg >= 0 ? 'ok' : 'bad';
-      const chgStr = (p.chg>=0?'+':'')+p.chg.toFixed(2)+'%';
-      return card(e.label, '$'+p.price.toFixed(2), chgStr, chgClass);
-    }),
-    ...(()=>{
-      const p = livePrices['458730.KS'];
-      if (!p) return [card('TIGER(0052D0)', '—', '조회 중')];
-      const chgStr = (p.chg>=0?'+':'')+p.chg.toFixed(2)+'%';
-      return [card('TIGER(0052D0)', p.price.toLocaleString('ko-KR')+'원', chgStr, p.chg>=0?'ok':'bad')];
-    })()
-  ].join('');
+  const timeStr = lastFetchTime ? `${lastFetchTime.getHours()}:${String(lastFetchTime.getMinutes()).padStart(2,'0')}` : '—';
+  const rateCard = card('USD/KRW 환율', liveRate ? liveRate.toLocaleString('ko-KR',{maximumFractionDigits:1})+'원' : '—', `Yahoo Finance · ${timeStr}`);
+  const etfCards = ACCT_ETFS.map(e => {
+    const p = livePrices[e.ticker];
+    if (!p) return card(e.label, '—', '수동입력 필요');
+    const chgStr = (p.chg>=0?'+':'')+p.chg.toFixed(2)+'%';
+    const priceStr = e.currency === 'USD' ? '$'+p.price.toFixed(2) : p.price.toLocaleString('ko-KR')+'원';
+    return card(e.label, priceStr, chgStr, p.chg>=0?'ok':'bad');
+  });
+  document.getElementById('acctKpis').innerHTML = [rateCard, ...etfCards].join('');
 }
 
 function renderAccountTable() {
-  // 수량 읽기 (입력 필드 우선, 없으면 저장값)
-  const qty = {}, avg = {};
-  ACCT_ETFS.forEach(e => {
-    const qEl = document.getElementById('acct_qty_'+e.key);
-    const pEl = document.getElementById('acct_avg_'+e.key);
-    qty[e.key] = qEl ? +qEl.value || 0 : acctHoldings[e.key] || 0;
-    avg[e.key] = pEl ? +pEl.value || 0 : acctHoldings[e.key+'Avg'] || 0;
-  });
-
-  const rate = liveRate || 1380; // 환율 없으면 기본값
+  const rate = liveRate || 1380;
   const nowYr = new Date().getFullYear();
   const simRow = rows.find(r => r.yr === nowYr) || rows[0];
+  const simMon = simRow?.monthly || 0;
 
-  let totalActual = 0, totalSim = 0, totalCost = 0, totalGain = 0;
+  let totalActual=0, totalCost=0, totalGain=0, totalSimAsset=0, totalActualDiv=0, totalSimDiv=0;
 
   const tbRows = ACCT_ETFS.map(e => {
-    const lp = livePrices[e.ticker];
-    const currentPrice = lp ? lp.price : (avg[e.key] || 0);
-    const priceKrw = e.currency === 'USD' ? currentPrice * rate : currentPrice;
-    const avgKrw   = e.currency === 'USD' ? avg[e.key] * rate : avg[e.key];
-    const actualVal = qty[e.key] * priceKrw;
-    const costVal   = qty[e.key] * avgKrw;
-    const gain      = actualVal - costVal;
-    const gainPct   = costVal > 0 ? (gain / costVal * 100) : 0;
-    const simVal    = params[e.simKey] || 0;
-    const diff      = actualVal - simVal;
-    const diffPct   = simVal > 0 ? (diff / simVal * 100) : 0;
+    const qty    = _acctGet(e.key,'qty');
+    const avg    = _acctGet(e.key,'avg');
+    const manual = _acctGet(e.key,'manual');
+    const lp     = livePrices[e.ticker];
 
-    totalActual += actualVal;
-    totalSim    += simVal;
-    totalCost   += costVal;
-    totalGain   += gain;
+    // 현재가: 자동조회 > 수동입력 > 평균매입가(임시)
+    const rawPrice   = lp ? lp.price : (manual || avg || 0);
+    const priceKrw   = e.currency === 'USD' ? rawPrice * rate : rawPrice;
+    const avgKrw     = e.currency === 'USD' ? avg * rate : avg;
+    const actualVal  = qty * priceKrw;
+    const costVal    = qty * avgKrw;
+    const gain       = actualVal - costVal;
+    const gainPct    = costVal > 0 ? gain/costVal*100 : 0;
+    const simAsset   = simRow?.[e.simAsset] || 0;
+    const simAnnDiv  = simRow?.[e.simDiv]   || 0;
+    const actualDiv  = actualVal * e.divRate;           // 예상 연배당 (현재가치 × 배당률)
+    const diff       = actualVal - simAsset;
+    const diffPct    = simAsset > 0 ? diff/simAsset*100 : 0;
 
-    const gainColor = gain >= 0 ? '#16a34a' : '#dc2626';
-    const diffColor = diff >= 0 ? '#16a34a' : '#dc2626';
-    const priceStr  = lp
-      ? (e.currency==='USD' ? '$'+currentPrice.toFixed(2)+` (${(currentPrice*rate).toLocaleString('ko-KR',{maximumFractionDigits:0})}원)` : currentPrice.toLocaleString('ko-KR')+'원')
-      : '<span style="color:#f59e0b">수동입력</span>';
-    const chgBadge  = lp ? `<span style="font-size:10px;color:${lp.chg>=0?'#16a34a':'#dc2626'}">${lp.chg>=0?'▲':'▼'}${Math.abs(lp.chg).toFixed(2)}%</span>` : '';
+    totalActual    += actualVal;
+    totalCost      += costVal;
+    totalGain      += gain;
+    totalSimAsset  += simAsset;
+    totalActualDiv += actualDiv;
+    totalSimDiv    += simAnnDiv;
+
+    const gainColor  = gain  >= 0 ? '#16a34a' : '#dc2626';
+    const diffColor  = diff  >= 0 ? '#16a34a' : '#dc2626';
+    const priceDisp  = lp
+      ? (e.currency==='USD'
+          ? `$${rawPrice.toFixed(2)}<br><span style="font-size:10px;color:var(--muted)">${(rawPrice*rate).toLocaleString('ko-KR',{maximumFractionDigits:0})}원</span>`
+          : rawPrice.toLocaleString('ko-KR')+'원')
+      : (manual ? `<span style="color:#f59e0b">수동 ${e.currency==='USD'?'$':'₩'}${rawPrice.toFixed(2)}</span>` : '<span style="color:var(--muted)">—</span>');
+    const chgBadge   = lp ? `<br><span style="font-size:10px;color:${lp.chg>=0?'#16a34a':'#dc2626'}">${lp.chg>=0?'▲':'▼'}${Math.abs(lp.chg).toFixed(2)}%</span>` : '';
 
     return `<tr>
-      <td><b>${e.label}</b></td>
-      <td>${priceStr} ${chgBadge}</td>
-      <td>${qty[e.key].toLocaleString('ko-KR', {maximumFractionDigits:3})}</td>
-      <td>${eok(actualVal)}</td>
+      <td><b style="color:var(--navy)">${e.label}</b><br><span style="font-size:10px;color:var(--muted)">${e.ticker}</span></td>
+      <td>${priceDisp}${chgBadge}</td>
+      <td>${qty ? qty.toLocaleString('ko-KR',{maximumFractionDigits:3}) : '<span style="color:var(--muted)">—</span>'}</td>
+      <td><b>${eok(actualVal)}</b></td>
       <td>${eok(costVal)}</td>
       <td style="color:${gainColor};font-weight:700">${gain>=0?'+':''}${eok(gain)}<br><span style="font-size:10px">${gainPct>=0?'+':''}${gainPct.toFixed(1)}%</span></td>
-      <td>${eok(simVal)}</td>
+      <td style="color:#6366f1;font-weight:700">${eok(actualDiv)}<br><span style="font-size:10px;color:var(--muted)">/년 예상</span></td>
+      <td>${eok(simAsset)}<br><span style="font-size:10px;color:var(--muted)">${nowYr}년 시뮬</span></td>
+      <td>${eok(simAnnDiv)}<br><span style="font-size:10px;color:var(--muted)">/년 시뮬</span></td>
       <td style="color:${diffColor};font-weight:700">${diff>=0?'+':''}${eok(diff)}<br><span style="font-size:10px">${diffPct>=0?'+':''}${diffPct.toFixed(1)}%</span></td>
     </tr>`;
   });
 
-  const totalGainPct  = totalCost  > 0 ? (totalGain /(totalCost)*100) : 0;
-  const totalDiff     = totalActual - totalSim;
-  const totalDiffPct  = totalSim   > 0 ? (totalDiff / totalSim * 100) : 0;
-  const sumGainColor  = totalGain  >= 0 ? '#16a34a' : '#dc2626';
-  const sumDiffColor  = totalDiff  >= 0 ? '#16a34a' : '#dc2626';
+  const totalGainPct = totalCost  > 0 ? totalGain/totalCost*100   : 0;
+  const totalDiff    = totalActual - totalSimAsset;
+  const totalDiffPct = totalSimAsset > 0 ? totalDiff/totalSimAsset*100 : 0;
+  const sumGainColor = totalGain >= 0 ? '#16a34a' : '#dc2626';
+  const sumDiffColor = totalDiff >= 0 ? '#16a34a' : '#dc2626';
+  const nowYrStr     = nowYr + '년';
+
+  document.getElementById('acctSummaryBar').innerHTML = `
+    <div style="display:flex;gap:10px;flex-wrap:wrap;padding:12px 16px;background:#EBF3FB;border-radius:12px;margin-bottom:12px;align-items:center">
+      <span style="font-size:12px;font-weight:700;color:var(--navy)">📊 ${nowYrStr} 현황</span>
+      <span style="font-size:12px">평가금액 <b>${eok(totalActual)}</b></span>
+      <span style="font-size:12px">매입금액 <b>${eok(totalCost)}</b></span>
+      <span style="font-size:12px;color:${sumGainColor};font-weight:800">손익 ${totalGain>=0?'+':''}${eok(totalGain)} (${totalGainPct>=0?'+':''}${totalGainPct.toFixed(1)}%)</span>
+      <span style="font-size:12px;color:#6366f1;font-weight:700">예상연배당 ${eok(totalActualDiv)}</span>
+      <span style="font-size:12px;color:var(--muted)">→ 예상월배당 ${eok(totalActualDiv/12)}</span>
+      <span style="font-size:12px;color:${sumDiffColor};font-weight:700">시뮬대비 ${totalDiff>=0?'+':''}${eok(totalDiff)} (${totalDiffPct>=0?'+':''}${totalDiffPct.toFixed(1)}%)</span>
+    </div>`;
 
   document.getElementById('acctTable').innerHTML = `
     <thead>
       <tr style="background:#EBF3FB">
-        <th>종목</th>
-        <th>현재가</th>
-        <th>보유수량</th>
-        <th>평가금액</th>
-        <th>매입금액</th>
-        <th>평가손익 (%)</th>
-        <th>시뮬 초기값 (${nowYr})</th>
-        <th>실제 vs 시뮬 차이</th>
+        <th>종목</th><th>현재가</th><th>보유수량</th><th>평가금액</th><th>매입금액</th>
+        <th>평가손익(%)</th><th>예상연배당</th>
+        <th>${nowYrStr} 시뮬자산</th><th>${nowYrStr} 시뮬배당</th>
+        <th>실제 vs 시뮬 자산차이</th>
       </tr>
     </thead>
     <tbody>
       ${tbRows.join('')}
       <tr style="background:#EBF3FB;font-weight:800;border-top:2px solid #1558A0">
-        <td>합계</td>
-        <td>—</td>
-        <td>—</td>
+        <td>합계</td><td>—</td><td>—</td>
         <td><b>${eok(totalActual)}</b></td>
         <td><b>${eok(totalCost)}</b></td>
         <td style="color:${sumGainColor};font-weight:800">${totalGain>=0?'+':''}${eok(totalGain)}<br><span style="font-size:10px">${totalGainPct>=0?'+':''}${totalGainPct.toFixed(1)}%</span></td>
-        <td><b>${eok(totalSim)}</b></td>
+        <td style="color:#6366f1;font-weight:800">${eok(totalActualDiv)}<br><span style="font-size:10px">월 ${eok(totalActualDiv/12)}</span></td>
+        <td><b>${eok(totalSimAsset)}</b></td>
+        <td><b>${eok(totalSimDiv)}</b><br><span style="font-size:10px">월 ${eok(totalSimDiv/12)}</span></td>
         <td style="color:${sumDiffColor};font-weight:800">${totalDiff>=0?'+':''}${eok(totalDiff)}<br><span style="font-size:10px">${totalDiffPct>=0?'+':''}${totalDiffPct.toFixed(1)}%</span></td>
       </tr>
     </tbody>`;
