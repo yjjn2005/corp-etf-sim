@@ -170,7 +170,7 @@ th:first-child{background:linear-gradient(180deg,#f0f4fb,#e8eef8);z-index:2}
       <div class="logo">U&K</div>
       <div>
         <h1>유앤김 법인 자금운용 시뮬레이터</h1>
-        <p>1966년생 만60세(2026) → 만99세(2065) · SCHD + 0052D0 + JEPQ + JEPI + QQQ + TLT</p>
+        <p>1966년생 만60세(2026) → 만99세(2065) · 6종목 · 가수금 13억 · 검증수정본 v5.1</p>
         <div class="status" id="saveStatus">저장 데이터 없음</div>
       </div>
     </div>
@@ -226,6 +226,8 @@ th:first-child{background:linear-gradient(180deg,#f0f4fb,#e8eef8);z-index:2}
     <div class="card risk" style="margin-top:14px">
       <b>중요:</b> 이 앱은 투자·세무 의사결정 보조용입니다. 실제 법인세, 배당소득세, 가수금 인정이자, 증여세/상속세, 환율 변동, ETF 실제 분배금 변동은 세무사·투자전문가 확인이 필요합니다.
     </div>
+    <div class="section-title" style="margin-top:22px"><h2>검증 결과 · 실행 전 확인 필수 사항</h2></div>
+    <div class="grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:12px" id="verifyCards"></div>
   </section>
 
   <!-- ② 가정 -->
@@ -265,7 +267,7 @@ th:first-child{background:linear-gradient(180deg,#f0f4fb,#e8eef8);z-index:2}
     <div class="table-wrap"><table id="shareTable"></table></div>
   </section>
 
-  <div class="footer">© 유앤김 자산관리 · corp-etf-sim v5 (SCHD + 0052D0 + JEPQ + JEPI + QQQ + TLT) · 데이터는 이 브라우저(localStorage)에만 저장됩니다</div>
+  <div class="footer">© 유앤김 자산관리 · corp-etf-sim v5.1 검증수정본 · SCHD + 0052D0 + JEPQ + JEPI + QQQ + TLT · 가수금 13억 · 2026~2065 · 데이터는 이 브라우저(localStorage)에만 저장됩니다</div>
 </main>
 
 <!-- 수동입력 모달 -->
@@ -333,10 +335,11 @@ th:first-child{background:linear-gradient(180deg,#f0f4fb,#e8eef8);z-index:2}
 
 <script>
 // ════════════════════════════════════════════════
-// 유앤김 법인 ETF 시뮬레이터 v5
+// 유앤김 법인 ETF 시뮬레이터 v5.1
 // 포트폴리오: SCHD(9.96억) + 0052D0(1억) + JEPQ(2억) + JEPI(1억) + QQQ(0.5억) + TLT(0.5억)
 // 가수금 ₩13억 · 만60세(2026) ~ 만99세(2065) · 40개년
 // 잉여 세후배당 → ETF 비중별 비례 재투자 (Excel 계산 원장 기준)
+// [검증수정 2026-07] 기간 표기 통일 2026~2065, 0052D0 신규상장 경고, 장기수치 민감도 주의
 // ════════════════════════════════════════════════
 const START_YEAR = 2026, START_AGE = 60, END_AGE = 99;
 
@@ -464,7 +467,7 @@ function recalc() { rows = simulate(); renderAll(); toast('재계산 완료'); }
 
 function renderAll() {
   renderTaxDisclosure(); renderKpis(); renderBars(); renderDivBars(); renderMilestones();
-  renderInputs(); renderTable(); renderCash(); renderShares();
+  renderInputs(); renderTable(); renderCash(); renderShares(); renderVerifyCards();
   renderManualList(); renderMemoList();
 }
 
@@ -483,18 +486,65 @@ function renderTaxDisclosure() {
       <span style="background:#fdeedd;color:#B5711A;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">JEPI ${eok(params.jepiPrincipal)}</span>
       <span style="background:#ede9fb;color:#4A3AA7;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">QQQ ${eok(params.qqqPrincipal)}</span>
       <span style="background:#f1f5f9;color:#475569;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">TLT ${eok(params.tltPrincipal)}</span>
-      합계 ${eok(total6)}
+      합계 ${eok(total6)} · 가수금 ${eok(params.loanInit)} (장부 확정 필요)
     </div>
     <div class="tax-grid">
-      <div><div class="ok-h">✓ 반영됨</div>미국/해외 원천징수세 15% · 국내(0052D0) 세금 15.4%</div>
+      <div><div class="ok-h">✓ 반영됨</div>미국/해외 원천징수세 15% · 국내(0052D0) 세금 15.4% · 잉여배당 ETF 비중별 비례 재투자 · 기간 2026~2065 통일</div>
       <div><div class="bad-h">✗ 미반영 (별도 검토 필요)</div>
         법인세 · 가수금 인정이자(4.6%) 과세 · 배당소득 종합과세 ·
-        비상장주식 보충적평가법 · 증여세/상속세 · 환율변동 · ETF 실제 분배금 변동
+        비상장주식 보충적평가법 · 증여세/상속세 · 환율변동 · ETF 실제 분배금 변동 ·
+        0052D0 실측 분배율(신규상장 2025-05-20, 운용이력 짧음) · 외국납부세액공제 회수율
       </div>
     </div>
     <div style="margin-top:8px;padding-top:7px;border-top:1px solid #E8C87A;font-size:10px;color:#7A4800">
       모든 수치는 참고용 추정치이며, 실제 세무 판단은 세무사·회계사 확인이 필요합니다.
     </div>`;
+}
+
+function renderVerifyCards() {
+  const el = document.getElementById('verifyCards');
+  if (!el) return;
+  const items = [
+    {
+      status:'warn', icon:'🏦', title:'가수금 장부 잔액 확정 필요',
+      body:`현재 시뮬레이션은 <b>₩13억 기준</b>으로 계산됩니다.<br>
+      기존 보고서의 11억/15억 시나리오와 다를 수 있으니 실제 장부 잔액을 확인 후 [가정] 탭에서 <b>초기 가수금</b>을 수정해 재계산하세요.`
+    },
+    {
+      status:'warn', icon:'📋', title:'0052D0 분배율 가정 재검증 필요',
+      body:`TIGER 코리아배당다우존스(0052D0)는 <b>상장일 2025-05-20</b>으로 운용 이력이 짧습니다.<br>
+      초기 분배율 3.5%, 연 7% 성장, 상한 10% 가정은 실측 분배금 누적 후 재검증이 필요합니다. 또한 미국배당다우존스형(458730)과는 성격이 다른 <b>국내 주식형</b> ETF입니다.`
+    },
+    {
+      status:'warn', icon:'📊', title:'장기 수치 과신 금지',
+      body:`만99세 법인자산 <b>약 ${eok(rows.at(-1)?.corpAsset||0)}</b>은 분배율 성장, 전액 재투자, 장기 복리 가정에 매우 민감합니다.<br>
+      실행 판단은 <b>가수금 완납 시점 · 초기 10~15년 현금흐름 · 세후 기준</b> 중심으로 하는 것이 안전합니다.`
+    },
+    {
+      status:'bad', icon:'⚖️', title:'세무 가정 세무사 확인 필요',
+      body:`미국 원천세 15% 외에 ① 국내 ETF 분배금 법인 수령 시 과세 방식, ② 외국납부세액공제 회수율, ③ 가수금 인정이자(현행 4.6%) 적용 여부, ④ 법인 배당소득 익금산입 처리는 <b>담당 세무사 확인 후</b> 가정치를 조정하세요.`
+    },
+    {
+      status:'ok', icon:'✅', title:'기간 표기 2026~2065 통일',
+      body:`원본 엑셀에서 일부 시트가 2027~2065로 표기된 오류를 수정했습니다.<br>
+      시뮬레이션 기준: <b>2026년(만60세) 투자 개시 → 2065년(만99세) · 40개년</b><br>
+      2026년 배당은 포트폴리오 구성 첫 해로 상환액 산정에 포함됩니다.`
+    },
+    {
+      status:'ok', icon:'🔄', title:'잉여배당 비례 재투자 로직 반영',
+      body:`세후 배당에서 가수금 상환분을 제외한 잉여금은 <b>각 ETF 원금 비중에 비례해 자동 재투자</b>됩니다.<br>
+      이는 엑셀 계산 원장(계산 시트)의 기말자산 산출 방식과 동일하며, 단순 유보금 적립 방식보다 복리 효과가 큽니다.`
+    },
+  ];
+  el.innerHTML = items.map(({status,icon,title,body}) => `
+    <div class="card" style="border-left:4px solid ${status==='ok'?'var(--green)':status==='warn'?'var(--amber)':'var(--red)'}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <span style="font-size:18px">${icon}</span>
+        <span class="pill ${status}">${status==='ok'?'확인완료':status==='warn'?'주의':'필수확인'}</span>
+      </div>
+      <div style="font-size:12px;font-weight:800;color:var(--navy);margin-bottom:6px">${title}</div>
+      <div class="note" style="font-size:11px">${body}</div>
+    </div>`).join('');
 }
 
 function renderKpis() {
@@ -621,7 +671,7 @@ const inputSpec = [
 
 const groupLabels = {
   SCHD_GROUP:  '📘 SCHD — 코어 고배당 성장형 ETF (Schwab, 20,198주 고정)',
-  TIGER_GROUP: '🟢 0052D0 — TIGER 코리아배당다우존스 (국내 코어)',
+  TIGER_GROUP: '🟢 0052D0 — TIGER 코리아배당다우존스 (국내 코어 · 상장 2025-05-20 · 분배율 재검증 필요)',
   JEPQ_GROUP:  '📗 JEPQ — 나스닥 프리미엄 인컴 ETF (JPMorgan)',
   JEPI_GROUP:  '🟡 JEPI — S&P500 프리미엄 인컴 ETF (JPMorgan)',
   QQQ_GROUP:   '🟣 QQQ — 나스닥 성장형 ETF (Invesco)',
