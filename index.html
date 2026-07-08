@@ -1155,19 +1155,20 @@ async function fetchLivePrices() {
     if (rr.ok) { const d = await rr.json(); liveRate = d.rates?.KRW || 0; }
   } catch(e) {}
 
-  // ── 2. 주가: Yahoo Finance v8/chart → allorigins.win 프록시 (병렬)
-  const PROXY = 'https://api.allorigins.win/get?url=';
+  // ── 2. 주가: Yahoo Finance v8/chart → proxy.cors.sh (CORS *, 키 불필요)
+  const PROXY = 'https://proxy.cors.sh/https://query1.finance.yahoo.com/v8/finance/chart/';
   const fetchTicker = async (ticker) => {
-    const yfUrl = encodeURIComponent(`https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?range=1d&interval=1d`);
     const ctrl = new AbortController();
-    const tid  = setTimeout(() => ctrl.abort(), 20000);
+    const tid  = setTimeout(() => ctrl.abort(), 15000);
     try {
-      const res = await fetch(PROXY + yfUrl, { signal: ctrl.signal });
+      const res = await fetch(`${PROXY}${ticker}?range=1d&interval=1d`, {
+        signal: ctrl.signal,
+        headers: { 'origin': 'https://yjjn2005.github.io' }
+      });
       clearTimeout(tid);
       if (!res.ok) return null;
-      const wrapper = await res.json();
-      const inner   = JSON.parse(wrapper.contents);
-      const meta    = inner?.chart?.result?.[0]?.meta;
+      const json = await res.json();
+      const meta = json?.chart?.result?.[0]?.meta;
       if (!meta?.regularMarketPrice) return null;
       return {
         price: meta.regularMarketPrice,
