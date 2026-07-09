@@ -1682,7 +1682,11 @@ function saveGistSettings() {
   saveGistCfg({ token, gistId: gistId || '', autoSync });
   document.getElementById('gistModal').classList.remove('open');
   toast('설정 저장 완료');
-  if (gistId) gistLoad();
+  if (gistId) {
+    gistLoad();           // 기존 Gist ID 있으면 불러오기
+  } else {
+    gistSave();           // Gist ID 없으면 새로 생성 (자동으로 ID 저장됨)
+  }
 }
 
 // 페이지 로드 시 자동 불러오기 시도
