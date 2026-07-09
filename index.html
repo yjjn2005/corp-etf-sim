@@ -1196,7 +1196,7 @@ function renderMemoList(){
 
 const STORAGE_KEY = 'corp_etf_sim_v5';
 function saveLocal(show=true){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ params, manual, memos, savedAt: new Date().toISOString() }));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ params, manual, memos, acctHoldings, savedAt: new Date().toISOString() }));
   if (show) toast('이 기기에 저장 완료');
 }
 function loadLocal(){
@@ -1206,6 +1206,7 @@ function loadLocal(){
     const d = JSON.parse(raw);
     if (d.params) params = { ...structuredClone(defaults), ...d.params, shareholders: { ...defaults.shareholders, ...(d.params.shareholders||{}) } };
     manual = d.manual || []; memos = d.memos || [];
+    if (d.acctHoldings) { acctHoldings = d.acctHoldings; localStorage.setItem('acctHoldings_v2', JSON.stringify(acctHoldings)); }
     if (d.savedAt) document.getElementById('saveStatus').textContent = '이 기기 저장: ' + new Date(d.savedAt).toLocaleString('ko-KR');
   } catch(e) { console.warn(e); }
 }
@@ -1299,7 +1300,9 @@ function saveAccountHoldings() {
     acctHoldings[e.key].manual = _acctGet(e.key,'manual');
   });
   localStorage.setItem('acctHoldings_v2', JSON.stringify(acctHoldings));
-  toast('보유 수량 저장 완료 ✓');
+  saveLocal(false);          // savedAt 갱신 → 타임스탬프 비교 정상화
+  scheduleAutoSync();        // Gist 자동 업로드 (3초 디바운스)
+  toast('보유 수량 저장 완료 ✓ · 클라우드 동기화 중...');
   renderAccountTable();
 }
 
