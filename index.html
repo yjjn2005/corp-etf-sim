@@ -1,157 +1,190 @@
 <!doctype html>
-<html lang="ko">
-<head>
+<html lang="ko"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>유앤김 법인 자금운용 시뮬레이터</title>
-<meta name="theme-color" content="#001F5B">
+<title>유앤김 법인 자금운용 시뮬레이터 (비관 시나리오)</title>
+<meta name="theme-color" content="#071120">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
 :root{
-  --navy:#0A1628;--navy2:#112240;--navy3:#1a3a5c;--gold:#C9A84C;--gold2:#e8c96a;--gold-dim:#8a6b28;
-  --bg:#EFF2F8;--card:#ffffff;--card2:#f8faff;
-  --line:#dde3f0;--line2:#c8d2e8;--text:#1a2332;--muted:#64748b;--muted2:#94a3b8;
+  --ebony:#071120;--navy2:#0D1E38;--navy3:#172F50;
+  --gold:#B5852A;--gold2:#D4A84E;--gold-dim:#7A5718;--gold-pale:#F0E6CC;
+  --bg:#EDE9E2;--card:#FAFAF7;--card2:#F3EFE8;
+  --line:#DDD9D0;--line2:#CBC4BB;
+  --text:#1C1510;--muted:#5C5346;--muted2:#9B9184;
   --blue:#1558A0;--teal:#0D7065;--amber:#B5711A;
   --purple:#4A3AA7;--red:#A83030;--green:#1A6B3C;
-  --pb:#EBF3FB;--pt:#E5F5EE;--pp:#EEEDFB;--pr:#FAEBEB;--pg:#EBF5EE;--pa:#FBF3E5;
-  --shadow:0 4px 20px rgba(10,22,40,.08),0 1px 4px rgba(10,22,40,.06);
-  --shadow-lg:0 8px 40px rgba(10,22,40,.14),0 2px 8px rgba(10,22,40,.08);
-  --shadow-card:0 2px 16px rgba(10,22,40,.07),0 0 0 1px rgba(10,22,40,.04);
+  --pb:#EBF1FB;--pt:#E4F3EC;--pp:#EEEBFB;--pr:#FAEBEB;--pg:#E8F4ED;--pa:#FAF2E4;
+  --shadow:0 2px 16px rgba(7,17,32,.08),0 1px 3px rgba(7,17,32,.05);
+  --shadow-lg:0 12px 48px rgba(7,17,32,.18),0 2px 8px rgba(7,17,32,.09);
+  --shadow-card:0 1px 10px rgba(7,17,32,.07),0 0 0 1px rgba(7,17,32,.05);
   --font:'Noto Sans KR',-apple-system,BlinkMacSystemFont,'Apple SD Gothic Neo','Malgun Gothic',sans-serif;
-  --radius:18px;--radius-sm:10px;--radius-xs:7px;
+  --radius:13px;--radius-sm:8px;--radius-xs:5px;
 }
 *{box-sizing:border-box;-webkit-font-smoothing:antialiased}
-body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.5}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);line-height:1.55}
 
+/* ─── HEADER ─────────────────────────────────── */
 header{
   position:sticky;top:0;z-index:50;
-  background:linear-gradient(135deg,var(--navy) 0%,var(--navy2) 55%,var(--navy3) 100%);
-  color:#fff;padding:14px 20px;
-  box-shadow:0 4px 24px rgba(10,22,40,.28),0 1px 0 rgba(255,255,255,.05);
-  border-bottom:1px solid rgba(201,168,76,.18);
+  background:var(--ebony);
+  border-bottom:1px solid rgba(181,133,42,.2);
+  box-shadow:0 0 0 1px rgba(181,133,42,.06) inset,0 6px 28px rgba(0,0,0,.42);
+  background-image:repeating-linear-gradient(-45deg,transparent,transparent 8px,rgba(255,255,255,.013) 8px,rgba(255,255,255,.013) 9px);
 }
-.top{max-width:1280px;margin:auto;display:flex;align-items:center;gap:14px;justify-content:space-between;flex-wrap:wrap}
-.brand{display:flex;gap:14px;align-items:center}
+.top{max-width:1320px;margin:auto;display:flex;align-items:center;gap:16px;justify-content:space-between;flex-wrap:wrap;padding:13px 22px}
+.brand{display:flex;gap:15px;align-items:center}
 .logo{
-  width:46px;height:46px;border:1.5px solid rgba(201,168,76,.5);border-radius:13px;
-  display:grid;place-items:center;color:var(--gold);font-weight:900;font-size:14px;letter-spacing:-.5px;
-  background:linear-gradient(135deg,rgba(201,168,76,.12),rgba(201,168,76,.04));
-  box-shadow:0 0 0 1px rgba(201,168,76,.15) inset,0 2px 8px rgba(0,0,0,.2);
+  width:50px;height:50px;border:1.5px solid rgba(212,168,78,.55);border-radius:50%;
+  display:grid;place-items:center;color:var(--gold2);font-weight:900;font-size:13px;letter-spacing:.4px;
+  background:radial-gradient(circle at 38% 28%,rgba(181,133,42,.18),rgba(181,133,42,.04));
+  box-shadow:0 0 0 1px rgba(181,133,42,.1) inset,0 0 18px rgba(181,133,42,.14),0 2px 10px rgba(0,0,0,.36);
+  flex-shrink:0;text-shadow:0 1px 4px rgba(0,0,0,.4);
 }
-.brand h1{margin:0;font-size:16px;font-weight:800;letter-spacing:-.3px;text-shadow:0 1px 3px rgba(0,0,0,.2)}
-.brand p{margin:3px 0 0;color:rgba(215,225,240,.7);font-size:11px;font-weight:400}
-.status{font-size:10px;color:rgba(175,185,210,.6);margin-top:1px}
+.brand h1{margin:0;font-size:15px;font-weight:800;letter-spacing:-.3px;color:rgba(255,255,255,.96);text-shadow:0 1px 3px rgba(0,0,0,.3)}
+.brand p{margin:2px 0 0;color:rgba(214,202,182,.55);font-size:11px;font-weight:400}
+.status{font-size:10px;color:rgba(181,133,42,.48);margin-top:2px;font-weight:500}
 .actions{display:flex;gap:7px;flex-wrap:wrap}
-.btn{border:0;border-radius:var(--radius-sm);padding:8px 14px;font-weight:700;cursor:pointer;font-size:12px;font-family:var(--font);letter-spacing:-.2px;transition:all .2s ease;}
-.btn.white{background:rgba(255,255,255,.95);color:var(--navy);box-shadow:0 2px 8px rgba(0,0,0,.12)}
-.btn.gold{background:linear-gradient(135deg,var(--gold2),var(--gold));color:#1b2430;box-shadow:0 3px 10px rgba(201,168,76,.35);}
-.btn.ghost{background:rgba(255,255,255,.1);color:rgba(255,255,255,.9);border:1px solid rgba(255,255,255,.18);backdrop-filter:blur(4px)}
-.btn:hover{filter:brightness(1.08);transform:translateY(-1px);box-shadow:0 5px 14px rgba(0,0,0,.15)}
-.btn:active{transform:translateY(0)}
+.btn{border:0;border-radius:var(--radius-sm);padding:8px 14px;font-weight:700;cursor:pointer;font-size:12px;font-family:var(--font);letter-spacing:-.1px;transition:all .17s ease}
+.btn.white{background:rgba(250,250,247,.96);color:var(--ebony);box-shadow:0 1px 6px rgba(0,0,0,.14),0 0 0 1px rgba(255,255,255,.6) inset}
+.btn.gold{background:linear-gradient(135deg,#D4A84E 0%,#B5852A 55%,#9A6E1C 100%);color:#FFF8EC;letter-spacing:.02em;box-shadow:0 2px 8px rgba(181,133,42,.4),0 1px 0 rgba(255,255,255,.18) inset}
+.btn.ghost{background:rgba(255,255,255,.07);color:rgba(255,255,255,.82);border:1px solid rgba(255,255,255,.14);backdrop-filter:blur(8px)}
+.btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+.btn:active{transform:translateY(0);filter:brightness(.97)}
 
-.tabs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:20px;overflow-x:auto;padding:6px 4px;background:rgba(10,22,40,.04);border-radius:14px;}
-.tab{border:0;background:transparent;border-radius:10px;padding:9px 16px;cursor:pointer;font-weight:600;color:var(--muted);font-size:12.5px;white-space:nowrap;font-family:var(--font);transition:all .18s ease;letter-spacing:-.2px;}
-.tab.active{background:#fff;color:var(--navy);font-weight:800;box-shadow:0 2px 10px rgba(10,22,40,.12),0 0 0 1px rgba(10,22,40,.06);}
-.tab:hover:not(.active){background:rgba(255,255,255,.6);color:var(--navy2)}
-main{max-width:1280px;margin:22px auto;padding:0 18px 60px}
-.pane{display:none;animation:fadeUp .25s ease}.pane.active{display:block}
-@keyframes fadeUp{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+/* ─── TABS ───────────────────────────────────── */
+.tabs{display:flex;gap:4px;flex-wrap:wrap;margin-bottom:22px;overflow-x:auto;padding:5px;background:rgba(7,17,32,.07);border:1px solid rgba(7,17,32,.09);border-radius:11px}
+.tab{border:0;background:transparent;border-radius:7px;padding:8px 15px;cursor:pointer;font-weight:600;color:var(--muted);font-size:12px;white-space:nowrap;font-family:var(--font);transition:all .15s ease;letter-spacing:-.1px}
+.tab.active{background:var(--card);color:var(--ebony);font-weight:800;box-shadow:0 2px 8px rgba(7,17,32,.11),0 0 0 1px rgba(7,17,32,.07)}
+.tab:hover:not(.active){background:rgba(255,255,255,.55);color:var(--navy2)}
+main{max-width:1320px;margin:24px auto;padding:0 20px 70px}
+.pane{display:none;animation:fadeUp .22s ease}.pane.active{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
 
+/* ─── GRID ───────────────────────────────────── */
 .grid{display:grid;gap:14px}
 .kpis{grid-template-columns:repeat(6,minmax(0,1fr))}
-.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-card);padding:18px;transition:box-shadow .2s ease;}
-.card:hover{box-shadow:var(--shadow)}
-.kpi{background:linear-gradient(145deg,#ffffff,#f8faff);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-card);padding:18px 16px 14px;position:relative;overflow:hidden;}
-.kpi::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:linear-gradient(90deg,var(--navy2),var(--navy3));border-radius:var(--radius) var(--radius) 0 0;}
-.kpi .label{color:var(--muted);font-size:10.5px;font-weight:700;line-height:1.4;letter-spacing:.2px;text-transform:uppercase}
-.kpi .value{font-size:20px;font-weight:900;margin:8px 0 4px;color:var(--navy);letter-spacing:-.5px}
-.kpi .sub{color:var(--muted2);font-size:10.5px}
-.kpi.ok::before{background:linear-gradient(90deg,#16a34a,#22c55e)}
-.kpi.ok .value{color:var(--green)}
-.kpi.bad::before{background:linear-gradient(90deg,#dc2626,#ef4444)}
-.kpi.bad .value{color:var(--red)}
-.kpi.warn::before{background:linear-gradient(90deg,#d97706,#f59e0b)}
-.kpi.warn .value{color:var(--amber)}
-
-.section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:26px 0 14px;flex-wrap:wrap}
-.section-title h2{margin:0;color:var(--navy);font-size:17px;font-weight:800;letter-spacing:-.4px;display:flex;align-items:center;gap:8px;}
-.section-title h2::before{content:'';display:inline-block;width:4px;height:18px;background:linear-gradient(var(--gold2),var(--gold));border-radius:2px}
-.note{font-size:11.5px;color:var(--muted);line-height:1.6;font-weight:400}
 .two{grid-template-columns:1.4fr .9fr}
 @media(max-width:900px){.two{grid-template-columns:1fr}}
 
+/* ─── BASE CARD ──────────────────────────────── */
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow-card);padding:18px;transition:box-shadow .18s,transform .18s}
+.card:hover{box-shadow:var(--shadow)}
+
+/* ─── KPI CARD ───────────────────────────────── */
+.kpi{
+  background:var(--card);
+  border:1px solid var(--line);
+  border-left:3px solid var(--gold);   /* signature gold stripe */
+  border-radius:var(--radius);
+  box-shadow:var(--shadow-card);
+  padding:18px 16px 15px;
+  position:relative;overflow:hidden;
+}
+.kpi::before{display:none}   /* remove old top gradient bar */
+.kpi::after{content:'';position:absolute;top:-24px;right:-24px;width:90px;height:90px;background:radial-gradient(circle,rgba(181,133,42,.07) 0%,transparent 70%);pointer-events:none}
+.kpi .label{color:var(--muted);font-size:9.5px;font-weight:700;line-height:1.4;letter-spacing:.09em;text-transform:uppercase}
+.kpi .value{font-size:22px;font-weight:900;margin:9px 0 5px;color:var(--text);letter-spacing:-.04em;line-height:1.1;font-variant-numeric:tabular-nums}
+.kpi .sub{color:var(--muted2);font-size:10.5px}
+.kpi.ok{border-left-color:#1d9e52}.kpi.ok .value{color:var(--green)}
+.kpi.bad{border-left-color:#cf2f2f}.kpi.bad .value{color:var(--red)}
+.kpi.warn{border-left-color:#c97d12}.kpi.warn .value{color:var(--amber)}
+
+/* ─── SECTION TITLE ──────────────────────────── */
+.section-title{display:flex;justify-content:space-between;align-items:center;gap:10px;margin:28px 0 15px;flex-wrap:wrap}
+.section-title h2{margin:0;color:var(--ebony);font-size:15px;font-weight:800;letter-spacing:-.3px;display:flex;align-items:center;gap:10px}
+.section-title h2::before{content:'';display:inline-block;width:3px;height:16px;background:linear-gradient(180deg,var(--gold2),var(--gold));border-radius:2px}
+.note{font-size:11.5px;color:var(--muted);line-height:1.6;font-weight:400}
+
+/* ─── CHARTS ─────────────────────────────────── */
 .chartbox{height:300px}
 .legend{display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;color:var(--muted);font-size:11px;font-weight:500}
-.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:5px}
-.bars{height:250px;display:flex;align-items:end;gap:6px;border-left:1px solid var(--line2);border-bottom:1px solid var(--line2);padding:10px 4px 4px;}
+.dot{width:8px;height:8px;border-radius:50%;display:inline-block;margin-right:4px}
+.bars{height:250px;display:flex;align-items:end;gap:6px;border-left:1px solid var(--line2);border-bottom:1px solid var(--line2);padding:10px 4px 4px}
 .barcol{flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;height:100%;justify-content:flex-end}
-.stack{width:100%;max-width:36px;border-radius:5px 5px 0 0;overflow:hidden;display:flex;flex-direction:column-reverse;transition:height .5s ease;cursor:pointer}
+.stack{width:100%;max-width:36px;border-radius:4px 4px 0 0;overflow:hidden;display:flex;flex-direction:column-reverse;transition:height .5s ease;cursor:pointer}
 .seg{width:100%;transition:height .4s ease}
 .xlabel{font-size:9.5px;color:var(--muted2)}
-.barcol:hover .stack{filter:brightness(1.1);transform:scaleY(1.01);transform-origin:bottom}
+.barcol:hover .stack{filter:brightness(1.09);transform:scaleY(1.015);transform-origin:bottom}
 
-.hbar-wrap{display:flex;flex-direction:column;gap:8px}
+/* ─── HORIZONTAL BARS ────────────────────────── */
+.hbar-wrap{display:flex;flex-direction:column;gap:9px}
 .hbar-row{display:flex;align-items:center;gap:10px}
 .hbar-label{width:58px;font-size:11px;color:var(--muted);text-align:right;flex-shrink:0;font-weight:600}
-.hbar-track{flex:1;background:#EDF0F8;border-radius:6px;height:18px;overflow:hidden;position:relative}
-.hbar-val{position:absolute;left:8px;top:0;height:100%;display:flex;align-items:center;font-size:10px;color:#fff;font-weight:800;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.2)}
+.hbar-track{flex:1;background:rgba(7,17,32,.07);border-radius:5px;height:18px;overflow:hidden;position:relative}
+.hbar-val{position:absolute;left:8px;top:0;height:100%;display:flex;align-items:center;font-size:10px;color:#fff;font-weight:800;white-space:nowrap;text-shadow:0 1px 2px rgba(0,0,0,.3)}
 
-.milestone{display:flex;align-items:center;gap:12px;padding:11px 0;border-bottom:1px solid var(--line)}
+/* ─── MILESTONE ──────────────────────────────── */
+.milestone{display:flex;align-items:center;gap:13px;padding:12px 0;border-bottom:1px solid var(--line)}
 .milestone:last-child{border-bottom:none;padding-bottom:0}
-.badge{width:48px;height:48px;border-radius:13px;flex-shrink:0;background:linear-gradient(135deg,#f0ead4,#faf6e8);color:var(--navy);display:grid;place-items:center;font-weight:900;font-size:13px;border:1px solid rgba(201,168,76,.3);box-shadow:0 2px 8px rgba(0,0,0,.06);}
-.ms-title{font-weight:800;font-size:12px;color:var(--text)}
-.ms-val{color:var(--gold-dim);font-weight:900;font-size:14px;letter-spacing:-.3px}
+.badge{
+  width:48px;height:48px;border-radius:50%;   /* dark seal */
+  flex-shrink:0;
+  background:radial-gradient(circle at 38% 28%,var(--navy2),var(--ebony));
+  color:var(--gold2);display:grid;place-items:center;
+  font-weight:900;font-size:11px;letter-spacing:-.2px;
+  border:1.5px solid rgba(181,133,42,.4);
+  box-shadow:0 0 0 1px rgba(181,133,42,.08) inset,0 2px 10px rgba(0,0,0,.28),0 0 14px rgba(181,133,42,.1);
+  text-shadow:0 1px 3px rgba(0,0,0,.35);
+}
+.ms-title{font-weight:700;font-size:12px;color:var(--text)}
+.ms-val{color:var(--gold-dim);font-weight:900;font-size:15px;letter-spacing:-.3px;font-variant-numeric:tabular-nums}
 .ms-year{font-size:10px;color:var(--muted2)}
 
+/* ─── INPUTS ─────────────────────────────────── */
 .inputs{grid-template-columns:repeat(4,minmax(0,1fr))}
 @media(max-width:900px){.inputs{grid-template-columns:repeat(2,1fr)}}
 .field{display:grid;gap:5px;margin:8px 0}
-.field label{font-size:11px;color:var(--muted);font-weight:700;letter-spacing:.1px}
-.field input,.field select,.field textarea{width:100%;border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:9px 10px;background:#fff;font:inherit;font-size:13px;color:var(--text);transition:border-color .18s,box-shadow .18s;}
-.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--navy2);box-shadow:0 0 0 3px rgba(17,34,64,.1);}
+.field label{font-size:10px;color:var(--muted);font-weight:700;letter-spacing:.07em;text-transform:uppercase}
+.field input,.field select,.field textarea{width:100%;border:1.5px solid var(--line);border-radius:var(--radius-sm);padding:9px 10px;background:var(--card);font:inherit;font-size:13px;color:var(--text);transition:border-color .16s,box-shadow .16s}
+.field input:focus,.field select:focus,.field textarea:focus{outline:none;border-color:var(--gold);box-shadow:0 0 0 3px rgba(181,133,42,.12)}
 .field small{color:var(--muted2);font-size:10px}
-.input-group-title{grid-column:1/-1;font-size:12px;font-weight:800;color:var(--navy);padding:12px 6px 4px;border-bottom:2px solid var(--line);margin-top:8px;letter-spacing:-.2px;}
+.input-group-title{grid-column:1/-1;font-size:11.5px;font-weight:800;color:var(--ebony);padding:12px 8px 5px;border-bottom:2px solid rgba(181,133,42,.18);margin-top:10px;letter-spacing:-.1px}
 
-table{width:100%;border-collapse:collapse;background:#fff;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-card);font-size:11.5px}
-th,td{padding:9px 10px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
-th{background:linear-gradient(180deg,#f0f4fb,#e8eef8);color:var(--navy);font-weight:800;font-size:10.5px;position:sticky;top:0;letter-spacing:.1px;}
-tr:hover td{background:#f8faff}
-td:first-child,th:first-child{text-align:center;position:sticky;left:0;background:#fff;z-index:1}
-th:first-child{background:linear-gradient(180deg,#f0f4fb,#e8eef8);z-index:2}
+/* ─── TABLES ─────────────────────────────────── */
+table{width:100%;border-collapse:collapse;background:var(--card);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow-card);font-size:11.5px;font-variant-numeric:tabular-nums}
+th,td{padding:9px 11px;border-bottom:1px solid var(--line);text-align:right;white-space:nowrap}
+th{background:rgba(7,17,32,.05);color:var(--ebony);font-weight:800;font-size:10px;position:sticky;top:0;letter-spacing:.05em;text-transform:uppercase}
+tr:hover td{background:rgba(181,133,42,.04)}
+td:first-child,th:first-child{text-align:center;position:sticky;left:0;background:var(--card);z-index:1}
+th:first-child{background:rgba(7,17,32,.05);z-index:2}
 .table-wrap{overflow:auto;border-radius:var(--radius);max-height:520px;border:1px solid var(--line);box-shadow:var(--shadow-card)}
 
-.risk{border-left:4px solid var(--gold);background:linear-gradient(135deg,#fffdf5,#fff9e8);line-height:1.8;font-size:12.5px;color:#5a4000;}
-.tax-disclosure{background:linear-gradient(135deg,#fffdf5,#fff7e0);border:1px solid rgba(201,168,76,.4);border-radius:var(--radius);padding:16px 18px;margin-bottom:16px;box-shadow:0 2px 12px rgba(201,168,76,.08);}
-.tax-disclosure .ttl{font-size:12px;font-weight:800;color:#6b3d00;margin-bottom:10px}
+/* ─── RISK / DISCLOSURE ──────────────────────── */
+.risk{border-left:4px solid var(--gold);background:linear-gradient(135deg,#FFFDF5,#FFF9E8);line-height:1.8;font-size:12.5px;color:#4A3200}
+.tax-disclosure{background:linear-gradient(135deg,#FFFDF5,#FFF8E0);border:1px solid rgba(181,133,42,.32);border-radius:var(--radius);padding:16px 18px;margin-bottom:16px;box-shadow:0 2px 10px rgba(181,133,42,.07)}
+.tax-disclosure .ttl{font-size:12px;font-weight:800;color:#5A3A00;margin-bottom:10px}
 .tax-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;font-size:11px;line-height:1.7}
 @media(max-width:600px){.tax-grid{grid-template-columns:1fr}}
 .tax-grid .ok-h{font-weight:700;color:var(--green);margin-bottom:3px}
 .tax-grid .bad-h{font-weight:700;color:var(--red);margin-bottom:3px}
 
-.modal{position:fixed;inset:0;background:rgba(8,16,32,.56);backdrop-filter:blur(6px);display:none;place-items:center;z-index:200;padding:14px}
+/* ─── MODAL ──────────────────────────────────── */
+.modal{position:fixed;inset:0;background:rgba(7,17,32,.68);backdrop-filter:blur(10px) saturate(.8);display:none;place-items:center;z-index:200;padding:14px}
 .modal.open{display:grid;animation:fadeIn .2s ease}
 @keyframes fadeIn{from{opacity:0}to{opacity:1}}
-.modal-card{background:#fff;max-width:760px;width:100%;max-height:88vh;overflow:auto;border-radius:20px;box-shadow:0 40px 100px rgba(0,0,0,.3),0 0 0 1px rgba(255,255,255,.08);animation:slideUp .25s ease;}
-@keyframes slideUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:none}}
-.modal-head{position:sticky;top:0;background:linear-gradient(180deg,#fff,#fafbff);display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid var(--line);z-index:2;}
-.modal-head h2{margin:0;font-size:15px;font-weight:800;color:var(--navy);letter-spacing:-.3px}
+.modal-card{background:var(--card);max-width:760px;width:100%;max-height:88vh;overflow:auto;border-radius:18px;box-shadow:0 40px 100px rgba(0,0,0,.38),0 0 0 1px rgba(181,133,42,.12);animation:slideUp .22s ease}
+@keyframes slideUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:none}}
+.modal-head{position:sticky;top:0;background:var(--card);display:flex;justify-content:space-between;align-items:center;padding:18px 20px;border-bottom:1px solid var(--line);z-index:2}
+.modal-head h2{margin:0;font-size:15px;font-weight:800;color:var(--ebony);letter-spacing:-.3px}
 .modal-body{padding:18px 20px}
-.close{font-size:20px;background:var(--bg);border:0;cursor:pointer;color:var(--muted);width:34px;height:34px;border-radius:9px;display:grid;place-items:center;transition:all .15s;}
+.close{font-size:18px;background:rgba(7,17,32,.06);border:0;cursor:pointer;color:var(--muted);width:34px;height:34px;border-radius:8px;display:grid;place-items:center;transition:all .14s}
 .close:hover{background:var(--line);color:var(--text)}
-.mtabs{display:flex;gap:6px;margin-bottom:14px;flex-wrap:wrap;padding:4px;background:var(--bg);border-radius:10px}
-.mtab{padding:7px 13px;border:0;border-radius:7px;background:transparent;font-size:11.5px;cursor:pointer;color:var(--muted);font-family:var(--font);font-weight:600;transition:all .15s;}
-.mtab.active{background:#fff;color:var(--navy);font-weight:800;box-shadow:0 2px 8px rgba(10,22,40,.1)}
+.mtabs{display:flex;gap:5px;margin-bottom:14px;flex-wrap:wrap;padding:4px;background:rgba(7,17,32,.05);border-radius:9px}
+.mtab{padding:7px 13px;border:0;border-radius:6px;background:transparent;font-size:11.5px;cursor:pointer;color:var(--muted);font-family:var(--font);font-weight:600;transition:all .14px}
+.mtab.active{background:var(--card);color:var(--ebony);font-weight:800;box-shadow:0 1px 6px rgba(7,17,32,.1)}
 .mpane{display:none}.mpane.active{display:block}
 
-.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(14px);background:linear-gradient(135deg,var(--navy2),var(--navy));color:#fff;padding:12px 22px;border-radius:30px;opacity:0;transition:all .28s cubic-bezier(.34,1.56,.64,1);z-index:500;font-size:13px;white-space:nowrap;box-shadow:0 8px 28px rgba(10,22,40,.3);border:1px solid rgba(255,255,255,.1);}
+/* ─── TOAST ──────────────────────────────────── */
+.toast{position:fixed;left:50%;bottom:26px;transform:translateX(-50%) translateY(12px);background:var(--ebony);color:rgba(255,255,255,.92);padding:11px 22px;border-radius:999px;opacity:0;transition:all .26s cubic-bezier(.34,1.56,.64,1);z-index:500;font-size:13px;white-space:nowrap;box-shadow:0 8px 28px rgba(0,0,0,.36);border:1px solid rgba(181,133,42,.22)}
 .toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 
+/* ─── PILLS & TAGS ───────────────────────────── */
 .pill{display:inline-block;border-radius:999px;padding:3px 10px;font-size:10.5px;font-weight:700}
 .pill.ok{background:#dcfce7;color:#14532d}
 .pill.bad{background:#fee2e2;color:#7f1d1d}
-.pill.warn{background:#ffedd5;color:#7c2d12}
-
-.etf-tag{display:inline-block;border-radius:6px;padding:2px 8px;font-size:10px;font-weight:800;margin-right:4px;letter-spacing:.1px}
+.pill.warn{background:#fef3c7;color:#78350f}
+.etf-tag{display:inline-block;border-radius:5px;padding:2px 7px;font-size:10px;font-weight:800;margin-right:4px;letter-spacing:.05em}
 .tag-schd{background:#ddeefb;color:#0d4f8a}
 .tag-tiger{background:#dcfce7;color:#14532d}
 .tag-jepq{background:#d4ede8;color:#095c52}
@@ -159,7 +192,8 @@ th:first-child{background:linear-gradient(180deg,#f0f4fb,#e8eef8);z-index:2}
 .tag-qqq{background:#ede9fb;color:#3730a3}
 .tag-tlt{background:#f1f5f9;color:#475569}
 
-.footer{color:var(--muted2);font-size:11px;text-align:center;margin-top:36px;line-height:1.8;padding-top:20px;border-top:1px solid var(--line);}
+/* ─── FOOTER ─────────────────────────────────── */
+.footer{color:var(--muted2);font-size:11px;text-align:center;margin-top:40px;line-height:1.8;padding-top:20px;border-top:1px solid var(--line)}
 </style>
 </head>
 <body>
@@ -167,10 +201,10 @@ th:first-child{background:linear-gradient(180deg,#f0f4fb,#e8eef8);z-index:2}
 <header>
   <div class="top">
     <div class="brand">
-      <div class="logo">U&K</div>
+      <div class="logo">U&amp;K</div>
       <div>
         <h1>유앤김 법인 자금운용 시뮬레이터</h1>
-        <p>1966년생 만60세(2026) → 만99세(2065) · 6종목 · 가수금 13억 · 검증수정본 v5.1</p>
+        <p>비관 시나리오 v5.2 · 역사적 경제위기 5회 보정 · 만60세(2026)→만99세(2065) · 6종목 · 가수금 13억</p>
         <div class="status" id="saveStatus">저장 데이터 없음</div>
       </div>
     </div>
@@ -179,6 +213,14 @@ th:first-child{background:linear-gradient(180deg,#f0f4fb,#e8eef8);z-index:2}
       <button class="btn ghost" onclick="copyFullCode()">전체코드 복사</button>
       <button class="btn ghost" onclick="exportData()">내보내기</button>
       <button class="btn ghost" onclick="document.getElementById('importFile').click()">가져오기</button>
+      <div style="display:flex;gap:4px;background:rgba(255,255,255,.06);padding:4px;border-radius:9px;border:1px solid rgba(255,255,255,.1)">
+        <button class="scenario-btn" data-scenario="optimistic" onclick="switchScenario('optimistic')"
+          style="border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.09);color:rgba(255,255,255,.75);border-radius:6px;padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .15s">낙관</button>
+        <button class="scenario-btn" data-scenario="base" onclick="switchScenario('base')"
+          style="border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.09);color:rgba(255,255,255,.75);border-radius:6px;padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .15s">기본</button>
+        <button class="scenario-btn" data-scenario="pessimistic" onclick="switchScenario('pessimistic')"
+          style="border:1px solid #A83030;background:#A83030;color:#fff;border-radius:6px;padding:6px 12px;font-size:11px;font-weight:800;cursor:pointer;font-family:var(--font);transition:all .15s">비관</button>
+      </div>
       <button class="btn white" onclick="saveLocal()">이 기기 저장</button>
       <button class="btn gold" onclick="recalc()">재계산</button>
       <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
@@ -188,18 +230,35 @@ th:first-child{background:linear-gradient(180deg,#f0f4fb,#e8eef8);z-index:2}
 
 <main>
   <div class="tabs" id="tabs">
-    <button class="tab active" data-tab="summary">요약</button>
+    <button class="tab" data-tab="summary">요약</button>
     <button class="tab" data-tab="assumptions">가정</button>
     <button class="tab" data-tab="table">연도별 자산/배당/가수금/지분</button>
     <button class="tab" onclick="openRepayPlan()">월별 상환계획</button>
     <button class="tab" data-tab="cashflow">현금흐름</button>
     <button class="tab" data-tab="children">자녀지분</button>
-    <button class="tab" data-tab="account" style="background:linear-gradient(135deg,#1558A0,#0d3d72);color:#fff;font-weight:800">📊 실제 계좌현황</button>
+    <button class="tab active" data-tab="account" style="background:linear-gradient(135deg,var(--navy2),var(--ebony));color:var(--gold2);border:1px solid rgba(181,133,42,.28);font-weight:800">📊 실제 계좌현황</button>
   </div>
 
   <!-- ① 요약 -->
-  <section id="summary" class="pane active">
-    <div class="tax-disclosure" id="taxDisclosure"></div>
+  <section id="summary" class="pane">
+    <div class="tax-disclosure" id="taxDisclosure">
+    <div class="ttl">⚠️ 포트폴리오 구성 · 이 시뮬레이션이 반영하는 세금 / 반영하지 않는 세금</div>
+    <div style="margin-bottom:8px;font-size:11px;color:#7A4800">
+      <span style="background:#ddeefb;color:#1558A0;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">SCHD ₩10.0억</span>
+      <span style="background:#dcfce7;color:#1A6B3C;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">0052D0 ₩1.0억</span>
+      <span style="background:#d4ede8;color:#0D7065;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">JEPQ ₩2.0억</span>
+      <span style="background:#fdeedd;color:#B5711A;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">JEPI ₩1.0억</span>
+      <span style="background:#ede9fb;color:#4A3AA7;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">QQQ ₩5,000만</span>
+      <span style="background:#f1f5f9;color:#475569;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">TLT ₩5,000만</span>
+      합계 ₩15.0억 · 가수금 ₩13.0억 (장부 확정 필요)
+    </div>
+    <div class="tax-grid">
+      <div><div class="ok-h">✓ 반영됨</div>미국/해외 원천징수세 15% · 국내(0052D0) 세금 15.4% · 잉여배당 ETF 비중별 비례 재투자 · 기간 2026~2065 통일</div>
+      <div><div class="bad-h">✗ 미반영 (별도 검토 필요)</div>법인세 · 가수금 인정이자(4.6%) 과세 · 배당소득 종합과세 · 비상장주식 보충적평가법 · 증여세/상속세 · 환율변동 · ETF 실제 분배금 변동 · 0052D0 실측 분배율(신규상장 2025-05-20, 운용이력 짧음) · 외국납부세액공제 회수율</div>
+    </div>
+    <div style="margin-top:8px;padding-top:7px;border-top:1px solid rgba(181,133,42,.25);font-size:10px;color:#7A4800">
+      모든 수치는 참고용 추정치이며, 실제 세무 판단은 세무사·회계사 확인이 필요합니다.
+    </div></div>
     <div class="section-title"><h2>핵심 요약 대시보드</h2><div class="note">계산 기준: 기초자산 × 배당률 산정 · 잉여 세후배당 ETF 비중별 비례 재투자</div></div>
     <div class="grid kpis" id="kpis"></div>
     <div class="grid two">
@@ -218,7 +277,7 @@ th:first-child{background:linear-gradient(180deg,#f0f4fb,#e8eef8);z-index:2}
         <div class="chartbox"><div class="bars" id="assetBars"></div></div>
       </div>
       <div class="card">
-        <h2 style="margin-top:0;color:var(--navy);font-size:16px">핵심 이정표</h2>
+        <h2 style="margin-top:0;color:var(--ebony);font-size:15px;font-weight:800;display:flex;align-items:center;gap:10px"><span style="display:inline-block;width:3px;height:16px;background:linear-gradient(180deg,var(--gold2),var(--gold));border-radius:2px"></span>핵심 이정표</h2>
         <div id="milestones"></div>
       </div>
     </div>
@@ -227,6 +286,19 @@ th:first-child{background:linear-gradient(180deg,#f0f4fb,#e8eef8);z-index:2}
     <div class="card risk" style="margin-top:14px">
       <b>중요:</b> 이 앱은 투자·세무 의사결정 보조용입니다. 실제 법인세, 배당소득세, 가수금 인정이자, 증여세/상속세, 환율 변동, ETF 실제 분배금 변동은 세무사·투자전문가 확인이 필요합니다.
     </div>
+
+    <div class="section-title" style="margin-top:28px">
+      <h2>3-시나리오 비교</h2>
+      <div class="note">동일 투자원금·가정 · 위기 횟수·규모만 다름 · 헤더 버튼으로 시나리오 전환</div>
+    </div>
+    <div id="scenarioCompare"></div>
+
+    <div class="section-title" style="margin-top:22px">
+      <h2 id="crisisTitle">역사적 경제위기 보정 내역</h2>
+      <div class="note">실측 데이터 기반 주가 충격 + 배당 삭감 + 회복 궤적 반영 | 충격은 연초 자산에 즉시 적용, 배당 삭감은 회복기 동안 지수적 복원</div>
+    </div>
+    <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px" id="crisisCards"></div>
+
     <div class="section-title" style="margin-top:22px"><h2>검증 결과 · 실행 전 확인 필수 사항</h2></div>
     <div class="grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:12px" id="verifyCards"></div>
   </section>
@@ -269,7 +341,7 @@ th:first-child{background:linear-gradient(180deg,#f0f4fb,#e8eef8);z-index:2}
   </section>
 
   <!-- ⑥ 실제 계좌현황 -->
-  <section id="account" class="pane">
+  <section id="account" class="pane active">
     <div class="section-title">
       <h2>📊 실제 계좌현황 &amp; 시뮬레이션 비교</h2>
       <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap">
@@ -278,17 +350,20 @@ th:first-child{background:linear-gradient(180deg,#f0f4fb,#e8eef8);z-index:2}
         <span id="priceStatus" style="font-size:12px;color:var(--muted)"></span>
       </div>
     </div>
-    <!-- 환율 + 가격 표시 -->
     <div class="grid kpis" id="acctKpis" style="margin-bottom:14px"></div>
-    <!-- 수량 입력 -->
     <div class="card" style="margin-bottom:14px">
-      <h3 style="margin:0 0 12px;font-size:14px;color:var(--navy)">보유 수량 입력 <span style="font-weight:400;font-size:12px;color:var(--muted)">(변경 후 저장 버튼 클릭)</span></h3>
+      <h3 style="margin:0 0 12px;font-size:13px;color:var(--ebony);font-weight:800;letter-spacing:-.2px">보유 수량 입력 <span style="font-weight:400;font-size:12px;color:var(--muted)">(변경 후 저장 버튼 클릭)</span></h3>
       <div class="grid" style="grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px" id="acctInputs"></div>
     </div>
-    <!-- 요약 바 -->
     <div id="acctSummaryBar"></div>
-    <!-- 비교 테이블 -->
-    <div class="table-wrap"><table id="acctTable"></table></div>
+    <div class="table-wrap"><table id="acctTable">
+      <thead><tr style="background:rgba(7,17,32,.05)">
+        <th>종목</th><th>현재가</th><th>보유수량</th><th>평가금액</th><th>매입금액</th>
+        <th>평가손익(%)</th><th>예상연배당</th>
+        <th>2026년 시뮬자산</th><th>2026년 시뮬배당</th>
+        <th>실제 vs 시뮬 자산차이</th>
+      </tr></thead><tbody id="acctTbody"></tbody>
+    </table></div>
     <div class="card risk" style="margin-top:12px;font-size:12px">
       ⚠️ <b>시세 출처:</b> Yahoo Finance API (US ETF), Naver 증권 (TIGER). 지연 최대 15분. 환율은 Yahoo Finance USDKRW=X. 실시간 연동 실패 시 수동 입력란에 직접 현재가를 넣으세요.
     </div>
@@ -343,7 +418,7 @@ th:first-child{background:linear-gradient(180deg,#f0f4fb,#e8eef8);z-index:2}
       <button class="close" onclick="closeRepayModal()">✕</button>
     </div>
     <div class="modal-body">
-      <div style="background:#EBF3FB;border-radius:10px;padding:12px 15px;font-size:11.5px;color:#1558A0;line-height:1.9;margin-bottom:14px">
+      <div style="background:var(--pb);border-radius:10px;padding:12px 15px;font-size:11.5px;color:#1558A0;line-height:1.9;margin-bottom:14px">
         <b>운용 구조</b><br>
         <span style="background:#ddeefb;border:1px solid #b5d4f4;border-radius:5px;padding:1px 7px;font-weight:800;margin-right:4px">SCHD</span>분기 수령(3·6·9·12월) · 월평균 활용<br>
         <span style="background:#dcfce7;border:1px solid #a7f3d0;border-radius:5px;padding:1px 7px;font-weight:800;margin-right:4px">0052D0</span>분기 수령 · 원화 상환 재원<br>
@@ -362,49 +437,157 @@ th:first-child{background:linear-gradient(180deg,#f0f4fb,#e8eef8);z-index:2}
 
 <script>
 // ════════════════════════════════════════════════
-// 유앤김 법인 ETF 시뮬레이터 v5.1
+// 유앤김 법인 ETF 시뮬레이터 v5.2 — 비관 시나리오
 // 포트폴리오: SCHD(9.96억) + 0052D0(1억) + JEPQ(2억) + JEPI(1억) + QQQ(0.5억) + TLT(0.5억)
 // 가수금 ₩13억 · 만60세(2026) ~ 만99세(2065) · 40개년
-// 잉여 세후배당 → ETF 비중별 비례 재투자 (Excel 계산 원장 기준)
-// [검증수정 2026-07] 기간 표기 통일 2026~2065, 0052D0 신규상장 경고, 장기수치 민감도 주의
+// 역사적 경제위기 5회 보정: 주가하락(충격) + 배당삭감(회복기) 반영
 // ════════════════════════════════════════════════
 const START_YEAR = 2026, START_AGE = 60, END_AGE = 99;
 
+// ─── 시나리오별 경제위기 정의 ────────────────────────────────────
+// 출처: Bloomberg, S&P Dow Jones Indices, ETF.com 실측 데이터 기반
+// · SCHD 최대낙폭: 2020 -26%, 2022 -22.5%, 2008유사 -35%
+// · JEPQ 출시 2022 첫해 -31.7% / JEPI 2022 -18.2% (실측)
+// · QQQ 2022 -32.6%, 2008 -49.7%, COVID -28% (실측)
+// · TLT 2008 +33.8%, 2020 +27% / 금리인상기(2022) -31% 역전 주의
+// · 미국 주식 30%↑ 하락 평균 주기: 약 7~10년 (1928~2024 통계)
+const SCENARIOS = {
+  optimistic: {
+    label: '낙관', sublabel: '위기 없음', color: '#1A6B3C', bg: '#dcfce7',
+    desc: '40년간 경제위기 없이 복리 성장 — 수학적 상한선',
+    crises: []
+  },
+  base: {
+    label: '기본', sublabel: '3회 위기', color: '#1558A0', bg: '#ddeefb',
+    desc: '역사적 평균 주기(~10년) 기준 보통 규모 위기 3회',
+    crises: [
+      {
+        yr: 2032, name: '경기침체', severity: 'moderate',
+        basis: '역사적 평균 침체 참조 · S&P500 평균 -35%, SCHD 방어적',
+        drops: { schd:-.25, tiger:-.27, jepq:-.33, jepi:-.21, qqq:-.40, tlt:.14 },
+        divCut: { schd:-.10, tiger:-.12, jepq:-.20, jepi:-.17, qqq:-.05, tlt:0 },
+        recoveryYrs: 2
+      },
+      {
+        yr: 2044, name: '금융위기', severity: 'severe',
+        basis: '2008 GFC 수준 참조 · S&P500 -57%, QQQ -49.7% (실측)',
+        drops: { schd:-.35, tiger:-.37, jepq:-.44, jepi:-.27, qqq:-.50, tlt:.20 },
+        divCut: { schd:-.15, tiger:-.17, jepq:-.27, jepi:-.25, qqq:-.07, tlt:.02 },
+        recoveryYrs: 3
+      },
+      {
+        yr: 2057, name: '경기침체', severity: 'moderate',
+        basis: '후기 주기 침체 · 고령화·저성장 환경',
+        drops: { schd:-.24, tiger:-.26, jepq:-.31, jepi:-.20, qqq:-.37, tlt:.11 },
+        divCut: { schd:-.09, tiger:-.11, jepq:-.18, jepi:-.15, qqq:-.04, tlt:0 },
+        recoveryYrs: 2
+      },
+    ]
+  },
+  pessimistic: {
+    label: '비관', sublabel: '5회 위기', color: '#A83030', bg: '#fee2e2',
+    desc: '역사적 최빈도(~8년) 기준 · 심각한 위기 포함 5회',
+    crises: [
+      {
+        yr: 2028, name: '금리긴축 조정', severity: 'mild',
+        basis: '2022 Fed 금리인상 사이클 참조 · SCHD -22.5%, JEPQ -31.7% (실측) · TLT도 동반 하락',
+        drops: { schd:-.22, tiger:-.24, jepq:-.30, jepi:-.18, qqq:-.33, tlt:-.12 },
+        divCut: { schd:-.08, tiger:-.10, jepq:-.20, jepi:-.16, qqq:-.04, tlt:.02 },
+        recoveryYrs: 2
+      },
+      {
+        yr: 2035, name: '경기침체', severity: 'moderate',
+        basis: '2001~2002 IT버블 / 역사적 평균 침체 참조 · S&P500 -49% (2년 누적)',
+        drops: { schd:-.30, tiger:-.32, jepq:-.38, jepi:-.24, qqq:-.45, tlt:.16 },
+        divCut: { schd:-.12, tiger:-.14, jepq:-.22, jepi:-.20, qqq:-.06, tlt:0 },
+        recoveryYrs: 3
+      },
+      {
+        yr: 2041, name: '금융위기', severity: 'severe',
+        basis: '2008~2009 글로벌 금융위기 참조 · S&P500 -57%, QQQ -49.7% (실측)',
+        drops: { schd:-.38, tiger:-.40, jepq:-.48, jepi:-.30, qqq:-.55, tlt:.22 },
+        divCut: { schd:-.18, tiger:-.20, jepq:-.30, jepi:-.28, qqq:-.08, tlt:.03 },
+        recoveryYrs: 4
+      },
+      {
+        yr: 2050, name: '경기침체', severity: 'moderate',
+        basis: '중간 주기 침체 · 8~10년 주기 기준 · 2041 위기 후 9년',
+        drops: { schd:-.28, tiger:-.30, jepq:-.35, jepi:-.22, qqq:-.42, tlt:.14 },
+        divCut: { schd:-.10, tiger:-.12, jepq:-.20, jepi:-.18, qqq:-.05, tlt:0 },
+        recoveryYrs: 2
+      },
+      {
+        yr: 2060, name: '경기침체', severity: 'moderate',
+        basis: '후기 주기 침체 · 고령화·저성장·재정리스크 환경',
+        drops: { schd:-.25, tiger:-.27, jepq:-.32, jepi:-.20, qqq:-.38, tlt:.12 },
+        divCut: { schd:-.08, tiger:-.10, jepq:-.18, jepi:-.15, qqq:-.04, tlt:0 },
+        recoveryYrs: 2
+      },
+    ]
+  }
+};
+
+let currentScenario = 'pessimistic';
+// 현재 시나리오의 위기 목록 참조 (buildCrisisMap에서 사용)
+function getCrises() { return SCENARIOS[currentScenario].crises; }
+
+// 연도별 위기 영향 사전계산
+function buildCrisisMap(crises) {
+  const map = {};
+  for (let i = 0; i <= END_AGE - START_AGE; i++) {
+    const yr = START_YEAR + i;
+    map[yr] = { divMult:{schd:1,tiger:1,jepq:1,jepi:1,qqq:1,tlt:1}, isCrisis:false, crisis:null, isRecovery:false };
+  }
+  for (const c of crises) {
+    if (map[c.yr]) {
+      map[c.yr].isCrisis = true;
+      map[c.yr].crisis = c;
+      Object.keys(c.divCut).forEach(k => {
+        map[c.yr].divMult[k] = Math.min(map[c.yr].divMult[k], 1 + c.divCut[k]);
+      });
+    }
+    for (let r = 1; r <= c.recoveryYrs; r++) {
+      const ryr = c.yr + r;
+      if (map[ryr]) {
+        map[ryr].isRecovery = true;
+        const decay = Math.pow(0.45, r);
+        Object.keys(c.divCut).forEach(k => {
+          map[ryr].divMult[k] = Math.min(map[ryr].divMult[k], 1 + c.divCut[k] * decay);
+        });
+      }
+    }
+  }
+  return map;
+}
+
 const defaults = {
-  // SCHD — 코어 (20,198주 고정, 매도 없이 유지)
   schdPrincipal:  996_001_756,
   schdGrowth:     .05,
   schdDivRate:    .033,
-  schdDivGrowth:  .04,   // 원본 5% → 보수 가정 4%
+  schdDivGrowth:  .04,
   schdDivCap:     .12,
-  // 0052D0 — TIGER 코리아배당다우존스 (국내 코어)
   tigerPrincipal: 100_000_000,
   tigerGrowth:    .04,
   tigerDivRate:   .035,
-  tigerDivGrowth: .06,   // 원본 7% → 보수 가정 6%
+  tigerDivGrowth: .06,
   tigerDivCap:    .10,
-  // JEPQ — 나스닥 프리미엄 인컴
   jepqPrincipal:  200_000_000,
   jepqGrowth:     .03,
   jepqDivRate:    .10,
-  jepqDivChange:  -.015, // 원본 -0.5% → 보수 가정 -1.5%
+  jepqDivChange:  -.015,
   jepqDivFloor:   .07,
-  // JEPI — S&P500 프리미엄 인컴
   jepiPrincipal:  100_000_000,
   jepiGrowth:     .02,
   jepiDivRate:    .08,
-  jepiDivChange:  -.013, // 원본 -0.3% → 보수 가정 -1.3%
+  jepiDivChange:  -.013,
   jepiDivFloor:   .06,
-  // QQQ — 나스닥 성장
   qqqPrincipal:   50_000_000,
   qqqGrowth:      .07,
   qqqDivRate:     .0043,
-  qqqDivGrowth:   .107,  // 원본 11.7% → 보수 가정 10.7%
-  // TLT — 헤지 (장기국채)
+  qqqDivGrowth:   .107,
   tltPrincipal:   50_000_000,
   tltGrowth:      0,
   tltDivRate:     .0461,
-  // 공통
   usTax:          .15,
   krTax:          .154,
   loanInit:       1_300_000_000,
@@ -426,8 +609,6 @@ const eok = v => {
 };
 const pct = v => (v*100).toFixed(2) + '%';
 
-// ── 5년 단위 행 스타일 헬퍼 (모든 테이블 공통)
-// 연령대별 색상: 60대=파랑, 70대=초록, 80대=황금, 90대=보라
 function get5yr(age) {
   if (age % 5 !== 0) return { row:'', lbl:'' };
   const P = {
@@ -443,6 +624,7 @@ function get5yr(age) {
 
 function simulate() {
   const P = structuredClone(params);
+  const crisisMap = buildCrisisMap(getCrises());
   const out = [];
   let sB  = P.schdPrincipal,  kB  = P.tigerPrincipal,
       jqB = P.jepqPrincipal,  jiB = P.jepiPrincipal,
@@ -452,16 +634,29 @@ function simulate() {
   for (let i = 0; i <= END_AGE - START_AGE; i++) {
     const age = START_AGE + i;
     const yr  = START_YEAR + i;
+    const cm  = crisisMap[yr] || { divMult:{schd:1,tiger:1,jepq:1,jepi:1,qqq:1,tlt:1}, isCrisis:false, crisis:null, isRecovery:false };
 
-    // 배당률 계산
-    const sRate  = Math.min(P.schdDivRate  * Math.pow(1+P.schdDivGrowth,  i), P.schdDivCap);
-    const kRate  = Math.min(P.tigerDivRate * Math.pow(1+P.tigerDivGrowth, i), P.tigerDivCap);
-    const jqRate = Math.max(P.jepqDivRate  * Math.pow(1+P.jepqDivChange,  i), P.jepqDivFloor);
-    const jiRate = Math.max(P.jepiDivRate  * Math.pow(1+P.jepiDivChange,  i), P.jepiDivFloor);
-    const qqRate = P.qqqDivRate * Math.pow(1+P.qqqDivGrowth, i);
-    const tlRate = P.tltDivRate;
+    // ① 경제위기 충격: 연초 자산 가격 하락 적용
+    let preCrisisAsset = null;
+    if (cm.isCrisis && cm.crisis) {
+      preCrisisAsset = sB + kB + jqB + jiB + qqB + tlB;
+      sB  *= (1 + cm.crisis.drops.schd);
+      kB  *= (1 + cm.crisis.drops.tiger);
+      jqB *= (1 + cm.crisis.drops.jepq);
+      jiB *= (1 + cm.crisis.drops.jepi);
+      qqB *= (1 + cm.crisis.drops.qqq);
+      tlB *= (1 + cm.crisis.drops.tlt);
+    }
 
-    // 세후 배당 (US 15%, 국내 15.4%)
+    // ② 배당률 계산 (위기/회복기 배당 삭감 반영)
+    const dm = cm.divMult;
+    const sRate  = Math.min(P.schdDivRate  * Math.pow(1+P.schdDivGrowth,  i), P.schdDivCap)   * dm.schd;
+    const kRate  = Math.min(P.tigerDivRate * Math.pow(1+P.tigerDivGrowth, i), P.tigerDivCap)  * dm.tiger;
+    const jqRate = Math.max(P.jepqDivRate  * Math.pow(1+P.jepqDivChange,  i), P.jepqDivFloor) * dm.jepq;
+    const jiRate = Math.max(P.jepiDivRate  * Math.pow(1+P.jepiDivChange,  i), P.jepiDivFloor) * dm.jepi;
+    const qqRate = P.qqqDivRate * Math.pow(1+P.qqqDivGrowth, i) * dm.qqq;
+    const tlRate = P.tltDivRate * dm.tlt;
+
     const sNet  = sB  * sRate  * (1-P.usTax);
     const kNet  = kB  * kRate  * (1-P.krTax);
     const jqNet = jqB * jqRate * (1-P.usTax);
@@ -470,12 +665,10 @@ function simulate() {
     const tlNet = tlB * tlRate * (1-P.usTax);
     const total = sNet + kNet + jqNet + jiNet + qqNet + tlNet;
 
-    // 가수금 상환 — 세후 배당 전액 상환 (잉여 없음, 완납 후 재투자)
     const repay = Math.min(total, loan);
     loan = Math.max(loan - repay, 0);
     const surplus = total - repay;
 
-    // 잉여금 ETF 비중별 비례 재투자
     const totalP = sB + kB + jqB + jiB + qqB + tlB;
     const sEnd  = (sB  + surplus*(sB /totalP)) * (1+P.schdGrowth);
     const kEnd  = (kB  + surplus*(kB /totalP)) * (1+P.tigerGrowth);
@@ -486,6 +679,7 @@ function simulate() {
 
     const corpAsset = sEnd + kEnd + jqEnd + jiEnd + qqEnd + tlEnd;
     const corpValue = corpAsset * P.pbr;
+    const crisisLoss = preCrisisAsset ? (preCrisisAsset - (sB+kB+jqB+jiB+qqB+tlB)) : 0;
 
     out.push({
       i, age, yr,
@@ -496,7 +690,11 @@ function simulate() {
       repay, loan, surplus,
       corpAsset, corpValue,
       netCorpValue: Math.max(corpValue - loan, 0),
-      childShare: Math.max(corpValue - loan, 0) * (P.shareholders.A+P.shareholders.B+P.shareholders.C)
+      childShare: Math.max(corpValue - loan, 0) * (P.shareholders.A+P.shareholders.B+P.shareholders.C),
+      isCrisis: cm.isCrisis,
+      isRecovery: cm.isRecovery,
+      crisis: cm.crisis,
+      crisisLoss,
     });
 
     sB=sEnd; kB=kEnd; jqB=jqEnd; jiB=jiEnd; qqB=qqEnd; tlB=tlEnd;
@@ -504,10 +702,45 @@ function simulate() {
   return out;
 }
 
+function switchScenario(key) {
+  currentScenario = key;
+  rows = simulate();
+  renderAll();
+  // 버튼 활성 상태 갱신
+  document.querySelectorAll('.scenario-btn').forEach(b => {
+    const active = b.dataset.scenario === key;
+    const sc = SCENARIOS[b.dataset.scenario];
+    b.style.background = active ? sc.color : 'rgba(255,255,255,.09)';
+    b.style.color = active ? '#fff' : 'rgba(255,255,255,.75)';
+    b.style.border = active ? `1px solid ${sc.color}` : '1px solid rgba(255,255,255,.15)';
+    b.style.fontWeight = active ? '800' : '600';
+  });
+  toast(`${SCENARIOS[key].label} 시나리오 적용`);
+}
+
+// 3개 시나리오 동시 계산 (비교용)
+function simulateAll() {
+  const saved = currentScenario;
+  const results = {};
+  for (const key of Object.keys(SCENARIOS)) {
+    currentScenario = key;
+    results[key] = simulate();
+  }
+  currentScenario = saved;
+  return results;
+}
+
 function recalc() { rows = simulate(); renderAll(); toast('재계산 완료'); }
 
 function renderAll() {
   renderTaxDisclosure(); renderKpis(); renderBars(); renderDivBars(); renderMilestones();
+  renderCrisisCards();
+  // 위기 섹션 타이틀 업데이트
+  const ct = document.getElementById('crisisTitle');
+  if (ct) {
+    const sc = SCENARIOS[currentScenario];
+    ct.textContent = `역사적 경제위기 보정 내역 (${sc.label} · ${sc.sublabel})`;
+  }
   renderInputs(); renderTable(); renderCash(); renderShares(); renderVerifyCards();
   renderManualList(); renderMemoList();
 }
@@ -531,13 +764,9 @@ function renderTaxDisclosure() {
     </div>
     <div class="tax-grid">
       <div><div class="ok-h">✓ 반영됨</div>미국/해외 원천징수세 15% · 국내(0052D0) 세금 15.4% · 잉여배당 ETF 비중별 비례 재투자 · 기간 2026~2065 통일</div>
-      <div><div class="bad-h">✗ 미반영 (별도 검토 필요)</div>
-        법인세 · 가수금 인정이자(4.6%) 과세 · 배당소득 종합과세 ·
-        비상장주식 보충적평가법 · 증여세/상속세 · 환율변동 · ETF 실제 분배금 변동 ·
-        0052D0 실측 분배율(신규상장 2025-05-20, 운용이력 짧음) · 외국납부세액공제 회수율
-      </div>
+      <div><div class="bad-h">✗ 미반영 (별도 검토 필요)</div>법인세 · 가수금 인정이자(4.6%) 과세 · 배당소득 종합과세 · 비상장주식 보충적평가법 · 증여세/상속세 · 환율변동 · ETF 실제 분배금 변동 · 0052D0 실측 분배율(신규상장 2025-05-20, 운용이력 짧음) · 외국납부세액공제 회수율</div>
     </div>
-    <div style="margin-top:8px;padding-top:7px;border-top:1px solid #E8C87A;font-size:10px;color:#7A4800">
+    <div style="margin-top:8px;padding-top:7px;border-top:1px solid rgba(181,133,42,.25);font-size:10px;color:#7A4800">
       모든 수치는 참고용 추정치이며, 실제 세무 판단은 세무사·회계사 확인이 필요합니다.
     </div>`;
 }
@@ -546,63 +775,145 @@ function renderVerifyCards() {
   const el = document.getElementById('verifyCards');
   if (!el) return;
   const items = [
-    {
-      status:'warn', icon:'🏦', title:'가수금 장부 잔액 확정 필요',
-      body:`현재 시뮬레이션은 <b>₩13억 기준</b>으로 계산됩니다.<br>
-      기존 보고서의 11억/15억 시나리오와 다를 수 있으니 실제 장부 잔액을 확인 후 [가정] 탭에서 <b>초기 가수금</b>을 수정해 재계산하세요.`
-    },
-    {
-      status:'warn', icon:'📋', title:'0052D0 분배율 가정 재검증 필요',
-      body:`TIGER 코리아배당다우존스(0052D0)는 <b>상장일 2025-05-20</b>으로 운용 이력이 짧습니다.<br>
-      초기 분배율 3.5%, 연 7% 성장, 상한 10% 가정은 실측 분배금 누적 후 재검증이 필요합니다. 또한 미국배당다우존스형(458730)과는 성격이 다른 <b>국내 주식형</b> ETF입니다.`
-    },
-    {
-      status:'warn', icon:'📊', title:'장기 수치 과신 금지',
-      body:`만99세 법인자산 <b>약 ${eok(rows.at(-1)?.corpAsset||0)}</b>은 분배율 성장, 전액 재투자, 장기 복리 가정에 매우 민감합니다.<br>
-      실행 판단은 <b>가수금 완납 시점 · 초기 10~15년 현금흐름 · 세후 기준</b> 중심으로 하는 것이 안전합니다.`
-    },
-    {
-      status:'bad', icon:'⚖️', title:'세무 가정 세무사 확인 필요',
-      body:`미국 원천세 15% 외에 ① 국내 ETF 분배금 법인 수령 시 과세 방식, ② 외국납부세액공제 회수율, ③ 가수금 인정이자(현행 4.6%) 적용 여부, ④ 법인 배당소득 익금산입 처리는 <b>담당 세무사 확인 후</b> 가정치를 조정하세요.`
-    },
-    {
-      status:'ok', icon:'✅', title:'기간 표기 2026~2065 통일',
-      body:`원본 엑셀에서 일부 시트가 2027~2065로 표기된 오류를 수정했습니다.<br>
-      시뮬레이션 기준: <b>2026년(만60세) 투자 개시 → 2065년(만99세) · 40개년</b><br>
-      2026년 배당은 포트폴리오 구성 첫 해로 상환액 산정에 포함됩니다.`
-    },
-    {
-      status:'ok', icon:'🔄', title:'잉여배당 비례 재투자 로직 반영',
-      body:`세후 배당에서 가수금 상환분을 제외한 잉여금은 <b>각 ETF 원금 비중에 비례해 자동 재투자</b>됩니다.<br>
-      이는 엑셀 계산 원장(계산 시트)의 기말자산 산출 방식과 동일하며, 단순 유보금 적립 방식보다 복리 효과가 큽니다.`
-    },
+    { status:'warn', icon:'🏦', title:'가수금 장부 잔액 확정 필요', body:`현재 시뮬레이션은 <b>₩13억 기준</b>으로 계산됩니다.<br>기존 보고서의 11억/15억 시나리오와 다를 수 있으니 실제 장부 잔액을 확인 후 [가정] 탭에서 <b>초기 가수금</b>을 수정해 재계산하세요.` },
+    { status:'warn', icon:'📋', title:'0052D0 분배율 가정 재검증 필요', body:`TIGER 코리아배당다우존스(0052D0)는 <b>상장일 2025-05-20</b>으로 운용 이력이 짧습니다.<br>초기 분배율 3.5%, 연 7% 성장, 상한 10% 가정은 실측 분배금 누적 후 재검증이 필요합니다. 또한 미국배당다우존스형(458730)과는 성격이 다른 <b>국내 주식형</b> ETF입니다.` },
+    { status:'warn', icon:'📊', title:'장기 수치 과신 금지', body:`만99세 법인자산 <b>약 ${eok(rows.at(-1)?.corpAsset||0)}</b>은 분배율 성장, 전액 재투자, 장기 복리 가정에 매우 민감합니다.<br>실행 판단은 <b>가수금 완납 시점 · 초기 10~15년 현금흐름 · 세후 기준</b> 중심으로 하는 것이 안전합니다.` },
+    { status:'bad', icon:'⚖️', title:'세무 가정 세무사 확인 필요', body:`미국 원천세 15% 외에 ① 국내 ETF 분배금 법인 수령 시 과세 방식, ② 외국납부세액공제 회수율, ③ 가수금 인정이자(현행 4.6%) 적용 여부, ④ 법인 배당소득 익금산입 처리는 <b>담당 세무사 확인 후</b> 가정치를 조정하세요.` },
+    { status:'ok', icon:'✅', title:'기간 표기 2026~2065 통일', body:`원본 엑셀에서 일부 시트가 2027~2065로 표기된 오류를 수정했습니다.<br>시뮬레이션 기준: <b>2026년(만60세) 투자 개시 → 2065년(만99세) · 40개년</b><br>2026년 배당은 포트폴리오 구성 첫 해로 상환액 산정에 포함됩니다.` },
+    { status:'ok', icon:'🔄', title:'잉여배당 비례 재투자 로직 반영', body:`세후 배당에서 가수금 상환분을 제외한 잉여금은 <b>각 ETF 원금 비중에 비례해 자동 재투자</b>됩니다.<br>이는 엑셀 계산 원장(계산 시트)의 기말자산 산출 방식과 동일하며, 단순 유보금 적립 방식보다 복리 효과가 큽니다.` },
   ];
   el.innerHTML = items.map(({status,icon,title,body}) => `
     <div class="card" style="border-left:4px solid ${status==='ok'?'var(--green)':status==='warn'?'var(--amber)':'var(--red)'}">
-      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
-        <span style="font-size:18px">${icon}</span>
-        <span class="pill ${status}">${status==='ok'?'확인완료':status==='warn'?'주의':'필수확인'}</span>
-      </div>
-      <div style="font-size:12px;font-weight:800;color:var(--navy);margin-bottom:6px">${title}</div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px"><span style="font-size:18px">${icon}</span><span class="pill ${status}">${status==='ok'?'확인완료':status==='warn'?'주의':'필수확인'}</span></div>
+      <div style="font-size:12px;font-weight:800;color:var(--ebony);margin-bottom:6px">${title}</div>
       <div class="note" style="font-size:11px">${body}</div>
     </div>`).join('');
 }
 
 function renderKpis() {
+  const sc = SCENARIOS[currentScenario];
   const r0=rows[0], r10=rows[10], r20=rows[20], rLast=rows.at(-1);
   const cum = rows.reduce((a,r)=>a+r.total,0);
   const paid = rows.find(r=>r.loan===0);
+  const totalCrisisLoss = rows.reduce((a,r)=>a+r.crisisLoss,0);
   const paidCard = paid
     ? card('가수금 완납', `만${paid.age}세`, `${paid.yr}년 · ₩13억 완상환`, 'ok')
     : card('가수금 완납', '미도달', `잔액 ${eok(rLast.loan)}`, 'bad');
   document.getElementById('kpis').innerHTML = [
-    card('초기 월배당(세후)', eok(r0.monthly), '만60세 · 2026년'),
-    card('만70세 월배당', eok(r10.monthly), '2036년'),
-    card('만80세 월배당', eok(r20.monthly), '2046년'),
-    card('만99세 월배당', eok(rLast.monthly), '2065년'),
-    card('누계 세후배당(60~99세)', eok(cum), '40개년 합산 · 2026~2065'),
+    card('초기 월배당(세후)', eok(r0.monthly), `만60세 · 2026년`),
+    card('만70세 월배당', eok(r10.monthly), `2036년 · ${sc.label}`),
+    card('만80세 월배당', eok(r20.monthly), `2046년 · ${sc.label}`),
+    card('만99세 월배당', eok(rLast.monthly), `2065년 · ${sc.label}`),
+    totalCrisisLoss > 0
+      ? card('위기 누적 자산손실', eok(totalCrisisLoss), `${sc.sublabel} 충격 합산`, 'bad')
+      : card('위기 손실', '없음', '낙관 — 무위기 복리', 'ok'),
     paidCard,
   ].join('');
+
+  // 3-시나리오 비교표
+  renderScenarioCompare();
+}
+
+function renderScenarioCompare() {
+  const el = document.getElementById('scenarioCompare');
+  if (!el) return;
+  const all = simulateAll();
+  const keys = ['optimistic','base','pessimistic'];
+  const metrics = keys.map(k => {
+    const rs = all[k];
+    const sc = SCENARIOS[k];
+    const paid = rs.find(r=>r.loan===0);
+    const rLast = rs.at(-1);
+    const r10 = rs[10], r20 = rs[20];
+    const cum = rs.reduce((a,r)=>a+r.total,0);
+    const loss = rs.reduce((a,r)=>a+r.crisisLoss,0);
+    return { sc, paid, rLast, r10, r20, cum, loss };
+  });
+  const active = currentScenario;
+
+  // 가수금 완납 연도 범위로 지연 계산
+  const paidYears = metrics.map(m => m.paid?.yr || 9999);
+  const baseYr = paidYears[1]; // base 기준
+
+  el.innerHTML = `
+    <div style="overflow-x:auto;border-radius:13px;border:1px solid var(--line);box-shadow:var(--shadow-card)">
+    <table style="width:100%;border-collapse:collapse;background:var(--card);font-size:12px;font-variant-numeric:tabular-nums;min-width:520px">
+      <thead><tr style="background:rgba(7,17,32,.05)">
+        <th style="text-align:left;padding:10px 14px;font-size:10px;letter-spacing:.06em;text-transform:uppercase;color:var(--ebony)">지표</th>
+        ${keys.map(k => {
+          const sc = SCENARIOS[k];
+          const isActive = k === active;
+          return `<th style="padding:10px 12px;text-align:center;border-left:1px solid var(--line)">
+            <div style="display:inline-block;background:${sc.bg};color:${sc.color};border-radius:999px;padding:2px 10px;font-size:10px;font-weight:800;border:1.5px solid ${sc.color}20">${sc.label}</div>
+            <div style="font-size:9px;color:var(--muted2);margin-top:3px">${sc.sublabel}</div>
+          </th>`;
+        }).join('')}
+      </thead>
+      <tbody>
+        ${[
+          ['초기 월배당 (2026)', m => eok(all['optimistic'][0].monthly), false],
+          ['만70세 월배당 (2036)', m => eok(m.r10.monthly), false],
+          ['만80세 월배당 (2046)', m => eok(m.r20.monthly), false],
+          ['만99세 월배당 (2065)', m => eok(m.rLast.monthly), false],
+          ['가수금 완납', m => m.paid ? `만${m.paid.age}세 (${m.paid.yr})` : '미도달', true],
+          ['40년 누계 배당', m => eok(m.cum), false],
+          ['최종 법인자산 (2065)', m => eok(m.rLast.corpAsset), false],
+          ['자녀 순지분 (2065)', m => eok(m.rLast.childShare), false],
+          ['위기 누적 자산충격', m => m.loss > 0 ? eok(m.loss) : '없음', true],
+        ].map(([label, fn, highlight]) => {
+          // 첫 행은 모든 시나리오 동일이므로 simulateAll()의 첫 row를 공유
+          const vals = metrics.map(m => {
+            try { return label === '초기 월배당 (2026)' ? eok(all['optimistic'][0].monthly) : fn(m); } catch(e) { return '—'; }
+          });
+          return `<tr style="border-top:1px solid var(--line)">
+            <td style="padding:9px 14px;color:var(--muted);font-size:11px;font-weight:600">${label}</td>
+            ${keys.map((k,i) => {
+              const isActive = k === active;
+              return `<td style="padding:9px 12px;text-align:center;border-left:1px solid var(--line);${isActive?`background:${SCENARIOS[k].bg}20;font-weight:800;color:${SCENARIOS[k].color}`:''}">${vals[i]}</td>`;
+            }).join('')}
+          </tr>`;
+        }).join('')}
+      </tbody>
+    </table></div>`;
+}
+
+function renderCrisisCards() {
+  const el = document.getElementById('crisisCards');
+  if (!el) return;
+  const crises = getCrises();
+  const SMAP = { mild:'#B5711A', moderate:'#A83030', severe:'#7A0000' };
+  const SLBL = { mild:'경미', moderate:'중등', severe:'심각' };
+  if (crises.length === 0) {
+    el.innerHTML = `<div class="card" style="border-left:4px solid var(--green);grid-column:1/-1;text-align:center;padding:20px;color:var(--green);font-weight:700">
+      낙관 시나리오 — 40년간 경제위기 없이 복리 성장 (수학적 상한선)
+    </div>`;
+    return;
+  }
+  el.innerHTML = crises.map(c => {
+    const r = rows.find(row => row.yr === c.yr);
+    const afterAsset = r ? (r.sAsset+r.kAsset+r.jqAsset+r.jiAsset+r.qqAsset+r.tlAsset) : 0;
+    const color = SMAP[c.severity];
+    return `<div class="card" style="border-left:4px solid ${color};padding:14px 16px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+        <span style="background:${color};color:#fff;border-radius:999px;padding:2px 10px;font-size:10px;font-weight:800">${c.yr}년 위기</span>
+        <span style="font-weight:800;font-size:12px;color:#1C1510">${c.name}</span>
+        <span style="font-size:10px;color:var(--muted);background:rgba(7,17,32,.06);border-radius:5px;padding:1px 7px">${SLBL[c.severity]}</span>
+        ${r?`<span style="font-size:10px;color:var(--muted)">만${r.age}세</span>`:''}
+      </div>
+      <div style="font-size:10px;color:var(--muted2);margin-bottom:9px;line-height:1.6">📎 ${c.basis}</div>
+      <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:5px;margin-bottom:8px">
+        ${Object.entries(c.drops).map(([k,v]) => `
+          <div style="text-align:center;background:${v>0?'#dcfce7':'#fee2e2'};border-radius:6px;padding:4px 3px">
+            <div style="font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase">${k==='tiger'?'0052D0':k.toUpperCase()}</div>
+            <div style="font-size:11px;font-weight:900;color:${v>0?'#14532d':'#7f1d1d'}">${v>0?'+':''}${(v*100).toFixed(0)}%</div>
+          </div>`).join('')}
+      </div>
+      <div style="font-size:10.5px;color:var(--muted)">
+        배당삭감: SCHD ${(c.divCut.schd*100).toFixed(0)}% · JEPQ ${(c.divCut.jepq*100).toFixed(0)}% · JEPI ${(c.divCut.jepi*100).toFixed(0)}% · 회복기 ${c.recoveryYrs}년
+        ${r?` &nbsp;·&nbsp; 위기후 법인자산 <b style="color:${color}">${eok(afterAsset)}</b>` : ''}
+      </div>
+    </div>`;
+  }).join('');
 }
 
 function renderBars() {
@@ -617,10 +928,7 @@ function renderBars() {
     const segHtml = segs.map((v,si) =>
       `<div class="seg" style="height:${v/tot*100}%;background:${COLORS[si]}"></div>`
     ).join('');
-    return `<div class="barcol">
-      <div class="stack" title="만${ages[idx]}세 ${eok(r.corpAsset)}" style="height:${h}px">${segHtml}</div>
-      <div class="xlabel">${ages[idx]}</div>
-    </div>`;
+    return `<div class="barcol"><div class="stack" title="만${ages[idx]}세 ${eok(r.corpAsset)}" style="height:${h}px">${segHtml}</div><div class="xlabel">${ages[idx]}</div></div>`;
   }).join('');
 }
 
@@ -636,13 +944,7 @@ function renderDivBars() {
     const segHtml = nets.map((v,si) =>
       `<div style="height:100%;width:${v/tot*100}%;background:${COLORS[si]}"></div>`
     ).join('');
-    return `<div class="hbar-row">
-      <div class="hbar-label">만${ages[idx]}세</div>
-      <div class="hbar-track" style="position:relative">
-        <div style="height:100%;display:flex;width:${wPct}%">${segHtml}</div>
-        <div class="hbar-val">${eok(r.monthly)}/월</div>
-      </div>
-    </div>`;
+    return `<div class="hbar-row"><div class="hbar-label">만${ages[idx]}세</div><div class="hbar-track" style="position:relative"><div style="height:100%;display:flex;width:${wPct}%">${segHtml}</div><div class="hbar-val">${eok(r.monthly)}/월</div></div></div>`;
   }).join('');
 }
 
@@ -659,11 +961,7 @@ function renderMilestones() {
   document.getElementById('milestones').innerHTML = data.map(x => `
     <div class="milestone">
       <div class="badge">${x[0].replace('만','')}</div>
-      <div>
-        <div class="ms-year">${x[1]}년</div>
-        <div class="ms-title">${x[2]}</div>
-        <div class="ms-val">${x[3]}</div>
-      </div>
+      <div><div class="ms-year">${x[1]}년</div><div class="ms-title">${x[2]}</div><div class="ms-val">${x[3]}</div></div>
     </div>`).join('');
 }
 
@@ -727,13 +1025,7 @@ function setVal(k,v){ if(k.startsWith('sh_')) params.shareholders[k.slice(3)]=v;
 function renderInputs() {
   document.getElementById('inputs').innerHTML = inputSpec.map(([label,k,u,m]) => {
     if (k==='') return `<div class="input-group-title">${groupLabels[label]||label}</div>`;
-    return `<div class="card">
-      <div class="field">
-        <label>${label} (${u})</label>
-        <input type="number" data-k="${k}" data-m="${m}" value="${getVal(k)*m}" onchange="changeParam(this)">
-        <small>${u==='%'?'퍼센트 단위로 입력':u==='x'?'배수로 입력':'원 단위로 입력'}</small>
-      </div>
-    </div>`;
+    return `<div class="card"><div class="field"><label>${label} (${u})</label><input type="number" data-k="${k}" data-m="${m}" value="${getVal(k)*m}" onchange="changeParam(this)"><small>${u==='%'?'퍼센트 단위로 입력':u==='x'?'배수로 입력':'원 단위로 입력'}</small></div></div>`;
   }).join('');
 }
 
@@ -750,35 +1042,23 @@ function renderTable() {
   const f = document.getElementById('filter')?.value || 'all';
   const filtered = f==='all' ? rows : rows.filter(r => f==='90' ? r.age>=90 : (r.age>=+f && r.age<+f+10));
   document.getElementById('simTable').innerHTML =
-    `<thead><tr>
-      <th>나이</th><th>연도</th>
-      <th>SCHD자산</th><th>SCHD배당</th>
-      <th>0052D0자산</th><th>0052D0배당</th>
-      <th>JEPQ자산</th><th>JEPQ배당</th>
-      <th>JEPI자산</th><th>JEPI배당</th>
-      <th>QQQ자산</th><th>QQQ배당</th>
-      <th>TLT자산</th><th>TLT배당</th>
-      <th>월배당</th><th>가수금</th><th>법인자산</th><th>자녀지분(가수금공제)</th>
-    </tr></thead><tbody>` +
+    `<thead><tr><th>나이</th><th>연도</th><th>위기</th><th>SCHD자산</th><th>SCHD배당</th><th>0052D0자산</th><th>0052D0배당</th><th>JEPQ자산</th><th>JEPQ배당</th><th>JEPI자산</th><th>JEPI배당</th><th>QQQ자산</th><th>QQQ배당</th><th>TLT자산</th><th>TLT배당</th><th>월배당</th><th>가수금</th><th>법인자산</th><th>자녀지분(가수금공제)</th></tr></thead><tbody>` +
     filtered.map(r => {
       const {row, lbl} = get5yr(r.age);
       const loanCell = r.loan ? eok(r.loan) : '<b style="color:var(--green)">완납</b>';
-      return `<tr style="${row}">
-        <td style="${lbl}">${lbl?`<b>${r.age}세</b>`:r.age+'세'}</td>
-        <td style="${lbl}">${lbl?`<b>${r.yr}</b>`:r.yr}</td>
-        <td>${eok(r.sAsset)}</td><td>${eok(r.sNet)}</td>
-        <td>${eok(r.kAsset)}</td><td>${eok(r.kNet)}</td>
-        <td>${eok(r.jqAsset)}</td><td>${eok(r.jqNet)}</td>
-        <td>${eok(r.jiAsset)}</td><td>${eok(r.jiNet)}</td>
-        <td>${eok(r.qqAsset)}</td><td>${eok(r.qqNet)}</td>
-        <td>${eok(r.tlAsset)}</td><td>${eok(r.tlNet)}</td>
-        <td style="${lbl}"><b>${eok(r.monthly)}</b></td>
-        <td>${loanCell}</td>
-        <td style="${lbl}">${eok(r.corpAsset)}</td>
-        <td>${eok(r.childShare)}</td>
-      </tr>`;
-    }).join('') +
-    '</tbody>';
+      let rowStyle = row;
+      let crisisCell = '';
+      if (r.isCrisis) {
+        rowStyle = 'background:#FEF0F0;border-top:2.5px solid #A83030';
+        crisisCell = `<td style="text-align:center"><span style="background:#A83030;color:#fff;border-radius:4px;padding:1px 5px;font-size:9px;font-weight:800;white-space:nowrap">⚠️ ${r.crisis.name}</span></td>`;
+      } else if (r.isRecovery) {
+        rowStyle = rowStyle || 'background:#FFF8F0';
+        crisisCell = `<td style="text-align:center"><span style="color:#B5711A;font-size:9px;font-weight:700">회복중</span></td>`;
+      } else {
+        crisisCell = '<td></td>';
+      }
+      return `<tr style="${rowStyle}"><td style="${lbl}">${lbl?`<b>${r.age}세</b>`:r.age+'세'}</td><td style="${lbl}">${lbl?`<b>${r.yr}</b>`:r.yr}</td>${crisisCell}<td>${eok(r.sAsset)}</td><td>${eok(r.sNet)}</td><td>${eok(r.kAsset)}</td><td>${eok(r.kNet)}</td><td>${eok(r.jqAsset)}</td><td>${eok(r.jqNet)}</td><td>${eok(r.jiAsset)}</td><td>${eok(r.jiNet)}</td><td>${eok(r.qqAsset)}</td><td>${eok(r.qqNet)}</td><td>${eok(r.tlAsset)}</td><td>${eok(r.tlNet)}</td><td style="${lbl}"><b>${eok(r.monthly)}</b></td><td>${loanCell}</td><td style="${lbl}">${eok(r.corpAsset)}</td><td>${eok(r.childShare)}</td></tr>`;
+    }).join('') + '</tbody>';
 }
 
 function renderCash() {
@@ -792,26 +1072,16 @@ function renderCash() {
     card('최종 법인자산', eok(rLast.corpAsset), '만99세 · 2065년'),
   ].join('');
   document.getElementById('cashTable').innerHTML =
-    `<thead><tr>
-      <th>나이</th><th>연도</th>
-      <th>SCHD 월</th><th>0052D0 월</th><th>JEPQ 월</th><th>JEPI 월</th><th>QQQ 월</th><th>TLT 월</th>
-      <th>합계 월</th><th>월 상환</th><th>월 잉여</th><th>가수금 잔액</th>
-    </tr></thead><tbody>` +
+    `<thead><tr><th>나이</th><th>연도</th><th>위기</th><th>SCHD 월</th><th>0052D0 월</th><th>JEPQ 월</th><th>JEPI 월</th><th>QQQ 월</th><th>TLT 월</th><th>합계 월</th><th>월 상환</th><th>월 잉여</th><th>가수금 잔액</th></tr></thead><tbody>` +
     rows.map(r => {
       const {row, lbl} = get5yr(r.age);
       const loanCell = r.loan ? eok(r.loan) : '<b style="color:var(--green)">완납</b>';
-      return `<tr style="${row}">
-        <td style="${lbl}">${lbl?`<b>${r.age}세</b>`:r.age+'세'}</td>
-        <td style="${lbl}">${lbl?`<b>${r.yr}</b>`:r.yr}</td>
-        <td>${eok(r.sNet/12)}</td><td>${eok(r.kNet/12)}</td>
-        <td>${eok(r.jqNet/12)}</td><td>${eok(r.jiNet/12)}</td>
-        <td>${eok(r.qqNet/12)}</td><td>${eok(r.tlNet/12)}</td>
-        <td style="${lbl}"><b>${eok(r.monthly)}</b></td>
-        <td>${eok(r.repay/12)}</td><td>${eok(r.surplus/12)}</td>
-        <td>${loanCell}</td>
-      </tr>`;
-    }).join('') +
-    '</tbody>';
+      let rowStyle = row;
+      let crisisCell = '<td></td>';
+      if (r.isCrisis) { rowStyle = 'background:#FEF0F0;border-top:2.5px solid #A83030'; crisisCell = `<td style="text-align:center"><span style="background:#A83030;color:#fff;border-radius:4px;padding:1px 5px;font-size:9px;font-weight:800">⚠️위기</span></td>`; }
+      else if (r.isRecovery) { crisisCell = `<td style="text-align:center;color:#B5711A;font-size:9px;font-weight:700">회복중</td>`; }
+      return `<tr style="${rowStyle}"><td style="${lbl}">${lbl?`<b>${r.age}세</b>`:r.age+'세'}</td><td style="${lbl}">${lbl?`<b>${r.yr}</b>`:r.yr}</td>${crisisCell}<td>${eok(r.sNet/12)}</td><td>${eok(r.kNet/12)}</td><td>${eok(r.jqNet/12)}</td><td>${eok(r.jiNet/12)}</td><td>${eok(r.qqNet/12)}</td><td>${eok(r.tlNet/12)}</td><td style="${lbl}"><b>${eok(r.monthly)}</b></td><td>${eok(r.repay/12)}</td><td>${eok(r.surplus/12)}</td><td>${loanCell}</td></tr>`;
+    }).join('') + '</tbody>';
 }
 
 function renderShares() {
@@ -823,32 +1093,17 @@ function renderShares() {
       ({A:'자녀A',B:'자녀B',C:'자녀C',dad:'본인',mom:'배우자'})[k],
       eok(rLast.netCorpValue*v), (v*100).toFixed(1)+'% 지분 (가수금 공제)'
     )).join('') +
-    card('지분율 합계', (total*100).toFixed(1)+'%',
-      Math.abs(total-1)<.0001 ? '정상' : '⚠️ 100%가 아닙니다',
-      Math.abs(total-1)<.0001 ? 'ok' : 'bad');
+    card('지분율 합계', (total*100).toFixed(1)+'%', Math.abs(total-1)<.0001?'정상':'⚠️ 100%가 아닙니다', Math.abs(total-1)<.0001?'ok':'bad');
 
-  // 2026~2065 전체 (40년) 표시, 5년 단위 강조
   document.getElementById('shareTable').innerHTML =
     '<thead><tr><th>나이</th><th>연도</th><th>가수금 잔액</th><th>총 기업가치</th><th>순 기업가치<br><small style="font-weight:400;color:#888">(가수금 공제)</small></th><th>자녀A<br><small>30%</small></th><th>자녀B<br><small>25%</small></th><th>자녀C<br><small>25%</small></th><th>본인<br><small>10%</small></th><th>배우자<br><small>10%</small></th></tr></thead><tbody>' +
     rows.map(r => {
       const {row, lbl} = get5yr(r.age);
       const loanCell = r.loan ? eok(r.loan) : '<b style="color:var(--green)">완납</b>';
-      return `<tr style="${row}">
-        <td style="${lbl}">${lbl?`<b>${r.age}세</b>`:r.age+'세'}</td>
-        <td style="${lbl}">${lbl?`<b>${r.yr}</b>`:r.yr}</td>
-        <td>${loanCell}</td>
-        <td style="color:#888">${eok(r.corpValue)}</td>
-        <td style="${lbl};color:var(--navy)"><b>${eok(r.netCorpValue)}</b></td>
-        <td style="${lbl}">${eok(r.netCorpValue*sh.A)}</td>
-        <td style="${lbl}">${eok(r.netCorpValue*sh.B)}</td>
-        <td style="${lbl}">${eok(r.netCorpValue*sh.C)}</td>
-        <td>${eok(r.netCorpValue*sh.dad)}</td>
-        <td>${eok(r.netCorpValue*sh.mom)}</td>
-      </tr>`;
+      return `<tr style="${row}"><td style="${lbl}">${lbl?`<b>${r.age}세</b>`:r.age+'세'}</td><td style="${lbl}">${lbl?`<b>${r.yr}</b>`:r.yr}</td><td>${loanCell}</td><td style="color:#888">${eok(r.corpValue)}</td><td style="${lbl};color:var(--ebony)"><b>${eok(r.netCorpValue)}</b></td><td style="${lbl}">${eok(r.netCorpValue*sh.A)}</td><td style="${lbl}">${eok(r.netCorpValue*sh.B)}</td><td style="${lbl}">${eok(r.netCorpValue*sh.C)}</td><td>${eok(r.netCorpValue*sh.dad)}</td><td>${eok(r.netCorpValue*sh.mom)}</td></tr>`;
     }).join('') + '</tbody>';
 }
 
-// ── 월별 상환계획 모달
 function openRepayPlan() {
   document.getElementById('repayModal').classList.add('open');
   renderRepayPlan();
@@ -870,8 +1125,6 @@ function renderRepayPlan() {
     const mQqq   = r.qqNet / 12;
     const mTlt   = r.tlNet / 12;
     const mTotal = mSchd + mTiger + mJepq + mJepi + mQqq + mTlt;
-
-    // 세후 배당 전액 상환 — 월별 시뮬레이션
     let yearRepay = 0, paidMonth = null;
     let bal = loanBal;
     for (let m = 1; m <= 12; m++) {
@@ -882,49 +1135,20 @@ function renderRepayPlan() {
       if (bal === 0 && paidMonth === null) paidMonth = m;
     }
     loanBal = bal;
-    planRows.push({
-      yr: r.yr, age: r.age,
-      mSchd, mTiger, mJepq, mJepi, mQqq, mTlt, mTotal,
-      mRepay: yearRepay / 12,
-      mSurplus: mTotal - yearRepay / 12,
-      yearRepay, loanBal, paidMonth
-    });
+    planRows.push({ yr: r.yr, age: r.age, mSchd, mTiger, mJepq, mJepi, mQqq, mTlt, mTotal, mRepay: yearRepay / 12, mSurplus: mTotal - yearRepay / 12, yearRepay, loanBal, paidMonth });
   }
   const paidRow = planRows.find(r => r.loanBal === 0);
-
   document.getElementById('repayTable').innerHTML =
-    `<thead><tr>
-      <th>나이</th><th>연도</th>
-      <th>SCHD 월</th><th>0052D0 월</th><th>JEPQ+JEPI 월</th><th>QQQ+TLT 월</th>
-      <th>월 배당합계</th><th>월 상환</th><th>연말 가수금 잔액</th>
-    </tr></thead><tbody>` +
+    `<thead><tr><th>나이</th><th>연도</th><th>SCHD 월</th><th>0052D0 월</th><th>JEPQ+JEPI 월</th><th>QQQ+TLT 월</th><th>월 배당합계</th><th>월 상환</th><th>연말 가수금 잔액</th></tr></thead><tbody>` +
     planRows.map(r => {
       const done = r.loanBal === 0;
       const {row, lbl} = get5yr(r.age);
       const rowStyle = done ? 'background:#dcfce7' : row;
-      const ageCell  = lbl ? `<b style="font-size:13px">${r.age}세</b>` : r.age+'세';
-      const yrCell   = lbl ? `<b>${r.yr}</b>` : r.yr;
-      const balCell  = done
-        ? `<b style="color:#14532d;font-size:12px">완납 ✓ ${r.paidMonth}월</b>`
-        : eok(r.loanBal);
-      return `<tr style="${rowStyle}">
-        <td style="${lbl}">${ageCell}</td>
-        <td style="${lbl}">${yrCell}</td>
-        <td>${eok(r.mSchd)}</td>
-        <td>${eok(r.mTiger)}</td>
-        <td>${eok(r.mJepq+r.mJepi)}</td>
-        <td>${eok(r.mQqq+r.mTlt)}</td>
-        <td style="${lbl};font-size:12px">${eok(r.mTotal)}</td>
-        <td>${eok(r.mRepay)}</td>
-        <td>${balCell}</td>
-      </tr>`;
+      const balCell  = done ? `<b style="color:#14532d;font-size:12px">완납 ✓ ${r.paidMonth}월</b>` : eok(r.loanBal);
+      return `<tr style="${rowStyle}"><td style="${lbl}">${lbl?`<b style="font-size:13px">${r.age}세</b>`:r.age+'세'}</td><td style="${lbl}">${lbl?`<b>${r.yr}</b>`:r.yr}</td><td>${eok(r.mSchd)}</td><td>${eok(r.mTiger)}</td><td>${eok(r.mJepq+r.mJepi)}</td><td>${eok(r.mQqq+r.mTlt)}</td><td style="${lbl};font-size:12px">${eok(r.mTotal)}</td><td>${eok(r.mRepay)}</td><td>${balCell}</td></tr>`;
     }).join('') + '</tbody>';
-
   document.getElementById('repayResult').innerHTML = paidRow
-    ? `<div style="background:#dcfce7;border:1px solid #a7f3d0;border-radius:10px;padding:11px 15px;font-size:12.5px;color:#14532d;font-weight:700">
-        🎉 가수금 완납 예상: ${paidRow.yr}년 ${paidRow.paidMonth}월 (만${paidRow.age}세)
-        &nbsp;·&nbsp; 2027년 1월부터 ${Math.round((paidRow.yr - 2027)*12 + paidRow.paidMonth)}개월 소요
-       </div>`
+    ? `<div style="background:#dcfce7;border:1px solid #a7f3d0;border-radius:10px;padding:11px 15px;font-size:12.5px;color:#14532d;font-weight:700">🎉 가수금 완납 예상: ${paidRow.yr}년 ${paidRow.paidMonth}월 (만${paidRow.age}세) &nbsp;·&nbsp; 2027년 1월부터 ${Math.round((paidRow.yr - 2027)*12 + paidRow.paidMonth)}개월 소요</div>`
     : `<div style="background:#fee2e2;border-radius:10px;padding:10px 14px;font-size:12px;color:#7f1d1d">⚠️ 시뮬레이션 기간 내 완납 미도달 — 상환액 또는 투자원금을 조정하세요.</div>`;
 }
 
@@ -936,47 +1160,24 @@ function switchMT(id, el){
   el.classList.add('active');
   document.getElementById('mt-'+id).classList.add('active');
 }
-
 function saveManualRecord(){
-  const rec = {
-    id: Date.now(),
-    year: +mYear.value, month: +mMonth.value,
-    schd:  +mSchd.value||0,  tiger: +mTiger.value||0,
-    jepq:  +mJepq.value||0,  jepi:  +mJepi.value||0,
-    qqq:   +mQqq.value||0,   tlt:   +mTlt.value||0,
-    repay: +mRepay.value||0,
-    usd:   +mUsd.value||1380,
-  };
+  const rec = { id: Date.now(), year: +mYear.value, month: +mMonth.value, schd: +mSchd.value||0, tiger: +mTiger.value||0, jepq: +mJepq.value||0, jepi: +mJepi.value||0, qqq: +mQqq.value||0, tlt: +mTlt.value||0, repay: +mRepay.value||0, usd: +mUsd.value||1380 };
   if (!rec.year || rec.month<1 || rec.month>12) { toast('연도/월을 확인하세요'); return; }
-  manual.unshift(rec);
-  saveLocal(false);
-  renderManualList();
-  toast('수동 기록 저장 완료');
+  manual.unshift(rec); saveLocal(false); renderManualList(); toast('수동 기록 저장 완료');
 }
-
 function renderManualList(){
   const el = document.getElementById('manualList');
   if (!el) return;
   el.innerHTML = manual.length ? manual.slice(0,20).map(r => {
     const totalDiv = (r.schd||0)+(r.tiger||0)+(r.jepq||0)+(r.jepi||0)+(r.qqq||0)+(r.tlt||0);
-    return `<div class="milestone">
-      <div class="badge">${r.month}월</div>
-      <div>
-        <b>${r.year}년</b>
-        <div class="note">배당합계 ${eok(totalDiv)} · 상환 ${eok(r.repay)}</div>
-      </div>
-    </div>`;
+    return `<div class="milestone"><div class="badge">${r.month}월</div><div><b>${r.year}년</b><div class="note">배당합계 ${eok(totalDiv)} · 상환 ${eok(r.repay)}</div></div></div>`;
   }).join('') : '기록 없음';
 }
-
 function saveMemo(){
   const title = memoTitle.value.trim(), content = memoContent.value.trim();
   if (!title) { toast('제목을 입력하세요'); return; }
   memos.unshift({ id: Date.now(), title, content, createdAt: new Date().toISOString() });
-  saveLocal(false);
-  memoTitle.value=''; memoContent.value='';
-  renderMemoList();
-  toast('메모 저장 완료');
+  saveLocal(false); memoTitle.value=''; memoContent.value=''; renderMemoList(); toast('메모 저장 완료');
 }
 function renderMemoList(){
   const el = document.getElementById('memoListBox');
@@ -1000,8 +1201,7 @@ function loadLocal(){
     if (!raw) return;
     const d = JSON.parse(raw);
     if (d.params) params = { ...structuredClone(defaults), ...d.params, shareholders: { ...defaults.shareholders, ...(d.params.shareholders||{}) } };
-    manual = d.manual || [];
-    memos  = d.memos  || [];
+    manual = d.manual || []; memos = d.memos || [];
     if (d.savedAt) document.getElementById('saveStatus').textContent = '이 기기 저장: ' + new Date(d.savedAt).toLocaleString('ko-KR');
   } catch(e) { console.warn(e); }
 }
@@ -1016,19 +1216,16 @@ async function copyFullCode(){
     ta.value = '<!doctype html>\n' + document.documentElement.outerHTML;
     ta.style.cssText = 'position:fixed;opacity:0;top:0;left:0';
     document.body.appendChild(ta); ta.select();
-    document.execCommand('copy');
-    document.body.removeChild(ta);
+    document.execCommand('copy'); document.body.removeChild(ta);
     toast('전체 코드 복사 완료 ✓');
   }
 }
-
 function exportData(){
   const data = { params, manual, memos, exportedAt: new Date().toISOString(), version:'v5', note:'유앤김 법인 ETF 시뮬레이터 v5 백업 (SCHD+0052D0+JEPQ+JEPI+QQQ+TLT)' };
   const blob = new Blob([JSON.stringify(data,null,2)], { type:'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href=url; a.download=`corp-sim-v5-${new Date().toISOString().slice(0,10)}.json`;
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  URL.revokeObjectURL(url);
+  document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
   toast('백업 파일 다운로드 완료');
 }
 function importData(input){
@@ -1039,8 +1236,7 @@ function importData(input){
       const d = JSON.parse(e.target.result);
       if (d.params) params = { ...structuredClone(defaults), ...d.params, shareholders: { ...defaults.shareholders, ...(d.params.shareholders||{}) } };
       manual = d.manual || []; memos = d.memos || [];
-      saveLocal(false); rows = simulate(); renderAll();
-      toast('백업 파일 불러오기 완료');
+      saveLocal(false); rows = simulate(); renderAll(); toast('백업 파일 불러오기 완료');
     } catch(err) { toast('파일을 읽을 수 없습니다'); }
   };
   reader.readAsText(file); input.value='';
@@ -1073,17 +1269,14 @@ const ACCT_ETFS = [
   { key:'qqq',   label:'QQQ',           ticker:'QQQ',       currency:'USD', simAsset:'qqAsset', simDiv:'qqNet', divRate: params.qqqDivRate   },
   { key:'tlt',   label:'TLT',           ticker:'TLT',       currency:'USD', simAsset:'tlAsset', simDiv:'tlNet', divRate: params.tltDivRate   },
 ];
-
-// 링크 정보 (외부 시세 조회 바로가기)
 const ACCT_LINKS = {
-  SCHD:      { yf:'https://finance.yahoo.com/quote/SCHD',  naver:'https://finance.naver.com/world/sise.naver?symbol=SCHD.O', gf:'https://www.google.com/finance/quote/SCHD:NASDAQ' },
-  '458730.KS':{ yf:'https://finance.yahoo.com/quote/458730.KS', naver:'https://finance.naver.com/item/main.naver?code=458730', gf:'https://www.google.com/finance/quote/458730:KRX' },
-  JEPQ:      { yf:'https://finance.yahoo.com/quote/JEPQ',  naver:'https://finance.naver.com/world/sise.naver?symbol=JEPQ.O', gf:'https://www.google.com/finance/quote/JEPQ:NASDAQ' },
-  JEPI:      { yf:'https://finance.yahoo.com/quote/JEPI',  naver:'https://finance.naver.com/world/sise.naver?symbol=JEPI.O', gf:'https://www.google.com/finance/quote/JEPI:NYSEARCA' },
-  QQQ:       { yf:'https://finance.yahoo.com/quote/QQQ',   naver:'https://finance.naver.com/world/sise.naver?symbol=QQQ.O',  gf:'https://www.google.com/finance/quote/QQQ:NASDAQ' },
-  TLT:       { yf:'https://finance.yahoo.com/quote/TLT',   naver:'https://finance.naver.com/world/sise.naver?symbol=TLT.O',  gf:'https://www.google.com/finance/quote/TLT:NASDAQ' },
+  SCHD:        { yf:'https://finance.yahoo.com/quote/SCHD',       naver:'https://finance.naver.com/world/sise.naver?symbol=SCHD.O',      gf:'https://www.google.com/finance/quote/SCHD:NASDAQ' },
+  '458730.KS': { yf:'https://finance.yahoo.com/quote/458730.KS', naver:'https://finance.naver.com/item/main.naver?code=458730',         gf:'https://www.google.com/finance/quote/458730:KRX' },
+  JEPQ:        { yf:'https://finance.yahoo.com/quote/JEPQ',       naver:'https://finance.naver.com/world/sise.naver?symbol=JEPQ.O',      gf:'https://www.google.com/finance/quote/JEPQ:NASDAQ' },
+  JEPI:        { yf:'https://finance.yahoo.com/quote/JEPI',       naver:'https://finance.naver.com/world/sise.naver?symbol=JEPI.O',      gf:'https://www.google.com/finance/quote/JEPI:NYSEARCA' },
+  QQQ:         { yf:'https://finance.yahoo.com/quote/QQQ',        naver:'https://finance.naver.com/world/sise.naver?symbol=QQQ.O',       gf:'https://www.google.com/finance/quote/QQQ:NASDAQ' },
+  TLT:         { yf:'https://finance.yahoo.com/quote/TLT',        naver:'https://finance.naver.com/world/sise.naver?symbol=TLT.O',       gf:'https://www.google.com/finance/quote/TLT:NASDAQ' },
 };
-
 let acctHoldings = JSON.parse(localStorage.getItem('acctHoldings_v2') || 'null') || {};
 let livePrices = {};
 let liveRate = 0;
@@ -1094,7 +1287,6 @@ function _acctGet(key, field) {
   if (el) return +el.value || 0;
   return acctHoldings[key]?.[field] || 0;
 }
-
 function saveAccountHoldings() {
   ACCT_ETFS.forEach(e => {
     if (!acctHoldings[e.key]) acctHoldings[e.key] = {};
@@ -1107,37 +1299,38 @@ function saveAccountHoldings() {
   renderAccountTable();
 }
 
+const ACCT_COLORS = { schd:'var(--blue)', tiger:'var(--green)', jepq:'var(--teal)', jepi:'#eda100', qqq:'var(--purple)', tlt:'var(--muted2)' };
+
 function renderAccountInputs() {
-  const COLORS = { schd:'var(--blue)', tiger:'var(--green)', jepq:'var(--teal)', jepi:'#eda100', qqq:'var(--purple)', tlt:'var(--muted2)' };
   document.getElementById('acctInputs').innerHTML = ACCT_ETFS.map(e => {
     const h = acctHoldings[e.key] || {};
     const lnk = ACCT_LINKS[e.ticker] || {};
     const liveP = livePrices[e.ticker];
     const liveBadge = liveP
       ? `<span style="font-size:10px;color:${liveP.chg>=0?'#16a34a':'#dc2626'};font-weight:700">${liveP.chg>=0?'▲':'▼'}${Math.abs(liveP.chg).toFixed(2)}% 실시간</span>`
-      : `<span style="font-size:10px;color:var(--muted)">미조회</span>`;
-    return `
-    <div style="background:#f7f9ff;border-radius:12px;padding:14px 15px;border:2px solid ${COLORS[e.key]}22;border-top:3px solid ${COLORS[e.key]}">
+      : `<span style="font-size:10px;color:var(--muted2)">미조회</span>`;
+    const c = ACCT_COLORS[e.key];
+    return `<div style="background:var(--card2);border-radius:11px;padding:14px 15px;border:1px solid var(--line);border-top:3px solid ${c}">
       <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
-        <b style="color:${COLORS[e.key]};font-size:13px">${e.label}</b>
-        <div style="display:flex;gap:5px">
-          ${lnk.yf?`<a href="${lnk.yf}" target="_blank" style="font-size:10px;color:#1558A0;text-decoration:none;border:1px solid #1558A022;border-radius:4px;padding:2px 5px">YF</a>`:''}
-          ${lnk.naver?`<a href="${lnk.naver}" target="_blank" style="font-size:10px;color:#03c75a;text-decoration:none;border:1px solid #03c75a22;border-radius:4px;padding:2px 5px">네이버</a>`:''}
-          ${lnk.gf?`<a href="${lnk.gf}" target="_blank" style="font-size:10px;color:#ea4335;text-decoration:none;border:1px solid #ea433522;border-radius:4px;padding:2px 5px">구글</a>`:''}
+        <b style="color:${c};font-size:13px">${e.label}</b>
+        <div style="display:flex;gap:4px">
+          ${lnk.yf?`<a href="${lnk.yf}" target="_blank" style="font-size:10px;color:#1558A0;text-decoration:none;border:1px solid rgba(21,88,160,.2);border-radius:4px;padding:2px 5px;background:#fff">YF</a>`:''}
+          ${lnk.naver?`<a href="${lnk.naver}" target="_blank" style="font-size:10px;color:#03c75a;text-decoration:none;border:1px solid rgba(3,199,90,.2);border-radius:4px;padding:2px 5px;background:#fff">네이버</a>`:''}
+          ${lnk.gf?`<a href="${lnk.gf}" target="_blank" style="font-size:10px;color:#ea4335;text-decoration:none;border:1px solid rgba(234,67,53,.2);border-radius:4px;padding:2px 5px;background:#fff">구글</a>`:''}
         </div>
       </div>
       ${liveBadge}
-      <div style="font-size:11px;color:var(--muted);margin:8px 0 3px">보유수량 (주)</div>
+      <div style="font-size:10px;color:var(--muted);margin:8px 0 3px;text-transform:uppercase;letter-spacing:.06em;font-weight:700">보유수량 (주)</div>
       <input id="acct_qty_${e.key}" type="number" min="0" step="0.001" value="${h.qty||0}"
-        style="width:100%;padding:6px 9px;border:1px solid var(--line);border-radius:6px;font-size:13px;font-family:var(--font);box-sizing:border-box;margin-bottom:6px"
+        style="width:100%;padding:7px 9px;border:1.5px solid var(--line);border-radius:6px;font-size:13px;font-family:var(--font);box-sizing:border-box;margin-bottom:6px;background:var(--card)"
         oninput="renderAccountTable()">
-      <div style="font-size:11px;color:var(--muted);margin-bottom:3px">평균매입가 (${e.currency==='USD'?'$':'₩'})</div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.06em;font-weight:700">평균매입가 (${e.currency==='USD'?'$':'₩'})</div>
       <input id="acct_avg_${e.key}" type="number" min="0" step="0.01" value="${h.avg||0}"
-        style="width:100%;padding:6px 9px;border:1px solid var(--line);border-radius:6px;font-size:13px;font-family:var(--font);box-sizing:border-box;margin-bottom:6px"
+        style="width:100%;padding:7px 9px;border:1.5px solid var(--line);border-radius:6px;font-size:13px;font-family:var(--font);box-sizing:border-box;margin-bottom:6px;background:var(--card)"
         oninput="renderAccountTable()">
-      <div style="font-size:11px;color:#f59e0b;margin-bottom:3px">현재가 수동입력 (자동조회 실패 시)</div>
+      <div style="font-size:10px;color:var(--amber);margin-bottom:3px;text-transform:uppercase;letter-spacing:.06em;font-weight:700">현재가 수동입력</div>
       <input id="acct_manual_${e.key}" type="number" min="0" step="0.01" value="${h.manual||''}" placeholder="자동조회 우선"
-        style="width:100%;padding:6px 9px;border:1px solid #f59e0b55;border-radius:6px;font-size:13px;font-family:var(--font);box-sizing:border-box"
+        style="width:100%;padding:7px 9px;border:1.5px solid rgba(181,133,42,.35);border-radius:6px;font-size:13px;font-family:var(--font);box-sizing:border-box;background:var(--card)"
         oninput="renderAccountTable()">
     </div>`;
   }).join('');
@@ -1146,73 +1339,48 @@ function renderAccountInputs() {
 
 async function fetchLivePrices() {
   const st = document.getElementById('priceStatus');
-  st.innerHTML = '⏳ 시세 조회 중 (최대 20초)...';
-  st.style.color = 'var(--muted)';
-
-  // ── 1. 환율: open.er-api.com (CORS * 확인, 무료 키 불필요)
+  st.innerHTML = '⏳ 시세 조회 중 (최대 20초)...'; st.style.color = 'var(--muted)';
   try {
     const rr = await fetch('https://open.er-api.com/v6/latest/USD');
     if (rr.ok) { const d = await rr.json(); liveRate = d.rates?.KRW || 0; }
   } catch(e) {}
-
-  // ── 2. 주가: Yahoo Finance v8/chart → proxy.cors.sh (CORS *, 키 불필요)
   const PROXY = 'https://proxy.cors.sh/https://query1.finance.yahoo.com/v8/finance/chart/';
   const fetchTicker = async (ticker) => {
     const ctrl = new AbortController();
     const tid  = setTimeout(() => ctrl.abort(), 15000);
     try {
-      const res = await fetch(`${PROXY}${ticker}?range=1d&interval=1d`, {
-        signal: ctrl.signal,
-        headers: { 'origin': 'https://yjjn2005.github.io' }
-      });
+      const res = await fetch(`${PROXY}${ticker}?range=1d&interval=1d`, { signal: ctrl.signal, headers: { 'origin': 'https://yjjn2005.github.io' } });
       clearTimeout(tid);
       if (!res.ok) return null;
       const json = await res.json();
       const meta = json?.chart?.result?.[0]?.meta;
       if (!meta?.regularMarketPrice) return null;
-      return {
-        price: meta.regularMarketPrice,
-        chg:   meta.regularMarketChangePercent || 0,
-        prev:  meta.previousClose || meta.chartPreviousClose || 0,
-      };
+      return { price: meta.regularMarketPrice, chg: meta.regularMarketChangePercent || 0, prev: meta.previousClose || meta.chartPreviousClose || 0 };
     } catch(e) { clearTimeout(tid); return null; }
   };
-
   const tickerList = ACCT_ETFS.map(e => e.ticker);
   const results = await Promise.allSettled(tickerList.map(t => fetchTicker(t)));
-  results.forEach((r, i) => {
-    if (r.status === 'fulfilled' && r.value) livePrices[tickerList[i]] = r.value;
-  });
-
-  // ── 3. 결과 처리 + 캐시
+  results.forEach((r, i) => { if (r.status === 'fulfilled' && r.value) livePrices[tickerList[i]] = r.value; });
   lastFetchTime = new Date();
   const timeStr = `${lastFetchTime.getHours()}:${String(lastFetchTime.getMinutes()).padStart(2,'0')}`;
   const cnt = Object.keys(livePrices).length;
-
   if (cnt > 0 || liveRate) {
-    // 성공 결과 localStorage 캐시
     localStorage.setItem('livePriceCache', JSON.stringify({ livePrices, liveRate, fetchedAt: lastFetchTime.toISOString() }));
     const rateStr = liveRate ? Math.round(liveRate).toLocaleString('ko-KR') + '원' : '—';
-    const note    = cnt < tickerList.length ? ` <span style="color:#d97706">(${tickerList.length - cnt}종목 수동입력 필요)</span>` : '';
+    const note    = cnt < tickerList.length ? ` <span style="color:var(--amber)">(${tickerList.length - cnt}종목 수동입력 필요)</span>` : '';
     st.innerHTML  = `✅ ${cnt}/${tickerList.length}종목 조회 · 환율 ${rateStr} · ${timeStr}${note}`;
-    st.style.color = cnt === tickerList.length ? '#16a34a' : '#d97706';
-    renderAccountKpis();
-    renderAccountInputs();
+    st.style.color = cnt === tickerList.length ? '#16a34a' : 'var(--amber)';
+    renderAccountKpis(); renderAccountInputs();
   } else {
-    // 완전 실패 → 캐시 로드
     const cached = JSON.parse(localStorage.getItem('livePriceCache') || 'null');
     if (cached) {
-      livePrices = cached.livePrices || {};
-      liveRate   = cached.liveRate   || 0;
+      livePrices = cached.livePrices || {}; liveRate = cached.liveRate || 0;
       const cacheDate = new Date(cached.fetchedAt).toLocaleString('ko-KR', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
       st.innerHTML  = `⚠️ 실시간 조회 실패 — 캐시(${cacheDate}) 표시 중 · 수동입력란 업데이트 필요`;
-      st.style.color = '#d97706';
-      renderAccountKpis();
-      renderAccountInputs();
+      st.style.color = 'var(--amber)'; renderAccountKpis(); renderAccountInputs();
     } else {
       st.innerHTML  = '❌ 조회 실패 · 캐시 없음 — 아래 수동입력란에 현재가를 직접 입력하세요';
-      st.style.color = '#dc2626';
-      renderAccountInputs();
+      st.style.color = 'var(--red)'; renderAccountInputs();
     }
   }
   renderAccountTable();
@@ -1235,17 +1403,12 @@ function renderAccountTable() {
   const rate = liveRate || 1380;
   const nowYr = new Date().getFullYear();
   const simRow = rows.find(r => r.yr === nowYr) || rows[0];
-  const simMon = simRow?.monthly || 0;
-
   let totalActual=0, totalCost=0, totalGain=0, totalSimAsset=0, totalActualDiv=0, totalSimDiv=0;
-
   const tbRows = ACCT_ETFS.map(e => {
     const qty    = _acctGet(e.key,'qty');
     const avg    = _acctGet(e.key,'avg');
     const manual = _acctGet(e.key,'manual');
     const lp     = livePrices[e.ticker];
-
-    // 현재가: 자동조회 > 수동입력 > 평균매입가(임시)
     const rawPrice   = lp ? lp.price : (manual || avg || 0);
     const priceKrw   = e.currency === 'USD' ? rawPrice * rate : rawPrice;
     const avgKrw     = e.currency === 'USD' ? avg * rate : avg;
@@ -1255,50 +1418,27 @@ function renderAccountTable() {
     const gainPct    = costVal > 0 ? gain/costVal*100 : 0;
     const simAsset   = simRow?.[e.simAsset] || 0;
     const simAnnDiv  = simRow?.[e.simDiv]   || 0;
-    const actualDiv  = actualVal * e.divRate;           // 예상 연배당 (현재가치 × 배당률)
+    const actualDiv  = actualVal * e.divRate;
     const diff       = actualVal - simAsset;
     const diffPct    = simAsset > 0 ? diff/simAsset*100 : 0;
-
-    totalActual    += actualVal;
-    totalCost      += costVal;
-    totalGain      += gain;
-    totalSimAsset  += simAsset;
-    totalActualDiv += actualDiv;
-    totalSimDiv    += simAnnDiv;
-
-    const gainColor  = gain  >= 0 ? '#16a34a' : '#dc2626';
-    const diffColor  = diff  >= 0 ? '#16a34a' : '#dc2626';
+    totalActual    += actualVal; totalCost += costVal; totalGain += gain;
+    totalSimAsset  += simAsset; totalActualDiv += actualDiv; totalSimDiv += simAnnDiv;
+    const gainColor  = gain  >= 0 ? '#16a34a' : 'var(--red)';
+    const diffColor  = diff  >= 0 ? '#16a34a' : 'var(--red)';
     const priceDisp  = lp
-      ? (e.currency==='USD'
-          ? `$${rawPrice.toFixed(2)}<br><span style="font-size:10px;color:var(--muted)">${(rawPrice*rate).toLocaleString('ko-KR',{maximumFractionDigits:0})}원</span>`
-          : rawPrice.toLocaleString('ko-KR')+'원')
-      : (manual ? `<span style="color:#f59e0b">수동 ${e.currency==='USD'?'$':'₩'}${rawPrice.toFixed(2)}</span>` : '<span style="color:var(--muted)">—</span>');
-    const chgBadge   = lp ? `<br><span style="font-size:10px;color:${lp.chg>=0?'#16a34a':'#dc2626'}">${lp.chg>=0?'▲':'▼'}${Math.abs(lp.chg).toFixed(2)}%</span>` : '';
-
-    return `<tr>
-      <td><b style="color:var(--navy)">${e.label}</b><br><span style="font-size:10px;color:var(--muted)">${e.ticker}</span></td>
-      <td>${priceDisp}${chgBadge}</td>
-      <td>${qty ? qty.toLocaleString('ko-KR',{maximumFractionDigits:3}) : '<span style="color:var(--muted)">—</span>'}</td>
-      <td><b>${eok(actualVal)}</b></td>
-      <td>${eok(costVal)}</td>
-      <td style="color:${gainColor};font-weight:700">${gain>=0?'+':''}${eok(gain)}<br><span style="font-size:10px">${gainPct>=0?'+':''}${gainPct.toFixed(1)}%</span></td>
-      <td style="color:#6366f1;font-weight:700">${eok(actualDiv)}<br><span style="font-size:10px;color:var(--muted)">/년 예상</span></td>
-      <td>${eok(simAsset)}<br><span style="font-size:10px;color:var(--muted)">${nowYr}년 시뮬</span></td>
-      <td>${eok(simAnnDiv)}<br><span style="font-size:10px;color:var(--muted)">/년 시뮬</span></td>
-      <td style="color:${diffColor};font-weight:700">${diff>=0?'+':''}${eok(diff)}<br><span style="font-size:10px">${diffPct>=0?'+':''}${diffPct.toFixed(1)}%</span></td>
-    </tr>`;
+      ? (e.currency==='USD' ? `$${rawPrice.toFixed(2)}<br><span style="font-size:10px;color:var(--muted2)">${(rawPrice*rate).toLocaleString('ko-KR',{maximumFractionDigits:0})}원</span>` : rawPrice.toLocaleString('ko-KR')+'원')
+      : (manual ? `<span style="color:var(--amber)">수동 ${e.currency==='USD'?'$':'₩'}${rawPrice.toFixed(2)}</span>` : '<span style="color:var(--muted2)">—</span>');
+    const chgBadge   = lp ? `<br><span style="font-size:10px;color:${lp.chg>=0?'#16a34a':'var(--red)'}">${lp.chg>=0?'▲':'▼'}${Math.abs(lp.chg).toFixed(2)}%</span>` : '';
+    return `<tr><td><b style="color:var(--ebony)">${e.label}</b><br><span style="font-size:10px;color:var(--muted2)">${e.ticker}</span></td><td>${priceDisp}${chgBadge}</td><td>${qty ? qty.toLocaleString('ko-KR',{maximumFractionDigits:3}) : '<span style="color:var(--muted2)">—</span>'}</td><td><b>${eok(actualVal)}</b></td><td>${eok(costVal)}</td><td style="color:${gainColor};font-weight:700">${gain>=0?'+':''}${eok(gain)}<br><span style="font-size:10px">${gainPct>=0?'+':''}${gainPct.toFixed(1)}%</span></td><td style="color:#6366f1;font-weight:700">${eok(actualDiv)}<br><span style="font-size:10px;color:var(--muted2)">/년 예상</span></td><td>${eok(simAsset)}<br><span style="font-size:10px;color:var(--muted2)">${nowYr}년 시뮬</span></td><td>${eok(simAnnDiv)}<br><span style="font-size:10px;color:var(--muted2)">/년 시뮬</span></td><td style="color:${diffColor};font-weight:700">${diff>=0?'+':''}${eok(diff)}<br><span style="font-size:10px">${diffPct>=0?'+':''}${diffPct.toFixed(1)}%</span></td></tr>`;
   });
-
   const totalGainPct = totalCost  > 0 ? totalGain/totalCost*100   : 0;
   const totalDiff    = totalActual - totalSimAsset;
   const totalDiffPct = totalSimAsset > 0 ? totalDiff/totalSimAsset*100 : 0;
-  const sumGainColor = totalGain >= 0 ? '#16a34a' : '#dc2626';
-  const sumDiffColor = totalDiff >= 0 ? '#16a34a' : '#dc2626';
-  const nowYrStr     = nowYr + '년';
-
+  const sumGainColor = totalGain >= 0 ? '#16a34a' : 'var(--red)';
+  const sumDiffColor = totalDiff >= 0 ? '#16a34a' : 'var(--red)';
   document.getElementById('acctSummaryBar').innerHTML = `
-    <div style="display:flex;gap:10px;flex-wrap:wrap;padding:12px 16px;background:#EBF3FB;border-radius:12px;margin-bottom:12px;align-items:center">
-      <span style="font-size:12px;font-weight:700;color:var(--navy)">📊 ${nowYrStr} 현황</span>
+    <div style="display:flex;gap:10px;flex-wrap:wrap;padding:12px 16px;background:var(--pb);border-radius:11px;margin-bottom:12px;align-items:center;border:1px solid rgba(21,88,160,.12)">
+      <span style="font-size:12px;font-weight:800;color:var(--ebony)">📊 ${nowYr}년 현황</span>
       <span style="font-size:12px">평가금액 <b>${eok(totalActual)}</b></span>
       <span style="font-size:12px">매입금액 <b>${eok(totalCost)}</b></span>
       <span style="font-size:12px;color:${sumGainColor};font-weight:800">손익 ${totalGain>=0?'+':''}${eok(totalGain)} (${totalGainPct>=0?'+':''}${totalGainPct.toFixed(1)}%)</span>
@@ -1306,33 +1446,20 @@ function renderAccountTable() {
       <span style="font-size:12px;color:var(--muted)">→ 예상월배당 ${eok(totalActualDiv/12)}</span>
       <span style="font-size:12px;color:${sumDiffColor};font-weight:700">시뮬대비 ${totalDiff>=0?'+':''}${eok(totalDiff)} (${totalDiffPct>=0?'+':''}${totalDiffPct.toFixed(1)}%)</span>
     </div>`;
-
-  document.getElementById('acctTable').innerHTML = `
-    <thead>
-      <tr style="background:#EBF3FB">
-        <th>종목</th><th>현재가</th><th>보유수량</th><th>평가금액</th><th>매입금액</th>
-        <th>평가손익(%)</th><th>예상연배당</th>
-        <th>${nowYrStr} 시뮬자산</th><th>${nowYrStr} 시뮬배당</th>
-        <th>실제 vs 시뮬 자산차이</th>
-      </tr>
-    </thead>
-    <tbody>
-      ${tbRows.join('')}
-      <tr style="background:#EBF3FB;font-weight:800;border-top:2px solid #1558A0">
-        <td>합계</td><td>—</td><td>—</td>
-        <td><b>${eok(totalActual)}</b></td>
-        <td><b>${eok(totalCost)}</b></td>
-        <td style="color:${sumGainColor};font-weight:800">${totalGain>=0?'+':''}${eok(totalGain)}<br><span style="font-size:10px">${totalGainPct>=0?'+':''}${totalGainPct.toFixed(1)}%</span></td>
-        <td style="color:#6366f1;font-weight:800">${eok(totalActualDiv)}<br><span style="font-size:10px">월 ${eok(totalActualDiv/12)}</span></td>
-        <td><b>${eok(totalSimAsset)}</b></td>
-        <td><b>${eok(totalSimDiv)}</b><br><span style="font-size:10px">월 ${eok(totalSimDiv/12)}</span></td>
-        <td style="color:${sumDiffColor};font-weight:800">${totalDiff>=0?'+':''}${eok(totalDiff)}<br><span style="font-size:10px">${totalDiffPct>=0?'+':''}${totalDiffPct.toFixed(1)}%</span></td>
-      </tr>
-    </tbody>`;
+  document.getElementById('acctTable').querySelector('tbody').innerHTML =
+    tbRows.join('') +
+    `<tr style="background:rgba(7,17,32,.04);font-weight:800;border-top:2px solid var(--line2)">
+      <td>합계</td><td>—</td><td>—</td>
+      <td><b>${eok(totalActual)}</b></td><td><b>${eok(totalCost)}</b></td>
+      <td style="color:${sumGainColor};font-weight:800">${totalGain>=0?'+':''}${eok(totalGain)}<br><span style="font-size:10px">${totalGainPct>=0?'+':''}${totalGainPct.toFixed(1)}%</span></td>
+      <td style="color:#6366f1;font-weight:800">${eok(totalActualDiv)}<br><span style="font-size:10px">월 ${eok(totalActualDiv/12)}</span></td>
+      <td><b>${eok(totalSimAsset)}</b></td>
+      <td><b>${eok(totalSimDiv)}</b><br><span style="font-size:10px">월 ${eok(totalSimDiv/12)}</span></td>
+      <td style="color:${sumDiffColor};font-weight:800">${totalDiff>=0?'+':''}${eok(totalDiff)}<br><span style="font-size:10px">${totalDiffPct>=0?'+':''}${totalDiffPct.toFixed(1)}%</span></td>
+    </tr>`;
 }
 
 loadLocal();
 recalc();
 </script>
-</body>
-</html>
+</body></html>
