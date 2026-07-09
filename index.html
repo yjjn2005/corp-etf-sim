@@ -1596,8 +1596,11 @@ function applySyncPayload(d) {
 
 // 토큰 유효성 확인
 async function testGistToken() {
-  const token = document.getElementById('githubTokenInput').value.trim();
-  const el    = document.getElementById('tokenTestResult');
+  const raw   = document.getElementById('githubTokenInput').value.replace(/[^\x20-\x7E]/g, '');
+  const m     = raw.match(/(ghp_[A-Za-z0-9]+|github_pat_[A-Za-z0-9_]+)/);
+  const token = m ? m[1] : raw.trim();
+  document.getElementById('githubTokenInput').value = token;
+  const el = document.getElementById('tokenTestResult');
   if (!token) { el.textContent = '토큰을 먼저 입력하세요'; el.style.color='var(--red)'; return; }
   el.textContent = '확인 중...'; el.style.color = 'var(--muted)';
   try {
