@@ -206,9 +206,13 @@ th:first-child{background:rgba(7,17,32,.05);z-index:2}
         <h1>유앤김 법인 자금운용 시뮬레이터</h1>
         <p>비관 시나리오 v5.2 · 역사적 경제위기 5회 보정 · 만60세(2026)→만99세(2065) · 6종목 · 가수금 13억</p>
         <div class="status" id="saveStatus">저장 데이터 없음</div>
+        <div class="status" id="syncStatus" style="color:rgba(100,200,130,.55)"></div>
       </div>
     </div>
     <div class="actions">
+      <button class="btn ghost" onclick="openGistModal()" title="클라우드 동기화 설정">☁️ 연동</button>
+      <button class="btn ghost" onclick="gistSave()" title="클라우드에 저장">↑ 저장</button>
+      <button class="btn ghost" onclick="gistLoad()" title="클라우드에서 불러오기">↓ 불러오기</button>
       <button class="btn ghost" onclick="openManual()">수동입력</button>
       <button class="btn ghost" onclick="copyFullCode()">전체코드 복사</button>
       <button class="btn ghost" onclick="exportData()">내보내기</button>
@@ -1459,7 +1463,226 @@ function renderAccountTable() {
     </tr>`;
 }
 
+// ══════════════════════════════════════════════
+// GitHub Gist 클라우드 동기화
+// ══════════════════════════════════════════════
+const GIST_KEY    = 'corp_sim_gist_cfg';    // token + gist_id 저장
+const GIST_FILE   = 'corp-etf-sim-data.json';
+
+function gistCfg() {
+  try { return JSON.parse(localStorage.getItem(GIST_KEY) || '{}'); } catch(e) { return {}; }
+}
+function saveGistCfg(obj) {
+  localStorage.setItem(GIST_KEY, JSON.stringify(obj));
+}
+
+function buildSyncPayload() {
+  return { params, manual, memos, scenario: currentScenario, acctHoldings, syncedAt: new Date().toISOString(), version: 'v5.3' };
+}
+
+function applySyncPayload(d) {
+  if (d.params)  params = { ...structuredClone(defaults), ...d.params, shareholders: { ...defaults.shareholders, ...(d.params.shareholders||{}) } };
+  if (d.manual)  manual = d.manual;
+  if (d.memos)   memos  = d.memos;
+  if (d.scenario && SCENARIOS[d.scenario]) {
+    currentScenario = d.scenario;
+  }
+  if (d.acctHoldings) {
+    acctHoldings = d.acctHoldings;
+    localStorage.setItem('acctHoldings_v2', JSON.stringify(acctHoldings));
+  }
+}
+
+// 클라우드에 저장
+async function gistSave() {
+  const cfg = gistCfg();
+  if (!cfg.token) { openGistModal(); return; }
+  const payload = buildSyncPayload();
+  const body = { files: { [GIST_FILE]: { content: JSON.stringify(payload, null, 2) } } };
+  try {
+    setSyncStatus('⏳ 저장 중...');
+    let res, data;
+    if (cfg.gistId) {
+      // 기존 Gist 업데이트
+      res  = await fetch(`https://api.github.com/gists/${cfg.gistId}`, {
+        method: 'PATCH', headers: { Authorization: `token ${cfg.token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify(body)
+      });
+    } else {
+      // 새 Gist 생성
+      res  = await fetch('https://api.github.com/gists', {
+        method: 'POST', headers: { Authorization: `token ${cfg.token}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...body, description: '유앤김 법인 ETF 시뮬레이터 데이터', public: false })
+      });
+    }
+    data = await res.json();
+    if (!res.ok) throw new Error(data.message || res.status);
+    saveGistCfg({ ...cfg, gistId: data.id });
+    const t = new Date().toLocaleString('ko-KR');
+    setSyncStatus(`☁️ 저장 완료 · ${t}`);
+    saveLocal(false);
+    toast('☁️ 클라우드 저장 완료');
+  } catch(e) {
+    setSyncStatus(`❌ 저장 실패: ${e.message}`);
+    toast('저장 실패 — 토큰/네트워크 확인');
+  }
+}
+
+// 클라우드에서 불러오기
+async function gistLoad() {
+  const cfg = gistCfg();
+  if (!cfg.token || !cfg.gistId) { openGistModal(); return; }
+  try {
+    setSyncStatus('⏳ 불러오는 중...');
+    const res  = await fetch(`https://api.github.com/gists/${cfg.gistId}`, {
+      headers: { Authorization: `token ${cfg.token}` }
+    });
+    if (!res.ok) throw new Error(res.status);
+    const data = await res.json();
+    const raw  = data.files?.[GIST_FILE]?.content;
+    if (!raw) throw new Error('데이터 파일 없음');
+    const d = JSON.parse(raw);
+    applySyncPayload(d);
+    saveLocal(false);
+    rows = simulate();
+    renderAll();
+    // 시나리오 버튼 상태 갱신
+    document.querySelectorAll('.scenario-btn').forEach(b => {
+      const isActive = b.dataset.scenario === currentScenario;
+      const sc = SCENARIOS[b.dataset.scenario];
+      b.style.background = isActive ? sc.color : 'rgba(255,255,255,.09)';
+      b.style.color      = isActive ? '#fff'   : 'rgba(255,255,255,.75)';
+      b.style.border     = isActive ? `1px solid ${sc.color}` : '1px solid rgba(255,255,255,.15)';
+      b.style.fontWeight = isActive ? '800' : '600';
+    });
+    const t = d.syncedAt ? new Date(d.syncedAt).toLocaleString('ko-KR') : '—';
+    setSyncStatus(`☁️ 불러오기 완료 · 저장시각 ${t}`);
+    toast('☁️ 클라우드 데이터 불러오기 완료');
+  } catch(e) {
+    setSyncStatus(`❌ 불러오기 실패: ${e.message}`);
+    toast('불러오기 실패 — Gist ID/토큰 확인');
+  }
+}
+
+// 자동 동기화 (저장 후 3초 디바운스)
+let _autoSyncTimer = null;
+function scheduleAutoSync() {
+  const cfg = gistCfg();
+  if (!cfg.token || !cfg.gistId || !cfg.autoSync) return;
+  clearTimeout(_autoSyncTimer);
+  _autoSyncTimer = setTimeout(() => gistSave(), 3000);
+}
+
+function setSyncStatus(msg) {
+  const el = document.getElementById('syncStatus');
+  if (el) el.textContent = msg;
+}
+
+// Gist 설정 모달 열기/닫기
+function openGistModal() { document.getElementById('gistModal').classList.add('open'); renderGistModal(); }
+function closeGistModal(e) { if (!e || e.target.id === 'gistModal') document.getElementById('gistModal').classList.remove('open'); }
+
+function renderGistModal() {
+  const cfg = gistCfg();
+  document.getElementById('gistToken').value  = cfg.token  || '';
+  document.getElementById('gistId').value     = cfg.gistId || '';
+  document.getElementById('autoSyncChk').checked = !!cfg.autoSync;
+  if (cfg.gistId) {
+    document.getElementById('gistUrl').href = `https://gist.github.com/${cfg.gistId}`;
+    document.getElementById('gistUrlWrap').style.display = 'block';
+  } else {
+    document.getElementById('gistUrlWrap').style.display = 'none';
+  }
+}
+
+function saveGistSettings() {
+  const token    = document.getElementById('gistToken').value.trim();
+  const gistId   = document.getElementById('gistId').value.trim();
+  const autoSync = document.getElementById('autoSyncChk').checked;
+  if (!token) { toast('토큰을 입력하세요'); return; }
+  saveGistCfg({ token, gistId: gistId || '', autoSync });
+  document.getElementById('gistModal').classList.remove('open');
+  toast('설정 저장 완료');
+  if (gistId) gistLoad();
+}
+
+// 페이지 로드 시 자동 불러오기 시도
+async function autoLoadGist() {
+  const cfg = gistCfg();
+  if (cfg.token && cfg.gistId) {
+    setSyncStatus('☁️ 클라우드 데이터 확인 중...');
+    try {
+      const res  = await fetch(`https://api.github.com/gists/${cfg.gistId}`, {
+        headers: { Authorization: `token ${cfg.token}` }
+      });
+      if (!res.ok) { setSyncStatus('⚠️ 자동 불러오기 실패'); return; }
+      const data = await res.json();
+      const raw  = data.files?.[GIST_FILE]?.content;
+      if (!raw) { setSyncStatus('⚠️ 저장된 데이터 없음'); return; }
+      const d = JSON.parse(raw);
+      // 로컬 저장보다 최신인 경우만 덮어쓰기
+      const localRaw = localStorage.getItem(STORAGE_KEY);
+      const localAt  = localRaw ? JSON.parse(localRaw).savedAt || '' : '';
+      if (!d.syncedAt || d.syncedAt <= localAt) {
+        setSyncStatus(`☁️ 로컬 데이터 최신 · Gist ${new Date(d.syncedAt||0).toLocaleString('ko-KR')}`);
+        return;
+      }
+      applySyncPayload(d);
+      rows = simulate();
+      renderAll();
+      document.querySelectorAll('.scenario-btn').forEach(b => {
+        const isActive = b.dataset.scenario === currentScenario;
+        const sc = SCENARIOS[b.dataset.scenario];
+        b.style.background = isActive ? sc.color : 'rgba(255,255,255,.09)';
+        b.style.color      = isActive ? '#fff'   : 'rgba(255,255,255,.75)';
+        b.style.border     = isActive ? `1px solid ${sc.color}` : '1px solid rgba(255,255,255,.15)';
+        b.style.fontWeight = isActive ? '800' : '600';
+      });
+      setSyncStatus(`☁️ 자동 동기화 완료 · ${new Date(d.syncedAt).toLocaleString('ko-KR')}`);
+    } catch(e) { setSyncStatus('⚠️ 자동 동기화 실패'); }
+  } else {
+    setSyncStatus(gistCfg().token ? '⚙️ Gist ID 미설정 — ☁️ 버튼으로 설정' : '⚙️ 클라우드 미설정 — ☁️ 버튼 클릭');
+  }
+}
+
 loadLocal();
 recalc();
+autoLoadGist();
 </script>
+
+<!-- ─── Gist 설정 모달 ──────────────────────── -->
+<div class="modal" id="gistModal" onclick="closeGistModal(event)">
+  <div class="modal-card" style="max-width:480px">
+    <div class="modal-head">
+      <h2>☁️ GitHub Gist 클라우드 동기화 설정</h2>
+      <button class="close" onclick="closeGistModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div style="background:var(--pb);border-radius:10px;padding:12px 15px;font-size:11.5px;color:#1558A0;line-height:1.9;margin-bottom:16px">
+        <b>설정 방법</b><br>
+        ① <a href="https://github.com/settings/tokens/new?scopes=gist&description=corp-etf-sim" target="_blank" style="color:#1558A0;font-weight:700">GitHub → Settings → Tokens (classic)</a> 에서 <b>gist 권한</b>만 체크 후 토큰 발급<br>
+        ② 아래에 붙여넣기 → 저장 → 이후 어느 기기에서든 Gist ID로 동기화
+      </div>
+      <div class="field">
+        <label>GitHub Personal Access Token <span style="color:var(--red)">*</span></label>
+        <input id="gistToken" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx">
+        <small>이 기기 localStorage에만 저장 — 서버 전송 없음</small>
+      </div>
+      <div class="field">
+        <label>Gist ID <span style="color:var(--muted2)">(첫 저장 시 자동 생성)</span></label>
+        <input id="gistId" type="text" placeholder="자동 생성 후 여기 표시됩니다">
+        <small>다른 기기에서 이 ID를 동일하게 입력하면 데이터 공유</small>
+      </div>
+      <div id="gistUrlWrap" style="display:none;margin-bottom:10px">
+        <a id="gistUrl" href="#" target="_blank" style="font-size:11px;color:var(--blue);font-weight:700">🔗 Gist 페이지에서 확인</a>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:16px;padding:10px 12px;background:rgba(7,17,32,.04);border-radius:8px">
+        <input type="checkbox" id="autoSyncChk" style="width:15px;height:15px;accent-color:var(--green)">
+        <label for="autoSyncChk" style="font-size:12px;color:var(--muted);cursor:pointer;font-weight:600">가정 변경 시 3초 후 자동 저장</label>
+      </div>
+      <button class="btn gold" onclick="saveGistSettings()" style="width:100%;padding:11px;font-size:13px">설정 저장 &amp; 클라우드 불러오기</button>
+    </div>
+  </div>
+</div>
+
 </body></html>
