@@ -605,9 +605,9 @@ const defaults = {
 };
 
 let params = structuredClone(defaults);
-let rows = [];
-let manual = [];
-let memos = [];
+let rows = [], manual = [], memos = [];
+let acctHoldings = JSON.parse(localStorage.getItem('acctHoldings_v2') || 'null') || {};
+let livePrices = {}, liveRate = 0, lastFetchTime = null;
 
 const won = v => '₩' + Math.round(v).toLocaleString('ko-KR');
 const eok = v => {
@@ -1367,10 +1367,6 @@ const ACCT_LINKS = {
   QQQ:         { yf:'https://finance.yahoo.com/quote/QQQ',        naver:'https://finance.naver.com/world/sise.naver?symbol=QQQ.O',       gf:'https://www.google.com/finance/quote/QQQ:NASDAQ' },
   TLT:         { yf:'https://finance.yahoo.com/quote/TLT',        naver:'https://finance.naver.com/world/sise.naver?symbol=TLT.O',       gf:'https://www.google.com/finance/quote/TLT:NASDAQ' },
 };
-let acctHoldings = JSON.parse(localStorage.getItem('acctHoldings_v2') || 'null') || {};
-let livePrices = {};
-let liveRate = 0;
-let lastFetchTime = null;
 
 function _acctGet(key, field) {
   const el = document.getElementById('acct_'+field+'_'+key);
