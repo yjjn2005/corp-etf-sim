@@ -1325,17 +1325,17 @@ function renderAccountInputs() {
       </div>
       ${liveBadge}
       <div style="font-size:10px;color:var(--muted);margin:8px 0 3px;text-transform:uppercase;letter-spacing:.06em;font-weight:700">보유수량 (주)</div>
-      <input id="acct_qty_${e.key}" type="number" min="0" step="0.001" value="${h.qty||0}"
+      <input id="acct_qty_${e.key}" type="number" min="0" step="0.001" value="${h.qty||''}" placeholder="0"
         style="width:100%;padding:7px 9px;border:1.5px solid var(--line);border-radius:6px;font-size:13px;font-family:var(--font);box-sizing:border-box;margin-bottom:6px;background:var(--card)"
-        oninput="renderAccountTable()">
+        onfocus="this.select()" oninput="renderAccountTable()">
       <div style="font-size:10px;color:var(--muted);margin-bottom:3px;text-transform:uppercase;letter-spacing:.06em;font-weight:700">평균매입가 (${e.currency==='USD'?'$':'₩'})</div>
-      <input id="acct_avg_${e.key}" type="number" min="0" step="0.01" value="${h.avg||0}"
+      <input id="acct_avg_${e.key}" type="number" min="0" step="0.01" value="${h.avg||''}" placeholder="0"
         style="width:100%;padding:7px 9px;border:1.5px solid var(--line);border-radius:6px;font-size:13px;font-family:var(--font);box-sizing:border-box;margin-bottom:6px;background:var(--card)"
-        oninput="renderAccountTable()">
+        onfocus="this.select()" oninput="renderAccountTable()">
       <div style="font-size:10px;color:var(--amber);margin-bottom:3px;text-transform:uppercase;letter-spacing:.06em;font-weight:700">현재가 수동입력</div>
       <input id="acct_manual_${e.key}" type="number" min="0" step="0.01" value="${h.manual||''}" placeholder="자동조회 우선"
         style="width:100%;padding:7px 9px;border:1.5px solid rgba(181,133,42,.35);border-radius:6px;font-size:13px;font-family:var(--font);box-sizing:border-box;background:var(--card)"
-        oninput="renderAccountTable()">
+        onfocus="this.select()" oninput="renderAccountTable()">
     </div>`;
   }).join('');
   renderAccountTable();
