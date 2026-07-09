@@ -1199,7 +1199,7 @@ function renderMemoList(){
     </div>`).join('') : '';
 }
 
-const STORAGE_KEY = 'corp_etf_sim_v5';
+var STORAGE_KEY = 'corp_etf_sim_v5';
 function saveLocal(show=true){
   localStorage.setItem(STORAGE_KEY, JSON.stringify({ params, manual, memos, acctHoldings, savedAt: new Date().toISOString() }));
   if (show) toast('이 기기에 저장 완료');
@@ -1351,7 +1351,7 @@ document.getElementById('tabs').addEventListener('click', e => {
 // ══════════════════════════════════════════════
 // 실제 계좌현황 탭
 // ══════════════════════════════════════════════
-const ACCT_ETFS = [
+var ACCT_ETFS = [
   { key:'schd',  label:'SCHD',          ticker:'SCHD',      currency:'USD', simAsset:'sAsset',  simDiv:'sNet',  divRate: params.schdDivRate  },
   { key:'tiger', label:'TIGER(0052D0)', ticker:'458730.KS', currency:'KRW', simAsset:'kAsset',  simDiv:'kNet',  divRate: params.tigerDivRate },
   { key:'jepq',  label:'JEPQ',          ticker:'JEPQ',      currency:'USD', simAsset:'jqAsset', simDiv:'jqNet', divRate: params.jepqDivRate  },
@@ -1359,7 +1359,7 @@ const ACCT_ETFS = [
   { key:'qqq',   label:'QQQ',           ticker:'QQQ',       currency:'USD', simAsset:'qqAsset', simDiv:'qqNet', divRate: params.qqqDivRate   },
   { key:'tlt',   label:'TLT',           ticker:'TLT',       currency:'USD', simAsset:'tlAsset', simDiv:'tlNet', divRate: params.tltDivRate   },
 ];
-const ACCT_LINKS = {
+var ACCT_LINKS = {
   SCHD:        { yf:'https://finance.yahoo.com/quote/SCHD',       naver:'https://finance.naver.com/world/sise.naver?symbol=SCHD.O',      gf:'https://www.google.com/finance/quote/SCHD:NASDAQ' },
   '458730.KS': { yf:'https://finance.yahoo.com/quote/458730.KS', naver:'https://finance.naver.com/item/main.naver?code=458730',         gf:'https://www.google.com/finance/quote/458730:KRX' },
   JEPQ:        { yf:'https://finance.yahoo.com/quote/JEPQ',       naver:'https://finance.naver.com/world/sise.naver?symbol=JEPQ.O',      gf:'https://www.google.com/finance/quote/JEPQ:NASDAQ' },
@@ -1387,7 +1387,7 @@ function saveAccountHoldings() {
   renderAccountTable();
 }
 
-const ACCT_COLORS = { schd:'var(--blue)', tiger:'var(--green)', jepq:'var(--teal)', jepi:'#eda100', qqq:'var(--purple)', tlt:'var(--muted2)' };
+var ACCT_COLORS = { schd:'var(--blue)', tiger:'var(--green)', jepq:'var(--teal)', jepi:'#eda100', qqq:'var(--purple)', tlt:'var(--muted2)' };
 
 function renderAccountInputs() {
   document.getElementById('acctInputs').innerHTML = ACCT_ETFS.map(e => {
@@ -1556,7 +1556,7 @@ function renderAccountTable() {
 // ══════════════════════════════════════════════
 // GitHub Gist 클라우드 동기화
 // ══════════════════════════════════════════════
-const GIST_FILE = 'corp_etf_sim_backup.json';
+var GIST_FILE = 'corp_etf_sim_backup.json';
 
 function _gistToken()  { return localStorage.getItem('githubToken')  || ''; }
 function _gistId()     { return localStorage.getItem('githubGistId') || ''; }
