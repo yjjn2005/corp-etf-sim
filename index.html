@@ -1343,47 +1343,53 @@ function renderAccountInputs() {
 
 async function fetchLivePrices() {
   const st = document.getElementById('priceStatus');
-  st.innerHTML = '⏳ 시세 조회 중 (최대 20초)...'; st.style.color = 'var(--muted)';
+  st.innerHTML = '⏳ 시세 불러오는 중...'; st.style.color = 'var(--muted)';
+
+  // GitHub Action이 2시간마다 갱신하는 prices.json 읽기 (CORS 문제 없음)
+  const PRICES_URL = './prices.json';
   try {
-    const rr = await fetch('https://open.er-api.com/v6/latest/USD');
-    if (rr.ok) { const d = await rr.json(); liveRate = d.rates?.KRW || 0; }
-  } catch(e) {}
-  const PROXY = 'https://proxy.cors.sh/https://query1.finance.yahoo.com/v8/finance/chart/';
-  const fetchTicker = async (ticker) => {
-    const ctrl = new AbortController();
-    const tid  = setTimeout(() => ctrl.abort(), 15000);
-    try {
-      const res = await fetch(`${PROXY}${ticker}?range=1d&interval=1d`, { signal: ctrl.signal, headers: { 'origin': 'https://yjjn2005.github.io' } });
-      clearTimeout(tid);
-      if (!res.ok) return null;
-      const json = await res.json();
-      const meta = json?.chart?.result?.[0]?.meta;
-      if (!meta?.regularMarketPrice) return null;
-      return { price: meta.regularMarketPrice, chg: meta.regularMarketChangePercent || 0, prev: meta.previousClose || meta.chartPreviousClose || 0 };
-    } catch(e) { clearTimeout(tid); return null; }
-  };
-  const tickerList = ACCT_ETFS.map(e => e.ticker);
-  const results = await Promise.allSettled(tickerList.map(t => fetchTicker(t)));
-  results.forEach((r, i) => { if (r.status === 'fulfilled' && r.value) livePrices[tickerList[i]] = r.value; });
-  lastFetchTime = new Date();
-  const timeStr = `${lastFetchTime.getHours()}:${String(lastFetchTime.getMinutes()).padStart(2,'0')}`;
-  const cnt = Object.keys(livePrices).length;
-  if (cnt > 0 || liveRate) {
+    const res = await fetch(PRICES_URL + '?t=' + Date.now());
+    if (!res.ok) throw new Error('prices.json ' + res.status);
+    const data = await res.json();
+
+    // 환율
+    liveRate = data.USDKRW || 0;
+
+    // 종목별 가격 매핑
+    const TICKER_MAP = {
+      schd:'SCHD', tiger:'458730.KS', jepq:'JEPQ', jepi:'JEPI', qqq:'QQQ', tlt:'TLT'
+    };
+    ACCT_ETFS.forEach(e => {
+      const key = TICKER_MAP[e.key] || e.ticker;
+      const d   = data[key];
+      if (d && d.price) {
+        livePrices[e.ticker] = { price: d.price, chg: d.chg || 0, prev: d.prev || d.price };
+      }
+    });
+
+    lastFetchTime = data.updatedAt ? new Date(data.updatedAt) : new Date();
     localStorage.setItem('livePriceCache', JSON.stringify({ livePrices, liveRate, fetchedAt: lastFetchTime.toISOString() }));
-    const rateStr = liveRate ? Math.round(liveRate).toLocaleString('ko-KR') + '원' : '—';
-    const note    = cnt < tickerList.length ? ` <span style="color:var(--amber)">(${tickerList.length - cnt}종목 수동입력 필요)</span>` : '';
-    st.innerHTML  = `✅ ${cnt}/${tickerList.length}종목 조회 · 환율 ${rateStr} · ${timeStr}${note}`;
-    st.style.color = cnt === tickerList.length ? '#16a34a' : 'var(--amber)';
+
+    const cnt      = Object.keys(livePrices).length;
+    const total    = ACCT_ETFS.length;
+    const rateStr  = liveRate ? Math.round(liveRate).toLocaleString('ko-KR') + '원' : '—';
+    const updStr   = lastFetchTime.toLocaleString('ko-KR', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+    const errNote  = (data.errors||[]).length ? ` <span style="color:var(--amber)">(조회실패 ${data.errors.join(', ')})</span>` : '';
+    st.innerHTML   = `✅ ${cnt}/${total}종목 · 환율 ${rateStr} · 기준 ${updStr}${errNote}`;
+    st.innerHTML  += ` <span style="color:var(--muted2);font-size:10px">· GitHub Action 2h자동갱신</span>`;
+    st.style.color = cnt === total ? '#16a34a' : 'var(--amber)';
     renderAccountKpis(); renderAccountInputs();
-  } else {
+
+  } catch(err) {
+    // prices.json 실패 시 캐시 또는 안내
     const cached = JSON.parse(localStorage.getItem('livePriceCache') || 'null');
-    if (cached) {
-      livePrices = cached.livePrices || {}; liveRate = cached.liveRate || 0;
-      const cacheDate = new Date(cached.fetchedAt).toLocaleString('ko-KR', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
-      st.innerHTML  = `⚠️ 실시간 조회 실패 — 캐시(${cacheDate}) 표시 중 · 수동입력란 업데이트 필요`;
+    if (cached && cached.livePrices) {
+      livePrices = cached.livePrices; liveRate = cached.liveRate || 0;
+      const cDate = new Date(cached.fetchedAt).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
+      st.innerHTML  = `⚠️ 자동조회 실패 — 캐시(${cDate}) 사용 중`;
       st.style.color = 'var(--amber)'; renderAccountKpis(); renderAccountInputs();
     } else {
-      st.innerHTML  = '❌ 조회 실패 · 캐시 없음 — 아래 수동입력란에 현재가를 직접 입력하세요';
+      st.innerHTML  = `❌ 조회 실패 (${err.message}) — 수동입력란에 직접 입력하세요`;
       st.style.color = 'var(--red)'; renderAccountInputs();
     }
   }
