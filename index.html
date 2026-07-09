@@ -1641,6 +1641,8 @@ async function saveToGist() {
   const btn = document.getElementById('btnSaveGist');
   btn.textContent = '저장 중... ⏳'; btn.disabled = true;
 
+  const errEl = document.getElementById('gistSaveError');
+  errEl.style.display = 'none';
   try {
     const payload = buildSyncPayload();
     const body = {
@@ -1660,7 +1662,8 @@ async function saveToGist() {
     toast('☁️ 클라우드 저장 완료 ✓');
     closeGistModal();
   } catch(e) {
-    alert(`저장 실패: ${e.message}\n\n확인사항:\n• 토큰에 "gist" 권한 체크\n• 토큰 만료 여부\n• github.com/settings/tokens 에서 재발급`);
+    errEl.style.display = 'block';
+    errEl.textContent   = '❌ GitHub 오류: ' + e.message;
   } finally {
     btn.textContent = '클라우드에 저장'; btn.disabled = false;
   }
@@ -1806,6 +1809,7 @@ if (!_fromShare) autoLoadGist();
         <button class="btn gold" id="btnSaveGist" style="flex:1;padding:12px;font-size:13px" onclick="saveToGist()">클라우드에 저장</button>
         <button class="btn white" id="btnLoadGist" style="flex:1;padding:12px;font-size:13px" onclick="loadFromGist()">클라우드에서 불러오기</button>
       </div>
+      <div id="gistSaveError" style="display:none;margin-top:10px;padding:10px 12px;background:#fee;border:1px solid #faa;border-radius:6px;color:#c00;font-size:13px;word-break:break-all"></div>
     </div>
   </div>
 </div>
