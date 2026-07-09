@@ -210,12 +210,7 @@ th:first-child{background:rgba(7,17,32,.05);z-index:2}
       </div>
     </div>
     <div class="actions">
-      <button class="btn ghost" onclick="shareURL()" title="전체 데이터를 링크로 공유 (계좌현황 포함)">📤 공유링크</button>
-      <button class="btn green" onclick="openGistModal()" title="클라우드 동기화">☁️ Gist 연동</button>
-      <button class="btn ghost" onclick="openManual()">수동입력</button>
-      <button class="btn ghost" onclick="copyFullCode()">전체코드 복사</button>
-      <button class="btn ghost" onclick="exportData()">내보내기</button>
-      <button class="btn ghost" onclick="document.getElementById('importFile').click()">가져오기</button>
+      <button class="btn green" onclick="openGistModal()" title="클라우드 동기화">☁️ 연동</button>
       <div style="display:flex;gap:4px;background:rgba(255,255,255,.06);padding:4px;border-radius:9px;border:1px solid rgba(255,255,255,.1)">
         <button class="scenario-btn" data-scenario="optimistic" onclick="switchScenario('optimistic')"
           style="border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.09);color:rgba(255,255,255,.75);border-radius:6px;padding:6px 12px;font-size:11px;font-weight:600;cursor:pointer;font-family:var(--font);transition:all .15s">낙관</button>
@@ -224,8 +219,19 @@ th:first-child{background:rgba(7,17,32,.05);z-index:2}
         <button class="scenario-btn" data-scenario="pessimistic" onclick="switchScenario('pessimistic')"
           style="border:1px solid #A83030;background:#A83030;color:#fff;border-radius:6px;padding:6px 12px;font-size:11px;font-weight:800;cursor:pointer;font-family:var(--font);transition:all .15s">비관</button>
       </div>
-      <button class="btn white" onclick="saveLocal()">이 기기 저장</button>
       <button class="btn gold" onclick="recalc()">재계산</button>
+      <!-- 더보기 메뉴 -->
+      <div style="position:relative">
+        <button class="btn ghost" onclick="toggleMoreMenu()" id="moreMenuBtn">⋯ 더보기</button>
+        <div id="moreMenu" style="display:none;position:absolute;right:0;top:calc(100% + 6px);background:var(--card);border:1px solid var(--line);border-radius:10px;box-shadow:0 8px 28px rgba(0,0,0,.18);padding:6px;z-index:100;min-width:150px">
+          <button onclick="shareURL();toggleMoreMenu()" style="display:block;width:100%;text-align:left;padding:8px 12px;border:0;background:transparent;cursor:pointer;font-family:var(--font);font-size:12px;border-radius:6px;color:var(--text)" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='transparent'">📤 공유링크 (카톡전송)</button>
+          <button onclick="saveLocal();toggleMoreMenu()" style="display:block;width:100%;text-align:left;padding:8px 12px;border:0;background:transparent;cursor:pointer;font-family:var(--font);font-size:12px;border-radius:6px;color:var(--text)" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='transparent'">💾 이 기기 저장</button>
+          <button onclick="openManual();toggleMoreMenu()" style="display:block;width:100%;text-align:left;padding:8px 12px;border:0;background:transparent;cursor:pointer;font-family:var(--font);font-size:12px;border-radius:6px;color:var(--text)" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='transparent'">✏️ 수동입력</button>
+          <hr style="margin:4px 0;border:0;border-top:1px solid var(--line)">
+          <button onclick="exportData();toggleMoreMenu()" style="display:block;width:100%;text-align:left;padding:8px 12px;border:0;background:transparent;cursor:pointer;font-family:var(--font);font-size:12px;border-radius:6px;color:var(--muted)" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='transparent'">⬇️ 백업 내보내기</button>
+          <button onclick="document.getElementById('importFile').click();toggleMoreMenu()" style="display:block;width:100%;text-align:left;padding:8px 12px;border:0;background:transparent;cursor:pointer;font-family:var(--font);font-size:12px;border-radius:6px;color:var(--muted)" onmouseover="this.style.background='var(--bg)'" onmouseout="this.style.background='transparent'">⬆️ 백업 가져오기</button>
+        </div>
+      </div>
       <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
     </div>
   </div>
@@ -1314,6 +1320,17 @@ function importData(input){
   };
   reader.readAsText(file); input.value='';
 }
+
+function toggleMoreMenu() {
+  const m = document.getElementById('moreMenu');
+  m.style.display = m.style.display === 'none' ? 'block' : 'none';
+}
+document.addEventListener('click', e => {
+  if (!e.target.closest('#moreMenuBtn') && !e.target.closest('#moreMenu')) {
+    const m = document.getElementById('moreMenu');
+    if (m) m.style.display = 'none';
+  }
+});
 
 function toast(msg){
   const t = document.getElementById('toast');
