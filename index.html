@@ -1582,28 +1582,36 @@ async function gistSave() {
     setSyncStatus('⏳ 저장 중...');
     let res, data;
     if (cfg.gistId) {
-      // 기존 Gist 업데이트
       res  = await fetch(`https://api.github.com/gists/${cfg.gistId}`, {
         method: 'PATCH', headers: { Authorization: `token ${cfg.token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(body)
       });
     } else {
-      // 새 Gist 생성
       res  = await fetch('https://api.github.com/gists', {
         method: 'POST', headers: { Authorization: `token ${cfg.token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ ...body, description: '유앤김 법인 ETF 시뮬레이터 데이터', public: false })
       });
     }
     data = await res.json();
-    if (!res.ok) throw new Error(data.message || res.status);
-    saveGistCfg({ ...cfg, gistId: data.id });
-    const t = new Date().toLocaleString('ko-KR');
-    setSyncStatus(`☁️ 저장 완료 · ${t}`);
+    if (!res.ok) {
+      const errMsg = data.message || res.status;
+      setSyncStatus(`❌ 실패: ${errMsg}`);
+      alert(`Gist 저장 실패\n\n오류: ${errMsg}\n\n해결방법:\n• 토큰에 "gist" 권한이 있는지 확인\n• 토큰이 만료되지 않았는지 확인\n• https://github.com/settings/tokens 에서 재발급`);
+      return;
+    }
+    if (!cfg.gistId && data.id) {
+      saveGistCfg({ ...cfg, gistId: data.id });
+      setSyncStatus(`☁️ Gist 생성 완료 · ID: ${data.id.slice(0,8)}...`);
+      // 모달 열어서 생성된 ID 확인
+      setTimeout(openGistModal, 500);
+    } else {
+      setSyncStatus(`☁️ 저장 완료 · ${new Date().toLocaleString('ko-KR')}`);
+    }
     saveLocal(false);
     toast('☁️ 클라우드 저장 완료');
   } catch(e) {
     setSyncStatus(`❌ 저장 실패: ${e.message}`);
-    toast('저장 실패 — 토큰/네트워크 확인');
+    alert(`Gist 저장 실패\n\n오류: ${e.message}\n\n네트워크 연결을 확인하거나 잠시 후 다시 시도하세요.`);
   }
 }
 
