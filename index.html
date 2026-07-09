@@ -1614,14 +1614,18 @@ async function saveToGist() {
     files: { [GIST_FILE]: { content: JSON.stringify(payload, null, 2) } }
   };
 
+  const ctrl = new AbortController();
+  const tid  = setTimeout(() => ctrl.abort(), 15000); // 15초 타임아웃
+
   try {
     const url    = gistId ? `https://api.github.com/gists/${gistId}` : 'https://api.github.com/gists';
     const method = gistId ? 'PATCH' : 'POST';
     const res    = await fetch(url, {
-      method,
+      method, signal: ctrl.signal,
       headers: { 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
       body: JSON.stringify(body)
     });
+    clearTimeout(tid);
     const result = await res.json();
     if (!res.ok) throw new Error(result.message || `HTTP ${res.status}`);
 
@@ -1633,7 +1637,11 @@ async function saveToGist() {
     toast('☁️ 클라우드 저장 완료 ✓');
     closeGistModal();
   } catch(e) {
-    alert(`저장 실패: ${e.message}\n\n확인사항:\n• 토큰에 "gist" 권한 체크\n• 토큰 만료 여부\n• github.com/settings/tokens 에서 재발급`);
+    clearTimeout(tid);
+    const msg = e.name === 'AbortError'
+      ? '요청 시간 초과 (15초)\n네트워크 연결을 확인하세요'
+      : e.message;
+    alert(`저장 실패: ${msg}\n\n확인사항:\n• 토큰에 "gist" 권한 체크\n• 토큰 만료 여부\n• github.com/settings/tokens 에서 재발급`);
   } finally {
     btn.textContent = '클라우드에 저장'; btn.disabled = false;
   }
