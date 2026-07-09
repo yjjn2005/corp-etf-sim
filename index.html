@@ -1598,6 +1598,28 @@ function applySyncPayload(d) {
   });
 }
 
+// XHR 기반 Gist 요청 (fetch보다 타임아웃 신뢰성 높음)
+function xhrGist(method, url, token, bodyObj) {
+  return new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.timeout = 12000;
+    xhr.open(method, url);
+    xhr.setRequestHeader('Accept',        'application/vnd.github.v3+json');
+    xhr.setRequestHeader('Content-Type',  'application/json');
+    xhr.setRequestHeader('Authorization', `Bearer ${token}`);
+    xhr.onload  = () => {
+      try {
+        const json = JSON.parse(xhr.responseText);
+        if (xhr.status >= 200 && xhr.status < 300) resolve(json);
+        else reject(new Error(json.message || `HTTP ${xhr.status}`));
+      } catch(e) { reject(new Error('응답 파싱 오류')); }
+    };
+    xhr.onerror   = () => reject(new Error('네트워크 오류 — 인터넷 연결 확인'));
+    xhr.ontimeout = () => reject(new Error('요청 시간 초과 (12초) — 네트워크 확인'));
+    xhr.send(JSON.stringify(bodyObj));
+  });
+}
+
 // 클라우드에 저장
 async function saveToGist() {
   const token = document.getElementById('githubTokenInput').value.trim();
@@ -1607,27 +1629,16 @@ async function saveToGist() {
   const btn = document.getElementById('btnSaveGist');
   btn.textContent = '저장 중... ⏳'; btn.disabled = true;
 
-  const payload = buildSyncPayload();
-  const body = {
-    description: '유앤김 법인 자금운용 시뮬레이터 백업 데이터',
-    public: false,
-    files: { [GIST_FILE]: { content: JSON.stringify(payload, null, 2) } }
-  };
-
-  const ctrl = new AbortController();
-  const tid  = setTimeout(() => ctrl.abort(), 15000); // 15초 타임아웃
-
   try {
+    const payload = buildSyncPayload();
+    const body = {
+      description: '유앤김 법인 자금운용 시뮬레이터 백업 데이터',
+      public: false,
+      files: { [GIST_FILE]: { content: JSON.stringify(payload, null, 2) } }
+    };
     const url    = gistId ? `https://api.github.com/gists/${gistId}` : 'https://api.github.com/gists';
     const method = gistId ? 'PATCH' : 'POST';
-    const res    = await fetch(url, {
-      method, signal: ctrl.signal,
-      headers: { 'Accept': 'application/vnd.github.v3+json', 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-      body: JSON.stringify(body)
-    });
-    clearTimeout(tid);
-    const result = await res.json();
-    if (!res.ok) throw new Error(result.message || `HTTP ${res.status}`);
+    const result = await xhrGist(method, url, token, body);
 
     gistId = result.id;
     document.getElementById('githubGistIdInput').value = gistId;
@@ -1637,11 +1648,7 @@ async function saveToGist() {
     toast('☁️ 클라우드 저장 완료 ✓');
     closeGistModal();
   } catch(e) {
-    clearTimeout(tid);
-    const msg = e.name === 'AbortError'
-      ? '요청 시간 초과 (15초)\n네트워크 연결을 확인하세요'
-      : e.message;
-    alert(`저장 실패: ${msg}\n\n확인사항:\n• 토큰에 "gist" 권한 체크\n• 토큰 만료 여부\n• github.com/settings/tokens 에서 재발급`);
+    alert(`저장 실패: ${e.message}\n\n확인사항:\n• 토큰에 "gist" 권한 체크\n• 토큰 만료 여부\n• github.com/settings/tokens 에서 재발급`);
   } finally {
     btn.textContent = '클라우드에 저장'; btn.disabled = false;
   }
