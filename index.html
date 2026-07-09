@@ -1682,18 +1682,23 @@ function renderGistModal() {
   }
 }
 
-function saveGistSettings() {
+async function saveGistSettings() {
   const token    = document.getElementById('gistToken').value.trim();
   const gistId   = document.getElementById('gistId').value.trim();
   const autoSync = document.getElementById('autoSyncChk').checked;
   if (!token) { toast('토큰을 입력하세요'); return; }
   saveGistCfg({ token, gistId: gistId || '', autoSync });
-  document.getElementById('gistModal').classList.remove('open');
-  toast('설정 저장 완료');
+
   if (gistId) {
-    gistLoad();           // 기존 Gist ID 있으면 불러오기
+    document.getElementById('gistModal').classList.remove('open');
+    toast('설정 저장 완료');
+    gistLoad();
   } else {
-    gistSave();           // Gist ID 없으면 새로 생성 (자동으로 ID 저장됨)
+    // Gist ID 없음 → 새로 생성, 모달은 결과 나온 후 처리
+    toast('⏳ Gist 생성 중...');
+    await gistSave();  // 완료 대기
+    // 생성 성공 시 gistSave 안에서 openGistModal 호출됨
+    // 실패 시 alert로 표시됨
   }
 }
 
