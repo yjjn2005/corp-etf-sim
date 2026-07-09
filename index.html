@@ -1598,6 +1598,22 @@ function applySyncPayload(d) {
   });
 }
 
+// 토큰 유효성 확인
+async function testGistToken() {
+  const token = document.getElementById('githubTokenInput').value.trim();
+  const el    = document.getElementById('tokenTestResult');
+  if (!token) { el.textContent = '토큰을 먼저 입력하세요'; el.style.color='var(--red)'; return; }
+  el.textContent = '확인 중...'; el.style.color = 'var(--muted)';
+  try {
+    const result = await xhrGist('GET', 'https://api.github.com/user', token, null);
+    el.textContent = `✅ 유효 — ${result.login} (Classic 토큰 확인됨)`;
+    el.style.color = 'var(--green)';
+  } catch(e) {
+    el.textContent = `❌ ${e.message}`;
+    el.style.color = 'var(--red)';
+  }
+}
+
 // XHR 기반 Gist 요청 (fetch보다 타임아웃 신뢰성 높음)
 function xhrGist(method, url, token, bodyObj) {
   return new Promise((resolve, reject) => {
@@ -1616,7 +1632,7 @@ function xhrGist(method, url, token, bodyObj) {
     };
     xhr.onerror   = () => reject(new Error('네트워크 오류 — 인터넷 연결 확인'));
     xhr.ontimeout = () => reject(new Error('요청 시간 초과 (12초) — 네트워크 확인'));
-    xhr.send(JSON.stringify(bodyObj));
+    xhr.send(bodyObj ? JSON.stringify(bodyObj) : null);
   });
 }
 
@@ -1768,20 +1784,26 @@ if (!_fromShare) autoLoadGist();
       <button class="close" onclick="closeGistModal()">✕</button>
     </div>
     <div class="modal-body">
-      <div style="background:var(--pb);border-radius:10px;padding:12px 15px;font-size:11.5px;color:#1558A0;line-height:1.8;margin-bottom:14px">
-        <b>안내</b><br>
-        GitHub Gist를 사용해 여러 기기에서 데이터(계좌현황 포함)를 동기화합니다.<br>
-        토큰 발급 시 반드시 <b>'gist'</b> 권한만 체크해 주세요.<br>
-        <a href="https://github.com/settings/tokens/new" target="_blank" style="color:var(--blue);font-weight:700">👉 GitHub 토큰 발급하러 가기 ↗</a>
+      <div style="background:#FFF8E0;border:1px solid rgba(181,133,42,.35);border-radius:10px;padding:12px 15px;font-size:11.5px;color:#5A3A00;line-height:1.9;margin-bottom:14px">
+        <b>⚠️ 반드시 Classic 토큰으로 발급하세요</b><br>
+        GitHub에는 토큰 종류가 2가지입니다:<br>
+        &nbsp;• <b style="color:var(--green)">✓ Tokens (classic)</b> — Gist 연동 가능 ← <b>이것 선택</b><br>
+        &nbsp;• <span style="color:var(--red)">✗ Fine-grained tokens</span> — Gist 미지원<br>
+        <a href="https://github.com/settings/tokens/new" target="_blank" style="color:#1558A0;font-weight:700">👉 Classic 토큰 발급 (tokens/new) ↗</a>
+        &nbsp;— Expiration: <b>No expiration</b> · Scope: <b>gist</b> 만 체크
       </div>
       <div class="field">
-        <label>GitHub Personal Access Token (PAT) <span style="color:var(--red)">*</span></label>
+        <label>GitHub Classic Token <span style="color:var(--red)">*</span></label>
         <input type="password" id="githubTokenInput" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" onfocus="this.select()">
         <small>이 기기 localStorage에만 저장 — 서버 전송 없음</small>
       </div>
+      <div style="margin-bottom:12px">
+        <button onclick="testGistToken()" style="padding:6px 14px;border:1px solid var(--line2);border-radius:6px;background:var(--bg);cursor:pointer;font-family:var(--font);font-size:11.5px;font-weight:600">🔍 토큰 유효성 확인</button>
+        <span id="tokenTestResult" style="font-size:11.5px;margin-left:8px"></span>
+      </div>
       <div class="field">
         <label>Gist ID <span style="color:var(--muted2)">(처음엔 비워두세요 — 저장 시 자동 생성)</span></label>
-        <input type="text" id="githubGistIdInput" placeholder="저장 후 자동으로 채워집니다">
+        <input type="text" id="githubGistIdInput" placeholder="저장 후 자동으로 채워집니다" onfocus="this.select()">
         <small>모바일 등 다른 기기에서 이 ID를 동일하게 입력 → 불러오기</small>
       </div>
       <div style="display:flex;gap:10px;margin-top:18px">
