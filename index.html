@@ -606,7 +606,7 @@ const defaults = {
 
 let params = structuredClone(defaults);
 let rows = [], manual = [], memos = [];
-let acctHoldings = JSON.parse(localStorage.getItem('acctHoldings_v2') || 'null') || {};
+var acctHoldings = JSON.parse(localStorage.getItem('acctHoldings_v2') || 'null') || {};
 let livePrices = {}, liveRate = 0, lastFetchTime = null;
 
 const won = v => '₩' + Math.round(v).toLocaleString('ko-KR');
