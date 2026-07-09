@@ -210,6 +210,7 @@ th:first-child{background:rgba(7,17,32,.05);z-index:2}
       </div>
     </div>
     <div class="actions">
+      <button class="btn ghost" onclick="shareURL()" title="전체 데이터를 링크로 공유 (계좌현황 포함)">📤 공유링크</button>
       <button class="btn ghost" onclick="openGistModal()" title="클라우드 동기화 설정">☁️ 연동</button>
       <button class="btn ghost" onclick="gistSave()" title="클라우드에 저장">↑ 저장</button>
       <button class="btn ghost" onclick="gistLoad()" title="클라우드에서 불러오기">↓ 불러오기</button>
@@ -1225,6 +1226,75 @@ async function copyFullCode(){
     toast('전체 코드 복사 완료 ✓');
   }
 }
+// URL 공유 — 계좌현황 포함 전체 데이터를 링크에 담아 카톡 전송
+function shareURL() {
+  // 계좌 입력 중인 값도 반영
+  ACCT_ETFS.forEach(e => {
+    if (!acctHoldings[e.key]) acctHoldings[e.key] = {};
+    acctHoldings[e.key].qty    = _acctGet(e.key,'qty');
+    acctHoldings[e.key].avg    = _acctGet(e.key,'avg');
+    acctHoldings[e.key].manual = _acctGet(e.key,'manual');
+  });
+  const payload = { params, manual, memos, acctHoldings, scenario: currentScenario, sharedAt: new Date().toISOString(), v:'share1' };
+  try {
+    const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
+    const url = location.origin + location.pathname + '#share=' + encoded;
+    navigator.clipboard.writeText(url).then(() => {
+      toast('📤 공유링크 복사 완료! 카카오톡으로 본인에게 전송 후 모바일에서 열기');
+    }).catch(() => {
+      // 클립보드 실패 시 모달로 표시
+      showShareModal(url);
+    });
+  } catch(e) {
+    toast('링크 생성 실패: ' + e.message);
+  }
+}
+
+function showShareModal(url) {
+  const old = document.getElementById('shareURLModal');
+  if (old) old.remove();
+  const m = document.createElement('div');
+  m.id = 'shareURLModal';
+  m.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:9999;display:flex;align-items:center;justify-content:center;padding:16px';
+  m.innerHTML = `<div style="background:var(--card);border-radius:12px;padding:24px;max-width:500px;width:100%">
+    <div style="font-weight:700;font-size:15px;margin-bottom:12px">📤 공유 링크</div>
+    <textarea id="shareURLText" readonly style="width:100%;height:80px;font-size:11px;border:1px solid var(--line);border-radius:6px;padding:8px;resize:none;font-family:monospace;box-sizing:border-box">${url}</textarea>
+    <div style="font-size:12px;color:var(--muted);margin:10px 0">위 링크를 복사해서 카카오톡으로 본인에게 전송 → 모바일에서 링크 클릭</div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button onclick="document.getElementById('shareURLText').select();document.execCommand('copy');toast('복사 완료!')" style="padding:8px 16px;background:var(--gold);color:#fff;border:none;border-radius:6px;cursor:pointer;font-family:var(--font)">복사</button>
+      <button onclick="document.getElementById('shareURLModal').remove()" style="padding:8px 16px;background:var(--line);border:none;border-radius:6px;cursor:pointer;font-family:var(--font)">닫기</button>
+    </div>
+  </div>`;
+  document.body.appendChild(m);
+}
+
+// 페이지 로드 시 공유 링크 감지 → 자동 적용
+function applyShareURL() {
+  const hash = location.hash;
+  if (!hash.startsWith('#share=')) return false;
+  try {
+    const encoded = hash.slice(7);
+    const payload = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+    if (!payload.v || payload.v !== 'share1') return false;
+    if (payload.params)      params = { ...structuredClone(defaults), ...payload.params, shareholders: { ...defaults.shareholders, ...(payload.params.shareholders||{}) } };
+    if (payload.manual)      manual = payload.manual;
+    if (payload.memos)       memos  = payload.memos;
+    if (payload.acctHoldings) {
+      acctHoldings = payload.acctHoldings;
+      localStorage.setItem('acctHoldings_v2', JSON.stringify(acctHoldings));
+    }
+    if (payload.scenario && SCENARIOS[payload.scenario]) currentScenario = payload.scenario;
+    saveLocal(false);
+    history.replaceState(null, '', location.pathname); // URL 해시 제거
+    const t = payload.sharedAt ? new Date(payload.sharedAt).toLocaleString('ko-KR') : '방금';
+    toast(`📲 공유 데이터 적용 완료 (${t} 기준) · 계좌현황 포함`);
+    return true;
+  } catch(e) {
+    toast('공유링크 오류: ' + e.message);
+    return false;
+  }
+}
+
 function exportData(){
   const data = { params, manual, memos, exportedAt: new Date().toISOString(), version:'v5', note:'유앤김 법인 ETF 시뮬레이터 v5 백업 (SCHD+0052D0+JEPQ+JEPI+QQQ+TLT)' };
   const blob = new Blob([JSON.stringify(data,null,2)], { type:'application/json' });
@@ -1654,9 +1724,12 @@ async function autoLoadGist() {
   }
 }
 
-loadLocal();
+// 공유링크 우선 적용 → 없으면 로컬 로드
+const _fromShare = applyShareURL();
+if (!_fromShare) loadLocal();
 recalc();
-autoLoadGist();
+renderAll();
+if (!_fromShare) autoLoadGist();
 </script>
 
 <!-- ─── Gist 설정 모달 ──────────────────────── -->
