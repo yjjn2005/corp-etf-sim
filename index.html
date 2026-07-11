@@ -158,6 +158,7 @@ th:first-child{background:linear-gradient(180deg,#f0f4fb,#e8eef8);z-index:2}
 .tag-qqq{background:#ede9fb;color:#3730a3}
 
 .footer{color:var(--muted2);font-size:11px;text-align:center;margin-top:36px;line-height:1.8;padding-top:20px;border-top:1px solid var(--line);}
+.btn-extra{display:none}
 
 /* ── 모바일 반응형 ── */
 @media(max-width:640px){
@@ -220,13 +221,14 @@ th:first-child{background:linear-gradient(180deg,#f0f4fb,#e8eef8);z-index:2}
     </div>
     <div class="actions">
       <button class="btn ghost" onclick="openManual()">수동입력</button>
-      <button class="btn ghost" onclick="copyFullCode()">전체코드 복사</button>
-      <button class="btn ghost" onclick="exportData()">내보내기</button>
-      <button class="btn ghost" onclick="document.getElementById('importFile').click()">가져오기</button>
-      <button class="btn ghost" onclick="resetPortfolio()" style="border-color:rgba(255,180,50,.4);color:#ffd97a">포트폴리오 초기화</button>
-      <button class="btn ghost" id="syncBtn" onclick="openSync()" style="border-color:rgba(100,200,100,.4);color:#7dffb3">☁️ 클라우드 동기화</button>
+      <button class="btn ghost btn-extra" onclick="copyFullCode()">전체코드 복사</button>
+      <button class="btn ghost btn-extra" onclick="exportData()">내보내기</button>
+      <button class="btn ghost btn-extra" onclick="document.getElementById('importFile').click()">가져오기</button>
+      <button class="btn ghost btn-extra" onclick="resetPortfolio()" style="border-color:rgba(255,180,50,.4);color:#ffd97a">포트폴리오 초기화</button>
+      <button class="btn ghost btn-extra" id="syncBtn" onclick="openSync()" style="border-color:rgba(100,200,100,.4);color:#7dffb3">☁️ 동기화</button>
       <button class="btn white" onclick="saveLocal()">이 기기 저장</button>
       <button class="btn gold" onclick="recalc()">재계산</button>
+      <button class="btn ghost" onclick="toggleHeaderBtns()" style="padding:8px 10px;font-size:13px" title="기능 버튼 더보기"><span id="toggleBtnIcon">▼</span></button>
       <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
     </div>
   </div>
@@ -240,6 +242,7 @@ th:first-child{background:linear-gradient(180deg,#f0f4fb,#e8eef8);z-index:2}
     <button class="tab" onclick="openRepayPlan()">월별 상환계획</button>
     <button class="tab" data-tab="cashflow">현금흐름</button>
     <button class="tab" data-tab="children">자녀지분</button>
+    <button class="tab" data-tab="scenarios">📈 경기 시나리오</button>
     <button class="tab" data-tab="account" style="background:linear-gradient(135deg,#1558A0,#0d3d72);color:#fff;font-weight:800">📊 실제 계좌현황</button>
   </div>
 
@@ -311,6 +314,20 @@ th:first-child{background:linear-gradient(180deg,#f0f4fb,#e8eef8);z-index:2}
     <div class="section-title"><h2>자녀 지분가치</h2><div class="note">지분율 합계 자동 검증 포함</div></div>
     <div class="grid kpis" id="shareCards"></div>
     <div class="table-wrap"><table id="shareTable"></table></div>
+  </section>
+
+  <!-- ⑦ 경기 시나리오 -->
+  <section id="scenarios" class="pane">
+    <div class="section-title">
+      <h2>경기 시나리오 비교</h2>
+      <div class="note">현재 포트폴리오 구성 기준 · 경제 환경별 3가지 시나리오</div>
+    </div>
+    <div id="scenarioCards" class="grid" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:14px;margin-bottom:20px"></div>
+    <div class="section-title" style="margin-top:4px"><h2>연도별 월배당 비교표</h2><div class="note">5세 구간 · 단위: 만원/월</div></div>
+    <div class="table-wrap"><table id="scenarioTable"></table></div>
+    <div class="card risk" style="margin-top:14px;font-size:12px">
+      ⚠️ 시나리오 수치는 참고용 추정치입니다. 실제 ETF 분배금·주가 성장률은 경기 변동에 따라 다를 수 있으며 투자 판단의 근거로 단독 사용을 삼가십시오.
+    </div>
   </section>
 
   <!-- ⑥ 실제 계좌현황 -->
@@ -567,7 +584,126 @@ function recalc() { rows = simulate(); renderAll(); toast('재계산 완료'); }
 function renderAll() {
   renderTaxDisclosure(); renderKpis(); renderPortfolioComp(); renderBars(); renderDivBars(); renderMilestones();
   renderInputs(); renderTable(); renderCash(); renderShares(); renderVerifyCards();
-  renderManualList(); renderMemoList();
+  renderManualList(); renderMemoList(); renderScenarios();
+}
+
+// ── 헤더 버튼 토글 ──
+let _btnExpanded = false;
+function toggleHeaderBtns(){
+  _btnExpanded = !_btnExpanded;
+  document.querySelectorAll('.btn-extra').forEach(b => b.style.display = _btnExpanded ? '' : 'none');
+  document.getElementById('toggleBtnIcon').textContent = _btnExpanded ? '▲' : '▼';
+}
+
+// ── 시나리오 시뮬레이션 ──
+const SCENARIOS = [
+  {
+    key:'pessimistic', label:'비관', emoji:'📉', color:'#A83030', bg:'#FAEBEB', border:'#e8b4b4',
+    desc:'경기침체 · 금리상승 · 달러약세 · 고배당 감배',
+    overrides:{
+      schdGrowth:.02, schdDivGrowth:.005, schdDivCap:.07,
+      gpiqGrowth:.01, gpiqDivRate:.07,  gpiqDivChange:-.03, gpiqDivFloor:.04,
+      jepqGrowth:.01, jepqDivRate:.08,  jepqDivChange:-.03, jepqDivFloor:.05,
+      qqqGrowth:.03,  qqqDivGrowth:.04,
+    }
+  },
+  {
+    key:'base', label:'기본', emoji:'📊', color:'#1558A0', bg:'#EBF3FB', border:'#b5d4f4',
+    desc:'현재 가정치 기준 · 중립적 성장 시나리오',
+    overrides:{}
+  },
+  {
+    key:'optimistic', label:'낙관', emoji:'📈', color:'#1A6B3C', bg:'#E5F5EE', border:'#9fe1cb',
+    desc:'경기확장 · 달러강세 · 고배당 유지 · 성장 가속',
+    overrides:{
+      schdGrowth:.07, schdDivGrowth:.06, schdDivCap:.15,
+      gpiqGrowth:.05, gpiqDivRate:.09,  gpiqDivChange:0,   gpiqDivFloor:.07,
+      jepqGrowth:.05, jepqDivRate:.11,  jepqDivChange:0,   jepqDivFloor:.08,
+      qqqGrowth:.10,  qqqDivGrowth:.14,
+    }
+  },
+];
+
+function simulateWith(overrides){
+  const P = { ...structuredClone(params), ...overrides };
+  const out = [];
+  let sB=P.schdPrincipal, gB=P.gpiqPrincipal, jqB=P.jepqPrincipal, qqB=P.qqqPrincipal;
+  let loan=P.loanInit;
+  for(let i=0;i<=END_AGE-START_AGE;i++){
+    const age=START_AGE+i;
+    const sRate  = Math.min(P.schdDivRate*Math.pow(1+P.schdDivGrowth,i), P.schdDivCap);
+    const gRate  = Math.max(P.gpiqDivRate*Math.pow(1+P.gpiqDivChange,i),  P.gpiqDivFloor);
+    const jqRate = Math.max(P.jepqDivRate*Math.pow(1+P.jepqDivChange,i),  P.jepqDivFloor);
+    const qqRate = P.qqqDivRate*Math.pow(1+P.qqqDivGrowth,i);
+    const total  = (sB*sRate+gB*gRate+jqB*jqRate+qqB*qqRate)*(1-P.usTax);
+    const repay  = Math.min(total,loan); loan=Math.max(loan-repay,0);
+    const surplus=total-repay, totalP=sB+gB+jqB+qqB;
+    sB =(sB +(surplus*(sB /totalP)))*(1+P.schdGrowth);
+    gB =(gB +(surplus*(gB /totalP)))*(1+P.gpiqGrowth);
+    jqB=(jqB+(surplus*(jqB/totalP)))*(1+P.jepqGrowth);
+    qqB=(qqB+(surplus*(qqB/totalP)))*(1+P.qqqGrowth);
+    out.push({ age, total, monthly:total/12, loan, corpAsset:sB+gB+jqB+qqB });
+  }
+  return out;
+}
+
+function renderScenarios(){
+  const results = SCENARIOS.map(s=>({ ...s, rows: simulateWith(s.overrides) }));
+
+  // KPI 카드 3개
+  document.getElementById('scenarioCards').innerHTML = results.map(s=>{
+    const r=s.rows, paid=r.find(x=>x.loan===0);
+    const cum=r.reduce((a,x)=>a+x.total,0);
+    return `
+    <div class="card" style="border:2px solid ${s.border};background:${s.bg}">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:12px">
+        <span style="font-size:22px">${s.emoji}</span>
+        <div>
+          <div style="font-size:16px;font-weight:900;color:${s.color}">${s.label} 시나리오</div>
+          <div style="font-size:10.5px;color:var(--muted);line-height:1.5">${s.desc}</div>
+        </div>
+      </div>
+      ${scRow('초기 월배당',eok(r[0].monthly),'만60세 2026년',s.color)}
+      ${scRow('만70세 월배당',eok(r[10].monthly),'2036년',s.color)}
+      ${scRow('만80세 월배당',eok(r[20].monthly),'2046년',s.color)}
+      ${scRow('만99세 월배당',eok(r[39].monthly),'2065년',s.color)}
+      ${scRow('가수금 완납',paid?'만'+paid.age+'세':'-',paid?paid.age+'년 완납':'미도달',s.color)}
+      ${scRow('40년 누계배당',eok(cum),'세후 합산',s.color)}
+      ${scRow('만99세 법인자산',eok(r[39].corpAsset),'추정',s.color)}
+    </div>`;
+  }).join('');
+
+  // 비교 테이블
+  const ages=[60,65,70,75,80,85,90,95,99];
+  const thead=`<thead><tr>
+    <th>나이</th><th>연도</th>
+    <th style="color:#A83030">📉 비관(만원/월)</th>
+    <th style="color:#1558A0">📊 기본(만원/월)</th>
+    <th style="color:#1A6B3C">📈 낙관(만원/월)</th>
+    <th style="color:#1A6B3C">vs 기본 차이</th>
+  </tr></thead>`;
+  const tbody=ages.map(age=>{
+    const i=age-START_AGE;
+    const [pess,base,opt]=results.map(s=>s.rows[i]);
+    const yr=START_YEAR+i;
+    const diff=opt.monthly-pess.monthly;
+    const s5=get5yr(age);
+    return `<tr style="${s5.row}">
+      <td style="text-align:center;font-weight:800;${s5.lbl}">만${age}세</td>
+      <td style="text-align:center;color:var(--muted)">${yr}</td>
+      <td style="color:#A83030;font-weight:700">${Math.round(pess.monthly/10000).toLocaleString()}</td>
+      <td style="color:#1558A0;font-weight:700">${Math.round(base.monthly/10000).toLocaleString()}</td>
+      <td style="color:#1A6B3C;font-weight:700">${Math.round(opt.monthly/10000).toLocaleString()}</td>
+      <td style="color:#555;font-size:11px">범위 ${eok(diff)}</td>
+    </tr>`;
+  }).join('');
+  document.getElementById('scenarioTable').innerHTML = thead+`<tbody>${tbody}</tbody>`;
+}
+function scRow(label,val,sub,color){
+  return `<div style="display:flex;justify-content:space-between;align-items:baseline;padding:6px 0;border-bottom:1px solid rgba(0,0,0,.06)">
+    <span style="font-size:11px;color:var(--muted)">${label}</span>
+    <div style="text-align:right"><div style="font-size:14px;font-weight:900;color:${color}">${val}</div><div style="font-size:10px;color:var(--muted2)">${sub}</div></div>
+  </div>`;
 }
 
 function renderPortfolioComp() {
