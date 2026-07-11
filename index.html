@@ -200,6 +200,7 @@ th:first-child{background:linear-gradient(180deg,#f0f4fb,#e8eef8);z-index:2}
     <div class="tax-disclosure" id="taxDisclosure"></div>
     <div class="section-title"><h2>핵심 요약 대시보드</h2><div class="note">계산 기준: 기초자산 × 배당률 산정 · 잉여 세후배당 ETF 비중별 비례 재투자</div></div>
     <div class="grid kpis" id="kpis"></div>
+    <div class="card" id="portfolioComp" style="margin-bottom:16px"></div>
     <div class="grid two">
       <div class="card">
         <div class="section-title" style="margin-top:0">
@@ -482,9 +483,42 @@ function simulate() {
 function recalc() { rows = simulate(); renderAll(); toast('재계산 완료'); }
 
 function renderAll() {
-  renderTaxDisclosure(); renderKpis(); renderBars(); renderDivBars(); renderMilestones();
+  renderTaxDisclosure(); renderKpis(); renderPortfolioComp(); renderBars(); renderDivBars(); renderMilestones();
   renderInputs(); renderTable(); renderCash(); renderShares(); renderVerifyCards();
   renderManualList(); renderMemoList();
+}
+
+function renderPortfolioComp() {
+  const ETFs = [
+    { ticker:'SCHD', label:'Schwab US Dividend Equity ETF',       amt:params.schdPrincipal, color:'#1558A0', bg:'#ddeefb', tc:'#0d4f8a' },
+    { ticker:'QQQ',  label:'Invesco QQQ Trust (Nasdaq-100)',       amt:params.qqqPrincipal,  color:'#4A3AA7', bg:'#ede9fb', tc:'#3730a3' },
+    { ticker:'GPIQ', label:'Goldman Sachs U.S. Large Cap Premium', amt:params.gpiqPrincipal, color:'#c87a00', bg:'#fdf4dc', tc:'#7c4a00' },
+    { ticker:'JEPQ', label:'JPMorgan Nasdaq Equity Premium Income',amt:params.jepqPrincipal, color:'#0D7065', bg:'#d4ede8', tc:'#095c52' },
+  ];
+  const sorted = [...ETFs].sort((a,b)=>b.amt-a.amt);
+  const total = sorted.reduce((s,e)=>s+e.amt,0);
+  const rows = sorted.map(e=>{
+    const pct = total > 0 ? (e.amt/total*100) : 0;
+    return `
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)">
+      <span style="min-width:52px;background:${e.bg};color:${e.tc};border-radius:6px;padding:3px 9px;font-size:13px;font-weight:900;text-align:center">${e.ticker}</span>
+      <span style="flex:1;font-size:12px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${e.label}</span>
+      <span style="min-width:54px;text-align:right;font-size:14px;font-weight:800;color:var(--text)">${eok(e.amt)}</span>
+      <div style="min-width:120px;display:flex;align-items:center;gap:8px">
+        <div style="flex:1;height:8px;background:#eef1f8;border-radius:99px;overflow:hidden">
+          <div style="width:${pct.toFixed(1)}%;height:100%;background:${e.color};border-radius:99px;transition:width .5s ease"></div>
+        </div>
+        <span style="min-width:40px;text-align:right;font-size:13px;font-weight:700;color:${e.color}">${pct.toFixed(1)}%</span>
+      </div>
+    </div>`;
+  }).join('');
+  document.getElementById('portfolioComp').innerHTML = `
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:4px">
+      <span style="font-size:14px;font-weight:800;color:var(--navy)">포트폴리오 구성</span>
+      <span style="font-size:12px;color:var(--muted)">총 <b style="color:var(--text)">${eok(total)}</b> · ${sorted.length}종목 · 비중 높은 순</span>
+    </div>
+    ${rows}
+    <div style="border-top:none;padding-top:4px"></div>`;
 }
 
 function card(label, value, sub, cls='') {
