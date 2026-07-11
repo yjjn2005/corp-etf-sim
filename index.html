@@ -223,6 +223,7 @@ th:first-child{background:linear-gradient(180deg,#f0f4fb,#e8eef8);z-index:2}
       <button class="btn ghost" onclick="copyFullCode()">전체코드 복사</button>
       <button class="btn ghost" onclick="exportData()">내보내기</button>
       <button class="btn ghost" onclick="document.getElementById('importFile').click()">가져오기</button>
+      <button class="btn ghost" onclick="resetPortfolio()" style="border-color:rgba(255,180,50,.4);color:#ffd97a">포트폴리오 초기화</button>
       <button class="btn white" onclick="saveLocal()">이 기기 저장</button>
       <button class="btn gold" onclick="recalc()">재계산</button>
       <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
@@ -1022,44 +1023,49 @@ function renderMemoList(){
     </div>`).join('') : '';
 }
 
-const STORAGE_KEY = 'corp_etf_sim_v6';   // v6: 4종목 신포트폴리오 (SCHD/GPIQ/JEPQ/QQQ)
-const LEGACY_KEYS = ['corp_etf_sim_v5','corp_etf_sim_v4','corp_etf_sim_v3'];
-// v6 포트폴리오 필드 — 이 필드가 저장 데이터에 없으면 기본값으로 강제 재설정
-const V6_FIELDS = ['gpiqPrincipal','gpiqGrowth','gpiqDivRate','gpiqDivChange','gpiqDivFloor'];
+const STORAGE_KEY = 'corp_etf_sim_v6';
+const APP_VERSION = 'v6.0';  // 이 값이 바뀌면 포트폴리오 파라미터 자동 초기화
+const PORTFOLIO_KEYS = ['schdPrincipal','schdGrowth','schdDivRate','schdDivGrowth','schdDivCap',
+  'gpiqPrincipal','gpiqGrowth','gpiqDivRate','gpiqDivChange','gpiqDivFloor',
+  'jepqPrincipal','jepqGrowth','jepqDivRate','jepqDivChange','jepqDivFloor',
+  'qqqPrincipal','qqqGrowth','qqqDivRate','qqqDivGrowth','usTax'];
 
 function saveLocal(show=true){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ params, manual, memos, savedAt: new Date().toISOString() }));
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({
+    version: APP_VERSION, params, manual, memos, savedAt: new Date().toISOString()
+  }));
   if (show) toast('이 기기에 저장 완료');
 }
 function loadLocal(){
-  // 구버전 키 자동 삭제
-  LEGACY_KEYS.forEach(k => localStorage.removeItem(k));
+  // 구버전 키 정리
+  ['corp_etf_sim_v5','corp_etf_sim_v4','corp_etf_sim_v3'].forEach(k => localStorage.removeItem(k));
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
     const d = JSON.parse(raw);
+    const base = structuredClone(defaults);
     if (d.params) {
-      // v6 필드가 하나라도 없으면 포트폴리오 관련 값 전체를 기본값으로 강제 복원
-      const needsReset = V6_FIELDS.some(f => !(f in d.params));
-      const base = structuredClone(defaults);
-      if (needsReset) {
-        // 포트폴리오 투자금·배당 파라미터는 기본값 유지, 나머지(가수금 등)는 저장값 사용
-        const portfolioKeys = ['schdPrincipal','schdGrowth','schdDivRate','schdDivGrowth','schdDivCap',
-          'gpiqPrincipal','gpiqGrowth','gpiqDivRate','gpiqDivChange','gpiqDivFloor',
-          'jepqPrincipal','jepqGrowth','jepqDivRate','jepqDivChange','jepqDivFloor',
-          'qqqPrincipal','qqqGrowth','qqqDivRate','qqqDivGrowth','usTax'];
-        const merged = { ...base, ...d.params, shareholders: { ...base.shareholders, ...(d.params.shareholders||{}) } };
-        portfolioKeys.forEach(k => { merged[k] = base[k]; });
-        params = merged;
-        toast('포트폴리오 구성이 v6.0 기본값으로 초기화되었습니다');
-      } else {
-        params = { ...base, ...d.params, shareholders: { ...base.shareholders, ...(d.params.shareholders||{}) } };
+      const merged = { ...base, ...d.params, shareholders: { ...base.shareholders, ...(d.params.shareholders||{}) } };
+      // 저장 버전이 현재 앱 버전과 다르면 포트폴리오 파라미터만 기본값으로 강제 복원
+      if (d.version !== APP_VERSION) {
+        PORTFOLIO_KEYS.forEach(k => { merged[k] = base[k]; });
+        toast('포트폴리오 구성이 v6.0 기본값(15억)으로 초기화되었습니다');
+        // 새 버전으로 즉시 재저장
+        setTimeout(() => saveLocal(false), 300);
       }
+      params = merged;
     }
     manual = d.manual || [];
     memos  = d.memos  || [];
     if (d.savedAt) document.getElementById('saveStatus').textContent = '이 기기 저장: ' + new Date(d.savedAt).toLocaleString('ko-KR');
   } catch(e) { console.warn(e); }
+}
+function resetPortfolio(){
+  if (!confirm('포트폴리오 투자금액을 기본값(SCHD 10억/GPIQ 1.25억/JEPQ 1.25억/QQQ 2.5억)으로 초기화할까요?\n\n가수금·주주구성 등 다른 설정은 유지됩니다.')) return;
+  PORTFOLIO_KEYS.forEach(k => { params[k] = defaults[k]; });
+  rows = simulate(); renderAll();
+  saveLocal(false);
+  toast('포트폴리오 기본값으로 초기화 완료');
 }
 
 async function copyFullCode(){
