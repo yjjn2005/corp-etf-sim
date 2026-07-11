@@ -217,6 +217,7 @@ th:first-child{background:linear-gradient(180deg,#f0f4fb,#e8eef8);z-index:2}
         <h1>유앤김 법인 자금운용 시뮬레이터</h1>
         <p>1966년생 만60세(2026) → 만99세(2065) · 4종목 · 가수금 13억 · 총투자 15억 · v6.0</p>
         <div class="status" id="saveStatus">저장 데이터 없음</div>
+        <div class="status" id="syncStatus2" style="color:rgba(125,255,179,.7)"></div>
       </div>
     </div>
     <div class="actions">
@@ -1215,10 +1216,9 @@ function saveLocal(show=true){
   localStorage.setItem(STORAGE_KEY, JSON.stringify({
     version: APP_VERSION, params, manual, memos, savedAt: new Date().toISOString()
   }));
-  if (show) toast('이 기기에 저장 완료');
+  if (show) { toast('이 기기에 저장 완료'); autoUpload(); }
 }
 function loadLocal(){
-  // 구버전 키 정리
   ['corp_etf_sim_v5','corp_etf_sim_v4','corp_etf_sim_v3'].forEach(k => localStorage.removeItem(k));
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
@@ -1227,11 +1227,9 @@ function loadLocal(){
     const base = structuredClone(defaults);
     if (d.params) {
       const merged = { ...base, ...d.params, shareholders: { ...base.shareholders, ...(d.params.shareholders||{}) } };
-      // 저장 버전이 현재 앱 버전과 다르면 포트폴리오 파라미터만 기본값으로 강제 복원
       if (d.version !== APP_VERSION) {
         PORTFOLIO_KEYS.forEach(k => { merged[k] = base[k]; });
         toast('포트폴리오 구성이 v6.0 기본값(15억)으로 초기화되었습니다');
-        // 새 버전으로 즉시 재저장
         setTimeout(() => saveLocal(false), 300);
       }
       params = merged;
@@ -1241,11 +1239,71 @@ function loadLocal(){
     if (d.savedAt) document.getElementById('saveStatus').textContent = '이 기기 저장: ' + new Date(d.savedAt).toLocaleString('ko-KR');
   } catch(e) { console.warn(e); }
 }
-// ── GitHub Gist 동기화 ──
+
+// ── GitHub Gist 자동 동기화 ──
 const SYNC_TOKEN_KEY = 'gist_token_v6';
 const SYNC_GIST_KEY  = 'gist_id_v6';
 const GIST_FILENAME  = 'corp-etf-sim-v6.json';
 
+function getSyncCreds(){ return { tok: localStorage.getItem(SYNC_TOKEN_KEY)||'', gid: localStorage.getItem(SYNC_GIST_KEY)||'' }; }
+function setSyncBadge(msg, ok=true){
+  const el = document.getElementById('syncStatus2');
+  if (el) { el.textContent = msg; el.style.color = ok ? 'rgba(125,255,179,.9)' : 'rgba(255,150,150,.9)'; }
+}
+function syncSetStatus(msg, ok=true){
+  const el = document.getElementById('syncStatus');
+  if (el) { el.textContent = msg; el.style.color = ok ? 'var(--green)' : 'var(--red)'; }
+}
+
+// 자동 업로드 (저장 시 백그라운드)
+async function autoUpload(){
+  const { tok, gid } = getSyncCreds();
+  if (!tok || !gid) return;   // 자격증명 없으면 건너뜀
+  setSyncBadge('☁️ 동기화 중…');
+  const payload = JSON.stringify({ version:APP_VERSION, params, manual, memos, savedAt: new Date().toISOString() }, null, 2);
+  try {
+    const res = await fetch(`https://api.github.com/gists/${gid}`, {
+      method:'PATCH',
+      headers:{ Authorization:`token ${tok}`, 'Content-Type':'application/json' },
+      body: JSON.stringify({ files:{ [GIST_FILENAME]:{ content:payload } } })
+    });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const now = new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+    setSyncBadge(`☁️ 동기화됨 ${now}`);
+  } catch(e){ setSyncBadge('☁️ 동기화 실패', false); }
+}
+
+// 자동 다운로드 (앱 로드 시)
+async function autoDownload(){
+  const { tok, gid } = getSyncCreds();
+  if (!tok || !gid) return;
+  setSyncBadge('☁️ 동기화 불러오는 중…');
+  try {
+    const res = await fetch(`https://api.github.com/gists/${gid}`, { headers:{ Authorization:`token ${tok}` } });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const raw = data.files?.[GIST_FILENAME]?.content;
+    if (!raw) throw new Error('파일 없음');
+    const d = JSON.parse(raw);
+    // 클라우드 데이터가 로컬보다 최신이면 적용
+    const localRaw = localStorage.getItem(STORAGE_KEY);
+    const localSaved = localRaw ? JSON.parse(localRaw).savedAt : null;
+    if (!localSaved || new Date(d.savedAt) > new Date(localSaved)) {
+      const base = structuredClone(defaults);
+      if (d.params) params = { ...base, ...d.params, shareholders:{ ...base.shareholders, ...(d.params.shareholders||{}) } };
+      manual = d.manual || []; memos = d.memos || [];
+      rows = simulate(); renderAll(); saveLocal(false);
+      const dt = d.savedAt ? new Date(d.savedAt).toLocaleString('ko-KR') : '';
+      setSyncBadge(`☁️ 최신 데이터 적용 (${dt})`);
+      toast('☁️ 클라우드 최신 데이터 자동 적용');
+    } else {
+      const now = new Date().toLocaleTimeString('ko-KR',{hour:'2-digit',minute:'2-digit'});
+      setSyncBadge(`☁️ 최신 상태 ${now}`);
+    }
+  } catch(e){ setSyncBadge('☁️ 동기화 연결 실패', false); }
+}
+
+// 동기화 모달 (수동)
 function openSync(){
   document.getElementById('syncToken').value  = localStorage.getItem(SYNC_TOKEN_KEY) || '';
   document.getElementById('syncGistId').value = localStorage.getItem(SYNC_GIST_KEY)  || '';
@@ -1263,11 +1321,6 @@ function syncSaveCredentials(){
   if (gid) localStorage.setItem(SYNC_GIST_KEY, gid);
   return { tok, gid };
 }
-function syncSetStatus(msg, ok=true){
-  const el = document.getElementById('syncStatus');
-  el.textContent = msg;
-  el.style.color = ok ? 'var(--green)' : 'var(--red)';
-}
 
 async function gistUpload(){
   const { tok, gid } = syncSaveCredentials();
@@ -1278,13 +1331,17 @@ async function gistUpload(){
     const isNew = !gid;
     const url = isNew ? 'https://api.github.com/gists' : `https://api.github.com/gists/${gid}`;
     const method = isNew ? 'POST' : 'PATCH';
-    const body = { description:'유앤김 법인 ETF 시뮬레이터 v6 동기화 데이터', public:false, files:{ [GIST_FILENAME]:{ content:payload } } };
-    const res = await fetch(url, { method, headers:{ Authorization:`token ${tok}`, 'Content-Type':'application/json' }, body:JSON.stringify(body) });
+    const res = await fetch(url, {
+      method,
+      headers:{ Authorization:`token ${tok}`, 'Content-Type':'application/json' },
+      body: JSON.stringify({ description:'유앤김 법인 ETF 시뮬레이터 v6 동기화 데이터', public:false, files:{ [GIST_FILENAME]:{ content:payload } } })
+    });
     if (!res.ok) throw new Error(`HTTP ${res.status}`);
     const data = await res.json();
     localStorage.setItem(SYNC_GIST_KEY, data.id);
     document.getElementById('syncGistId').value = data.id;
     syncSetStatus(`✅ 업로드 완료! Gist ID: ${data.id}`);
+    setSyncBadge(`☁️ 동기화됨`);
     toast('☁️ 클라우드 업로드 완료');
   } catch(e){ syncSetStatus(`❌ 업로드 실패: ${e.message}`, false); }
 }
@@ -1304,7 +1361,8 @@ async function gistDownload(){
     if (d.params) params = { ...base, ...d.params, shareholders:{ ...base.shareholders, ...(d.params.shareholders||{}) } };
     manual = d.manual || []; memos = d.memos || [];
     rows = simulate(); renderAll(); saveLocal(false);
-    syncSetStatus(`✅ 다운로드 완료! (저장일: ${d.savedAt ? new Date(d.savedAt).toLocaleString('ko-KR') : '알 수 없음'})`);
+    syncSetStatus(`✅ 다운로드 완료! (${d.savedAt ? new Date(d.savedAt).toLocaleString('ko-KR') : ''})`);
+    setSyncBadge(`☁️ 동기화됨`);
     toast('☁️ 클라우드 데이터 적용 완료');
   } catch(e){ syncSetStatus(`❌ 다운로드 실패: ${e.message}`, false); }
 }
@@ -1639,6 +1697,7 @@ function renderAccountTable() {
 
 loadLocal();
 recalc();
+autoDownload();  // 자격증명 있으면 클라우드 최신 데이터 자동 적용
 </script>
 </body>
 </html>
