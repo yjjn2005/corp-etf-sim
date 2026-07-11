@@ -1022,17 +1022,40 @@ function renderMemoList(){
     </div>`).join('') : '';
 }
 
-const STORAGE_KEY = 'corp_etf_sim_v5';
+const STORAGE_KEY = 'corp_etf_sim_v6';   // v6: 4종목 신포트폴리오 (SCHD/GPIQ/JEPQ/QQQ)
+const LEGACY_KEYS = ['corp_etf_sim_v5','corp_etf_sim_v4','corp_etf_sim_v3'];
+// v6 포트폴리오 필드 — 이 필드가 저장 데이터에 없으면 기본값으로 강제 재설정
+const V6_FIELDS = ['gpiqPrincipal','gpiqGrowth','gpiqDivRate','gpiqDivChange','gpiqDivFloor'];
+
 function saveLocal(show=true){
   localStorage.setItem(STORAGE_KEY, JSON.stringify({ params, manual, memos, savedAt: new Date().toISOString() }));
   if (show) toast('이 기기에 저장 완료');
 }
 function loadLocal(){
+  // 구버전 키 자동 삭제
+  LEGACY_KEYS.forEach(k => localStorage.removeItem(k));
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
     const d = JSON.parse(raw);
-    if (d.params) params = { ...structuredClone(defaults), ...d.params, shareholders: { ...defaults.shareholders, ...(d.params.shareholders||{}) } };
+    if (d.params) {
+      // v6 필드가 하나라도 없으면 포트폴리오 관련 값 전체를 기본값으로 강제 복원
+      const needsReset = V6_FIELDS.some(f => !(f in d.params));
+      const base = structuredClone(defaults);
+      if (needsReset) {
+        // 포트폴리오 투자금·배당 파라미터는 기본값 유지, 나머지(가수금 등)는 저장값 사용
+        const portfolioKeys = ['schdPrincipal','schdGrowth','schdDivRate','schdDivGrowth','schdDivCap',
+          'gpiqPrincipal','gpiqGrowth','gpiqDivRate','gpiqDivChange','gpiqDivFloor',
+          'jepqPrincipal','jepqGrowth','jepqDivRate','jepqDivChange','jepqDivFloor',
+          'qqqPrincipal','qqqGrowth','qqqDivRate','qqqDivGrowth','usTax'];
+        const merged = { ...base, ...d.params, shareholders: { ...base.shareholders, ...(d.params.shareholders||{}) } };
+        portfolioKeys.forEach(k => { merged[k] = base[k]; });
+        params = merged;
+        toast('포트폴리오 구성이 v6.0 기본값으로 초기화되었습니다');
+      } else {
+        params = { ...base, ...d.params, shareholders: { ...base.shareholders, ...(d.params.shareholders||{}) } };
+      }
+    }
     manual = d.manual || [];
     memos  = d.memos  || [];
     if (d.savedAt) document.getElementById('saveStatus').textContent = '이 기기 저장: ' + new Date(d.savedAt).toLocaleString('ko-KR');
