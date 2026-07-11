@@ -674,26 +674,36 @@ function renderScenarios(){
   }).join('');
 
   // 비교 테이블
-  const ages=[60,65,70,75,80,85,90,95,99];
+  // 60~80세: 매년 상세 / 81~99세: 5세 단위
+  const ages = [];
+  for(let a=60;a<=80;a++) ages.push(a);
+  for(let a=85;a<=95;a+=5) ages.push(a);
+  ages.push(99);
+
   const thead=`<thead><tr>
     <th>나이</th><th>연도</th>
     <th style="color:#A83030">📉 비관(만원/월)</th>
     <th style="color:#1558A0">📊 기본(만원/월)</th>
     <th style="color:#1A6B3C">📈 낙관(만원/월)</th>
-    <th style="color:#1A6B3C">vs 기본 차이</th>
+    <th>낙관-비관 폭</th>
   </tr></thead>`;
   const tbody=ages.map(age=>{
     const i=age-START_AGE;
     const [pess,base,opt]=results.map(s=>s.rows[i]);
     const yr=START_YEAR+i;
     const diff=opt.monthly-pess.monthly;
-    const s5=get5yr(age);
-    return `<tr style="${s5.row}">
-      <td style="text-align:center;font-weight:800;${s5.lbl}">만${age}세</td>
+    // 60~80 매년: 5의 배수만 굵은 구분선, 나머지 일반행
+    const is5 = age%5===0;
+    const rowStyle = is5
+      ? get5yr(age).row
+      : (age>80 ? get5yr(age).row : 'border-bottom:1px solid var(--line)');
+    const lblStyle = is5 ? 'font-weight:900' : 'font-weight:600;color:var(--muted)';
+    return `<tr style="${rowStyle}">
+      <td style="text-align:center;${lblStyle}">만${age}세</td>
       <td style="text-align:center;color:var(--muted)">${yr}</td>
-      <td style="color:#A83030;font-weight:700">${Math.round(pess.monthly/10000).toLocaleString()}</td>
-      <td style="color:#1558A0;font-weight:700">${Math.round(base.monthly/10000).toLocaleString()}</td>
-      <td style="color:#1A6B3C;font-weight:700">${Math.round(opt.monthly/10000).toLocaleString()}</td>
+      <td style="color:#A83030;font-weight:${is5?'800':'600'}">${Math.round(pess.monthly/10000).toLocaleString()}</td>
+      <td style="color:#1558A0;font-weight:${is5?'800':'600'}">${Math.round(base.monthly/10000).toLocaleString()}</td>
+      <td style="color:#1A6B3C;font-weight:${is5?'800':'600'}">${Math.round(opt.monthly/10000).toLocaleString()}</td>
       <td style="color:#555;font-size:11px">범위 ${eok(diff)}</td>
     </tr>`;
   }).join('');
