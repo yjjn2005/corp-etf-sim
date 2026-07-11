@@ -224,6 +224,7 @@ th:first-child{background:linear-gradient(180deg,#f0f4fb,#e8eef8);z-index:2}
       <button class="btn ghost" onclick="exportData()">내보내기</button>
       <button class="btn ghost" onclick="document.getElementById('importFile').click()">가져오기</button>
       <button class="btn ghost" onclick="resetPortfolio()" style="border-color:rgba(255,180,50,.4);color:#ffd97a">포트폴리오 초기화</button>
+      <button class="btn ghost" id="syncBtn" onclick="openSync()" style="border-color:rgba(100,200,100,.4);color:#7dffb3">☁️ 클라우드 동기화</button>
       <button class="btn white" onclick="saveLocal()">이 기기 저장</button>
       <button class="btn gold" onclick="recalc()">재계산</button>
       <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(this)">
@@ -340,6 +341,40 @@ th:first-child{background:linear-gradient(180deg,#f0f4fb,#e8eef8);z-index:2}
 
   <div class="footer">© 유앤김 자산관리 · corp-etf-sim v6.0 · SCHD + GPIQ + JEPQ + QQQ · 총투자 15억 · 가수금 13억 · 2026~2065 · 데이터는 이 브라우저(localStorage)에만 저장됩니다</div>
 </main>
+
+<!-- 클라우드 동기화 모달 -->
+<div class="modal" id="syncModal" onclick="closeSyncModal(event)">
+  <div class="modal-card" style="max-width:520px">
+    <div class="modal-head">
+      <h2>☁️ 클라우드 동기화 (GitHub Gist)</h2>
+      <button class="close" onclick="closeSyncModal()">✕</button>
+    </div>
+    <div class="modal-body" style="display:flex;flex-direction:column;gap:14px">
+      <div class="card risk" style="font-size:12px;line-height:1.8">
+        <b>설정 방법:</b> GitHub → Settings → Developer settings → Personal access tokens → Tokens (classic) → Generate new token<br>
+        권한: <b>gist</b> 체크만 하면 됩니다.
+      </div>
+      <div class="field">
+        <label>GitHub Personal Access Token</label>
+        <input id="syncToken" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx" autocomplete="off">
+        <small>이 기기 localStorage에만 저장 · GitHub에 전송되지 않음</small>
+      </div>
+      <div class="field">
+        <label>Gist ID <span style="color:var(--muted2);font-weight:400">(첫 업로드 후 자동 채워짐)</span></label>
+        <input id="syncGistId" type="text" placeholder="처음엔 비워두세요 → 업로드 시 자동 생성">
+      </div>
+      <div style="display:flex;gap:10px">
+        <button class="btn gold" onclick="gistUpload()" style="flex:1;padding:12px">⬆️ 업로드 (이 기기 → 클라우드)</button>
+        <button class="btn white" onclick="gistDownload()" style="flex:1;padding:12px">⬇️ 다운로드 (클라우드 → 이 기기)</button>
+      </div>
+      <div id="syncStatus" style="font-size:12px;color:var(--muted);min-height:20px;text-align:center"></div>
+      <div style="font-size:11px;color:var(--muted2);line-height:1.7;border-top:1px solid var(--line);padding-top:10px">
+        💡 <b>사용법:</b> 한 기기에서 설정 후 업로드 → 다른 기기에서 같은 Token·Gist ID 입력 후 다운로드<br>
+        Gist ID는 업로드 후 이 칸에 자동 표시됩니다. 복사해서 다른 기기에 입력하세요.
+      </div>
+    </div>
+  </div>
+</div>
 
 <!-- 수동입력 모달 -->
 <div class="modal" id="manualModal" onclick="closeManual(event)">
@@ -1060,6 +1095,74 @@ function loadLocal(){
     if (d.savedAt) document.getElementById('saveStatus').textContent = '이 기기 저장: ' + new Date(d.savedAt).toLocaleString('ko-KR');
   } catch(e) { console.warn(e); }
 }
+// ── GitHub Gist 동기화 ──
+const SYNC_TOKEN_KEY = 'gist_token_v6';
+const SYNC_GIST_KEY  = 'gist_id_v6';
+const GIST_FILENAME  = 'corp-etf-sim-v6.json';
+
+function openSync(){
+  document.getElementById('syncToken').value  = localStorage.getItem(SYNC_TOKEN_KEY) || '';
+  document.getElementById('syncGistId').value = localStorage.getItem(SYNC_GIST_KEY)  || '';
+  document.getElementById('syncStatus').textContent = '';
+  document.getElementById('syncModal').classList.add('open');
+}
+function closeSyncModal(e){
+  if (e && e.target !== document.getElementById('syncModal')) return;
+  document.getElementById('syncModal').classList.remove('open');
+}
+function syncSaveCredentials(){
+  const tok = document.getElementById('syncToken').value.trim();
+  const gid = document.getElementById('syncGistId').value.trim();
+  if (tok) localStorage.setItem(SYNC_TOKEN_KEY, tok);
+  if (gid) localStorage.setItem(SYNC_GIST_KEY, gid);
+  return { tok, gid };
+}
+function syncSetStatus(msg, ok=true){
+  const el = document.getElementById('syncStatus');
+  el.textContent = msg;
+  el.style.color = ok ? 'var(--green)' : 'var(--red)';
+}
+
+async function gistUpload(){
+  const { tok, gid } = syncSaveCredentials();
+  if (!tok){ syncSetStatus('❌ Token을 입력하세요', false); return; }
+  syncSetStatus('⏳ 업로드 중…');
+  const payload = JSON.stringify({ version:APP_VERSION, params, manual, memos, savedAt: new Date().toISOString() }, null, 2);
+  try {
+    const isNew = !gid;
+    const url = isNew ? 'https://api.github.com/gists' : `https://api.github.com/gists/${gid}`;
+    const method = isNew ? 'POST' : 'PATCH';
+    const body = { description:'유앤김 법인 ETF 시뮬레이터 v6 동기화 데이터', public:false, files:{ [GIST_FILENAME]:{ content:payload } } };
+    const res = await fetch(url, { method, headers:{ Authorization:`token ${tok}`, 'Content-Type':'application/json' }, body:JSON.stringify(body) });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    localStorage.setItem(SYNC_GIST_KEY, data.id);
+    document.getElementById('syncGistId').value = data.id;
+    syncSetStatus(`✅ 업로드 완료! Gist ID: ${data.id}`);
+    toast('☁️ 클라우드 업로드 완료');
+  } catch(e){ syncSetStatus(`❌ 업로드 실패: ${e.message}`, false); }
+}
+
+async function gistDownload(){
+  const { tok, gid } = syncSaveCredentials();
+  if (!tok || !gid){ syncSetStatus('❌ Token과 Gist ID를 모두 입력하세요', false); return; }
+  syncSetStatus('⏳ 다운로드 중…');
+  try {
+    const res = await fetch(`https://api.github.com/gists/${gid}`, { headers:{ Authorization:`token ${tok}` } });
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
+    const data = await res.json();
+    const raw = data.files?.[GIST_FILENAME]?.content;
+    if (!raw) throw new Error('파일을 찾을 수 없습니다');
+    const d = JSON.parse(raw);
+    const base = structuredClone(defaults);
+    if (d.params) params = { ...base, ...d.params, shareholders:{ ...base.shareholders, ...(d.params.shareholders||{}) } };
+    manual = d.manual || []; memos = d.memos || [];
+    rows = simulate(); renderAll(); saveLocal(false);
+    syncSetStatus(`✅ 다운로드 완료! (저장일: ${d.savedAt ? new Date(d.savedAt).toLocaleString('ko-KR') : '알 수 없음'})`);
+    toast('☁️ 클라우드 데이터 적용 완료');
+  } catch(e){ syncSetStatus(`❌ 다운로드 실패: ${e.message}`, false); }
+}
+
 function resetPortfolio(){
   if (!confirm('포트폴리오 투자금액을 기본값(SCHD 10억/GPIQ 1.25억/JEPQ 1.25억/QQQ 2.5억)으로 초기화할까요?\n\n가수금·주주구성 등 다른 설정은 유지됩니다.')) return;
   PORTFOLIO_KEYS.forEach(k => { params[k] = defaults[k]; });
