@@ -186,9 +186,7 @@ th:first-child{background:rgba(7,17,32,.05);z-index:2}
 .pill.warn{background:#fef3c7;color:#78350f}
 .etf-tag{display:inline-block;border-radius:5px;padding:2px 7px;font-size:10px;font-weight:800;margin-right:4px;letter-spacing:.05em}
 .tag-schd{background:#ddeefb;color:#0d4f8a}
-.tag-tiger{background:#dcfce7;color:#14532d}
 .tag-jepq{background:#d4ede8;color:#095c52}
-.tag-jepi{background:#fdeedd;color:#974c0c}
 .tag-qqqi{background:#ede9fb;color:#3730a3}
 .tag-gpiq{background:#fce7f3;color:#9d174d}
 .tag-tlt{background:#f1f5f9;color:#475569}
@@ -255,17 +253,15 @@ th:first-child{background:rgba(7,17,32,.05);z-index:2}
     <div class="ttl">⚠️ 포트폴리오 구성 · 이 시뮬레이션이 반영하는 세금 / 반영하지 않는 세금</div>
     <div style="margin-bottom:8px;font-size:11px;color:#7A4800">
       <span style="background:#ddeefb;color:#1558A0;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">SCHD ₩10.0억</span>
-      <span style="background:#dcfce7;color:#1A6B3C;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">0052D0 ₩1.0억</span>
       <span style="background:#d4ede8;color:#0D7065;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">JEPQ ₩2.0억</span>
-      <span style="background:#fdeedd;color:#B5711A;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">JEPI ₩1.0억</span>
       <span style="background:#fce7f3;color:#9d174d;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">GPIQ ₩2.0억</span>
       <span style="background:#ede9fb;color:#4A3AA7;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">IQQ ₩1.0억(→2.0억 목표적립)</span>
       <span style="background:#f1f5f9;color:#475569;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">TLT ₩5,000만</span>
       합계 ₩17.5억 · 가수금 ₩13.0억 (장부 확정 필요)
     </div>
     <div class="tax-grid">
-      <div><div class="ok-h">✓ 반영됨</div>미국/해외 원천징수세 15% · 국내(0052D0) 세금 15.4% · 잉여배당 ETF 비중별 비례 재투자 · 기간 2026~2065 통일</div>
-      <div><div class="bad-h">✗ 미반영 (별도 검토 필요)</div>법인세 · 가수금 인정이자(4.6%) 과세 · 배당소득 종합과세 · 비상장주식 보충적평가법 · 증여세/상속세 · 환율변동 · ETF 실제 분배금 변동 · 0052D0 실측 분배율(신규상장 2025-05-20, 운용이력 짧음) · 외국납부세액공제 회수율</div>
+      <div><div class="ok-h">✓ 반영됨</div>미국/해외 원천징수세 15% · 잉여배당 ETF 비중별 비례 재투자 · 기간 2026~2065 통일</div>
+      <div><div class="bad-h">✗ 미반영 (별도 검토 필요)</div>법인세 · 가수금 인정이자(4.6%) 과세 · 배당소득 종합과세 · 비상장주식 보충적평가법 · 증여세/상속세 · 환율변동 · ETF 실제 분배금 변동 · 외국납부세액공제 회수율</div>
     </div>
     <div style="margin-top:8px;padding-top:7px;border-top:1px solid rgba(181,133,42,.25);font-size:10px;color:#7A4800">
       모든 수치는 참고용 추정치이며, 실제 세무 판단은 세무사·회계사 확인이 필요합니다.
@@ -278,9 +274,7 @@ th:first-child{background:rgba(7,17,32,.05);z-index:2}
           <h2>자산 성장 (구성별 누적막대)</h2>
           <div class="legend">
             <span><i class="dot" style="background:var(--blue)"></i>SCHD</span>
-            <span><i class="dot" style="background:var(--green)"></i>0052D0</span>
             <span><i class="dot" style="background:var(--teal)"></i>JEPQ</span>
-            <span><i class="dot" style="background:#eda100"></i>JEPI</span>
             <span><i class="dot" style="background:#c026d3"></i>GPIQ</span>
             <span><i class="dot" style="background:var(--purple)"></i>IQQ</span>
             <span><i class="dot" style="background:var(--muted2)"></i>TLT</span>
@@ -377,11 +371,11 @@ th:first-child{background:rgba(7,17,32,.05);z-index:2}
       </tr></thead><tbody id="acctTbody"></tbody>
     </table></div>
     <div class="card risk" style="margin-top:12px;font-size:12px">
-      ⚠️ <b>시세 출처:</b> Yahoo Finance API (US ETF), Naver 증권 (TIGER). 지연 최대 15분. 환율은 Yahoo Finance USDKRW=X. 실시간 연동 실패 시 수동 입력란에 직접 현재가를 넣으세요.
+      ⚠️ <b>시세 출처:</b> Yahoo Finance API (US ETF). 지연 최대 15분. 환율은 Yahoo Finance USDKRW=X. 실시간 연동 실패 시 수동 입력란에 직접 현재가를 넣으세요.
     </div>
   </section>
 
-  <div class="footer">© 유앤김 자산관리 · corp-etf-sim v6.0 (GPIQ·IQQ 반영) · SCHD + 0052D0 + JEPQ + JEPI + GPIQ + IQQ + TLT · 가수금 13억 · 2026~2065 · 데이터는 이 브라우저(localStorage)에만 저장됩니다</div>
+  <div class="footer">© 유앤김 자산관리 · corp-etf-sim v7.0 (0052D0·JEPI 제외) · SCHD + JEPQ + GPIQ + IQQ + TLT · 가수금 13억 · 2026~2065 · 데이터는 이 브라우저(localStorage)에만 저장됩니다</div>
 </main>
 
 <!-- 수동입력 모달 -->
@@ -400,9 +394,7 @@ th:first-child{background:rgba(7,17,32,.05);z-index:2}
           <div class="field"><label>월</label><input id="mMonth" type="number" min="1" max="12" value="1"></div>
         </div>
         <div class="field"><label><span class="etf-tag tag-schd">SCHD</span> 세후 배당(원)</label><input id="mSchd" type="number" value="0"></div>
-        <div class="field"><label><span class="etf-tag tag-tiger">0052D0</span> 세후 배당(원)</label><input id="mTiger" type="number" value="0"></div>
         <div class="field"><label><span class="etf-tag tag-jepq">JEPQ</span> 세후 배당(원)</label><input id="mJepq" type="number" value="0"></div>
-        <div class="field"><label><span class="etf-tag tag-jepi">JEPI</span> 세후 배당(원)</label><input id="mJepi" type="number" value="0"></div>
         <div class="field"><label><span class="etf-tag tag-gpiq">GPIQ</span> 세후 배당(원)</label><input id="mGpiq" type="number" value="0"></div>
         <div class="field"><label><span class="etf-tag tag-qqqi">IQQ</span> 세후 배당(원)</label><input id="mQqqi" type="number" value="0"></div>
         <div class="field"><label><span class="etf-tag tag-tlt">TLT</span> 세후 배당(원)</label><input id="mTlt" type="number" value="0"></div>
@@ -434,8 +426,7 @@ th:first-child{background:rgba(7,17,32,.05);z-index:2}
       <div style="background:var(--pb);border-radius:10px;padding:12px 15px;font-size:11.5px;color:#1558A0;line-height:1.9;margin-bottom:14px">
         <b>운용 구조</b><br>
         <span style="background:#ddeefb;border:1px solid #b5d4f4;border-radius:5px;padding:1px 7px;font-weight:800;margin-right:4px">SCHD</span>분기 수령(3·6·9·12월) · 월평균 활용<br>
-        <span style="background:#dcfce7;border:1px solid #a7f3d0;border-radius:5px;padding:1px 7px;font-weight:800;margin-right:4px">0052D0</span>분기 수령 · 원화 상환 재원<br>
-        <span style="background:#d4ede8;border:1px solid #9fe1cb;border-radius:5px;padding:1px 7px;font-weight:800;margin-right:4px">JEPQ</span><span style="background:#fdeedd;border:1px solid #fac775;border-radius:5px;padding:1px 7px;font-weight:800;margin-right:4px">JEPI</span><span style="background:#fce7f3;border:1px solid #f9a8d4;border-radius:5px;padding:1px 7px;font-weight:800;margin-right:4px">GPIQ</span>매월 수령 · 즉시 상환 투입<br>
+        <span style="background:#d4ede8;border:1px solid #9fe1cb;border-radius:5px;padding:1px 7px;font-weight:800;margin-right:4px">JEPQ</span><span style="background:#fce7f3;border:1px solid #f9a8d4;border-radius:5px;padding:1px 7px;font-weight:800;margin-right:4px">GPIQ</span>매월 수령 · 즉시 상환 투입<br>
         <span style="background:#ede9fb;border:1px solid #c4b5fd;border-radius:5px;padding:1px 7px;font-weight:800;margin-right:4px">IQQ</span>분기 수령(저배당 성장형) · 잔고 2억 도달까지 잉여 배당 우선 적립식 매수<br>
         <span style="background:#f1f5f9;border:1px solid #cbd5e1;border-radius:5px;padding:1px 7px;font-weight:800;margin-right:4px">TLT</span>매월 수령 · 즉시 상환 투입<br>
         <span style="background:#dcfce7;border:1px solid #a7f3d0;border-radius:5px;padding:1px 7px;font-weight:800;margin-right:4px">세금</span>원천세 차감 후 세후 배당 전액 상환 · <b>상환 한도 없음</b>
@@ -453,7 +444,7 @@ th:first-child{background:rgba(7,17,32,.05);z-index:2}
 <script>
 // ════════════════════════════════════════════════
 // 유앤김 법인 ETF 시뮬레이터 v5.2 — 비관 시나리오
-// 포트폴리오: SCHD(9.96억) + 0052D0(1억) + JEPQ(2억) + JEPI(1억) + GPIQ(2억) + IQQ(1억→2억 목표 적립) + TLT(0.5억)
+// 포트폴리오: SCHD(9.96억) + JEPQ(2억) + GPIQ(2억) + IQQ(1억→2억 목표 적립) + TLT(0.5억) — 0052D0·JEPI 제외
 // 가수금 ₩13억 · 만60세(2026) ~ 만99세(2065) · 40개년
 // 역사적 경제위기 5회 보정: 주가하락(충격) + 배당삭감(회복기) 반영
 // ════════════════════════════════════════════════
@@ -462,7 +453,7 @@ const START_YEAR = 2026, START_AGE = 60, END_AGE = 99;
 // ─── 시나리오별 경제위기 정의 ────────────────────────────────────
 // 출처: Bloomberg, S&P Dow Jones Indices, ETF.com 실측 데이터 기반
 // · SCHD 최대낙폭: 2020 -26%, 2022 -22.5%, 2008유사 -35%
-// · JEPQ 출시 2022 첫해 -31.7% / JEPI 2022 -18.2% (실측)
+// · JEPQ 출시 2022 첫해 -31.7% (실측)
 // · GPIQ(나스닥100 부분 커버드콜 인컴형) — JEPQ 유사 구조로 추정 반영
 // · IQQ(BlackRock iShares 나스닥100 저비용 추종, 2026-07-09 신규상장) — 원 QQQ와 유사한 저배당·고성장 프로필로 반영, 신규 상장으로 실측 데이터 없음(가정치)
 // · GPIQ/IQQ 모두 실측 분배금/가격 이력 축적 후 재검증 필요
@@ -481,22 +472,22 @@ const SCENARIOS = {
       {
         yr: 2032, name: '경기침체', severity: 'moderate',
         basis: '역사적 평균 침체 참조 · S&P500 평균 -35%, SCHD 방어적',
-        drops: { schd:-.25, tiger:-.27, jepq:-.33, jepi:-.21, gpiq:-.37, qqqi:-.40, tlt:.14 },
-        divCut: { schd:-.10, tiger:-.12, jepq:-.20, jepi:-.17, gpiq:-.13, qqqi:-.05, tlt:0 },
+        drops: { schd:-.25, jepq:-.33, gpiq:-.37, qqqi:-.40, tlt:.14 },
+        divCut: { schd:-.10, jepq:-.20, gpiq:-.13, qqqi:-.05, tlt:0 },
         recoveryYrs: 2
       },
       {
         yr: 2044, name: '금융위기', severity: 'severe',
         basis: '2008 GFC 수준 참조 · S&P500 -57%, QQQ -49.7% (실측)',
-        drops: { schd:-.35, tiger:-.37, jepq:-.44, jepi:-.27, gpiq:-.47, qqqi:-.50, tlt:.20 },
-        divCut: { schd:-.15, tiger:-.17, jepq:-.27, jepi:-.25, gpiq:-.17, qqqi:-.07, tlt:.02 },
+        drops: { schd:-.35, jepq:-.44, gpiq:-.47, qqqi:-.50, tlt:.20 },
+        divCut: { schd:-.15, jepq:-.27, gpiq:-.17, qqqi:-.07, tlt:.02 },
         recoveryYrs: 3
       },
       {
         yr: 2057, name: '경기침체', severity: 'moderate',
         basis: '후기 주기 침체 · 고령화·저성장 환경',
-        drops: { schd:-.24, tiger:-.26, jepq:-.31, jepi:-.20, gpiq:-.34, qqqi:-.37, tlt:.11 },
-        divCut: { schd:-.09, tiger:-.11, jepq:-.18, jepi:-.15, gpiq:-.11, qqqi:-.04, tlt:0 },
+        drops: { schd:-.24, jepq:-.31, gpiq:-.34, qqqi:-.37, tlt:.11 },
+        divCut: { schd:-.09, jepq:-.18, gpiq:-.11, qqqi:-.04, tlt:0 },
         recoveryYrs: 2
       },
     ]
@@ -508,36 +499,36 @@ const SCENARIOS = {
       {
         yr: 2028, name: '금리긴축 조정', severity: 'mild',
         basis: '2022 Fed 금리인상 사이클 참조 · SCHD -22.5%, JEPQ -31.7% (실측) · TLT도 동반 하락',
-        drops: { schd:-.22, tiger:-.24, jepq:-.30, jepi:-.18, gpiq:-.32, qqqi:-.33, tlt:-.12 },
-        divCut: { schd:-.08, tiger:-.10, jepq:-.20, jepi:-.16, gpiq:-.12, qqqi:-.04, tlt:.02 },
+        drops: { schd:-.22, jepq:-.30, gpiq:-.32, qqqi:-.33, tlt:-.12 },
+        divCut: { schd:-.08, jepq:-.20, gpiq:-.12, qqqi:-.04, tlt:.02 },
         recoveryYrs: 2
       },
       {
         yr: 2035, name: '경기침체', severity: 'moderate',
         basis: '2001~2002 IT버블 / 역사적 평균 침체 참조 · S&P500 -49% (2년 누적)',
-        drops: { schd:-.30, tiger:-.32, jepq:-.38, jepi:-.24, gpiq:-.42, qqqi:-.45, tlt:.16 },
-        divCut: { schd:-.12, tiger:-.14, jepq:-.22, jepi:-.20, gpiq:-.14, qqqi:-.06, tlt:0 },
+        drops: { schd:-.30, jepq:-.38, gpiq:-.42, qqqi:-.45, tlt:.16 },
+        divCut: { schd:-.12, jepq:-.22, gpiq:-.14, qqqi:-.06, tlt:0 },
         recoveryYrs: 3
       },
       {
         yr: 2041, name: '금융위기', severity: 'severe',
         basis: '2008~2009 글로벌 금융위기 참조 · S&P500 -57%, QQQ -49.7% (실측)',
-        drops: { schd:-.38, tiger:-.40, jepq:-.48, jepi:-.30, gpiq:-.52, qqqi:-.55, tlt:.22 },
-        divCut: { schd:-.18, tiger:-.20, jepq:-.30, jepi:-.28, gpiq:-.19, qqqi:-.08, tlt:.03 },
+        drops: { schd:-.38, jepq:-.48, gpiq:-.52, qqqi:-.55, tlt:.22 },
+        divCut: { schd:-.18, jepq:-.30, gpiq:-.19, qqqi:-.08, tlt:.03 },
         recoveryYrs: 4
       },
       {
         yr: 2050, name: '경기침체', severity: 'moderate',
         basis: '중간 주기 침체 · 8~10년 주기 기준 · 2041 위기 후 9년',
-        drops: { schd:-.28, tiger:-.30, jepq:-.35, jepi:-.22, gpiq:-.39, qqqi:-.42, tlt:.14 },
-        divCut: { schd:-.10, tiger:-.12, jepq:-.20, jepi:-.18, gpiq:-.13, qqqi:-.05, tlt:0 },
+        drops: { schd:-.28, jepq:-.35, gpiq:-.39, qqqi:-.42, tlt:.14 },
+        divCut: { schd:-.10, jepq:-.20, gpiq:-.13, qqqi:-.05, tlt:0 },
         recoveryYrs: 2
       },
       {
         yr: 2060, name: '경기침체', severity: 'moderate',
         basis: '후기 주기 침체 · 고령화·저성장·재정리스크 환경',
-        drops: { schd:-.25, tiger:-.27, jepq:-.32, jepi:-.20, gpiq:-.35, qqqi:-.38, tlt:.12 },
-        divCut: { schd:-.08, tiger:-.10, jepq:-.18, jepi:-.15, gpiq:-.11, qqqi:-.04, tlt:0 },
+        drops: { schd:-.25, jepq:-.32, gpiq:-.35, qqqi:-.38, tlt:.12 },
+        divCut: { schd:-.08, jepq:-.18, gpiq:-.11, qqqi:-.04, tlt:0 },
         recoveryYrs: 2
       },
     ]
@@ -553,7 +544,7 @@ function buildCrisisMap(crises) {
   const map = {};
   for (let i = 0; i <= END_AGE - START_AGE; i++) {
     const yr = START_YEAR + i;
-    map[yr] = { divMult:{schd:1,tiger:1,jepq:1,jepi:1,gpiq:1,qqqi:1,tlt:1}, isCrisis:false, crisis:null, isRecovery:false };
+    map[yr] = { divMult:{schd:1,jepq:1,gpiq:1,qqqi:1,tlt:1}, isCrisis:false, crisis:null, isRecovery:false };
   }
   for (const c of crises) {
     if (map[c.yr]) {
@@ -583,21 +574,11 @@ const defaults = {
   schdDivRate:    .033,
   schdDivGrowth:  .04,
   schdDivCap:     .12,
-  tigerPrincipal: 100_000_000,
-  tigerGrowth:    .04,
-  tigerDivRate:   .035,
-  tigerDivGrowth: .06,
-  tigerDivCap:    .10,
   jepqPrincipal:  200_000_000,
   jepqGrowth:     .03,
   jepqDivRate:    .10,
   jepqDivChange:  -.015,
   jepqDivFloor:   .07,
-  jepiPrincipal:  100_000_000,
-  jepiGrowth:     .02,
-  jepiDivRate:    .08,
-  jepiDivChange:  -.013,
-  jepiDivFloor:   .06,
   gpiqPrincipal:  200_000_000,
   gpiqGrowth:     .045,
   gpiqDivRate:    .10,
@@ -612,7 +593,6 @@ const defaults = {
   tltGrowth:      0,
   tltDivRate:     .0461,
   usTax:          .15,
-  krTax:          .154,
   loanInit:       1_300_000_000,
   pbr:            1,
   shareholders:   { A:.30, B:.25, C:.25, dad:.10, mom:.10 }
@@ -649,8 +629,7 @@ function simulate() {
   const P = structuredClone(params);
   const crisisMap = buildCrisisMap(getCrises());
   const out = [];
-  let sB  = P.schdPrincipal,  kB  = P.tigerPrincipal,
-      jqB = P.jepqPrincipal,  jiB = P.jepiPrincipal,
+  let sB  = P.schdPrincipal,  jqB = P.jepqPrincipal,
       gpB = P.gpiqPrincipal,  qiB = P.qqqiPrincipal,
       tlB = P.tltPrincipal;
   let loan = P.loanInit;
@@ -659,16 +638,14 @@ function simulate() {
   for (let i = 0; i <= END_AGE - START_AGE; i++) {
     const age = START_AGE + i;
     const yr  = START_YEAR + i;
-    const cm  = crisisMap[yr] || { divMult:{schd:1,tiger:1,jepq:1,jepi:1,gpiq:1,qqqi:1,tlt:1}, isCrisis:false, crisis:null, isRecovery:false };
+    const cm  = crisisMap[yr] || { divMult:{schd:1,jepq:1,gpiq:1,qqqi:1,tlt:1}, isCrisis:false, crisis:null, isRecovery:false };
 
     // ① 경제위기 충격: 연초 자산 가격 하락 적용
     let preCrisisAsset = null;
     if (cm.isCrisis && cm.crisis) {
-      preCrisisAsset = sB + kB + jqB + jiB + gpB + qiB + tlB;
+      preCrisisAsset = sB + jqB + gpB + qiB + tlB;
       sB  *= (1 + cm.crisis.drops.schd);
-      kB  *= (1 + cm.crisis.drops.tiger);
       jqB *= (1 + cm.crisis.drops.jepq);
-      jiB *= (1 + cm.crisis.drops.jepi);
       gpB *= (1 + cm.crisis.drops.gpiq);
       qiB *= (1 + cm.crisis.drops.qqqi);
       tlB *= (1 + cm.crisis.drops.tlt);
@@ -677,21 +654,17 @@ function simulate() {
     // ② 배당률 계산 (위기/회복기 배당 삭감 반영)
     const dm = cm.divMult;
     const sRate  = Math.min(P.schdDivRate  * Math.pow(1+P.schdDivGrowth,  i), P.schdDivCap)   * dm.schd;
-    const kRate  = Math.min(P.tigerDivRate * Math.pow(1+P.tigerDivGrowth, i), P.tigerDivCap)  * dm.tiger;
     const jqRate = Math.max(P.jepqDivRate  * Math.pow(1+P.jepqDivChange,  i), P.jepqDivFloor) * dm.jepq;
-    const jiRate = Math.max(P.jepiDivRate  * Math.pow(1+P.jepiDivChange,  i), P.jepiDivFloor) * dm.jepi;
     const gpRate = Math.max(P.gpiqDivRate  * Math.pow(1+P.gpiqDivChange,  i), P.gpiqDivFloor) * dm.gpiq;
     const qiRate = P.qqqiDivRate * Math.pow(1+P.qqqiDivGrowth, i) * dm.qqqi;
     const tlRate = P.tltDivRate * dm.tlt;
 
     const sNet  = sB  * sRate  * (1-P.usTax);
-    const kNet  = kB  * kRate  * (1-P.krTax);
     const jqNet = jqB * jqRate * (1-P.usTax);
-    const jiNet = jiB * jiRate * (1-P.usTax);
     const gpNet = gpB * gpRate * (1-P.usTax);
     const qiNet = qiB * qiRate * (1-P.usTax);
     const tlNet = tlB * tlRate * (1-P.usTax);
-    const total = sNet + kNet + jqNet + jiNet + gpNet + qiNet + tlNet;
+    const total = sNet + jqNet + gpNet + qiNet + tlNet;
 
     const repay = Math.min(total, loan);
     loan = Math.max(loan - repay, 0);
@@ -701,32 +674,30 @@ function simulate() {
     //    매년(=연 1회 단위로 근사한 "매월 적립식") 잉여금을 IQQ에 우선 배분하고,
     //    남은 잉여금만 전 종목(IQQ 포함) 비중별로 비례 재투자한다.
     //    목표 도달 후에는 IQQ도 다른 종목과 동일하게 비례 재투자로 전환된다.
-    const totalP = sB + kB + jqB + jiB + gpB + qiB + tlB;
+    const totalP = sB + jqB + gpB + qiB + tlB;
     const qiGap  = Math.max(P.qqqiTarget - qiB, 0);
     const toQiPriority  = Math.min(surplus, qiGap);
     const remainSurplus = surplus - toQiPriority;
     if (toQiPriority > 0 && qiGap - toQiPriority <= 0 && qiTargetHitYr === null) qiTargetHitYr = yr;
 
-    const sShare  = sB /totalP, kShare  = kB /totalP, jqShare = jqB/totalP,
-          jiShare = jiB/totalP, gpShare = gpB/totalP, qiShare = qiB/totalP, tlShare = tlB/totalP;
+    const sShare  = sB /totalP, jqShare = jqB/totalP,
+          gpShare = gpB/totalP, qiShare = qiB/totalP, tlShare = tlB/totalP;
 
     const sEnd  = (sB  + remainSurplus*sShare)  * (1+P.schdGrowth);
-    const kEnd  = (kB  + remainSurplus*kShare)  * (1+P.tigerGrowth);
     const jqEnd = (jqB + remainSurplus*jqShare) * (1+P.jepqGrowth);
-    const jiEnd = (jiB + remainSurplus*jiShare) * (1+P.jepiGrowth);
     const gpEnd = (gpB + remainSurplus*gpShare) * (1+P.gpiqGrowth);
     const qiEnd = (qiB + toQiPriority + remainSurplus*qiShare) * (1+P.qqqiGrowth);
     const tlEnd = (tlB + remainSurplus*tlShare) * (1+P.tltGrowth);
 
-    const corpAsset = sEnd + kEnd + jqEnd + jiEnd + gpEnd + qiEnd + tlEnd;
+    const corpAsset = sEnd + jqEnd + gpEnd + qiEnd + tlEnd;
     const corpValue = corpAsset * P.pbr;
-    const crisisLoss = preCrisisAsset ? (preCrisisAsset - (sB+kB+jqB+jiB+gpB+qiB+tlB)) : 0;
+    const crisisLoss = preCrisisAsset ? (preCrisisAsset - (sB+jqB+gpB+qiB+tlB)) : 0;
 
     out.push({
       i, age, yr,
-      sAsset:sEnd, kAsset:kEnd, jqAsset:jqEnd, jiAsset:jiEnd, gpAsset:gpEnd, qiAsset:qiEnd, tlAsset:tlEnd,
-      sRate, kRate, jqRate, jiRate, gpRate, qiRate, tlRate,
-      sNet, kNet, jqNet, jiNet, gpNet, qiNet, tlNet, total,
+      sAsset:sEnd, jqAsset:jqEnd, gpAsset:gpEnd, qiAsset:qiEnd, tlAsset:tlEnd,
+      sRate, jqRate, gpRate, qiRate, tlRate,
+      sNet, jqNet, gpNet, qiNet, tlNet, total,
       monthly: total/12,
       repay, loan, surplus,
       qiPriorityAlloc: toQiPriority, qiTargetHit: qiGap - toQiPriority <= 0,
@@ -739,7 +710,7 @@ function simulate() {
       crisisLoss,
     });
 
-    sB=sEnd; kB=kEnd; jqB=jqEnd; jiB=jiEnd; gpB=gpEnd; qiB=qiEnd; tlB=tlEnd;
+    sB=sEnd; jqB=jqEnd; gpB=gpEnd; qiB=qiEnd; tlB=tlEnd;
   }
   return out;
 }
@@ -792,22 +763,20 @@ function card(label, value, sub, cls='') {
 }
 
 function renderTaxDisclosure() {
-  const total7 = params.schdPrincipal + params.tigerPrincipal + params.jepqPrincipal + params.jepiPrincipal + params.gpiqPrincipal + params.qqqiPrincipal + params.tltPrincipal;
+  const total5 = params.schdPrincipal + params.jepqPrincipal + params.gpiqPrincipal + params.qqqiPrincipal + params.tltPrincipal;
   document.getElementById('taxDisclosure').innerHTML = `
     <div class="ttl">⚠️ 포트폴리오 구성 · 이 시뮬레이션이 반영하는 세금 / 반영하지 않는 세금</div>
     <div style="margin-bottom:8px;font-size:11px;color:#7A4800">
       <span style="background:#ddeefb;color:#1558A0;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">SCHD ${eok(params.schdPrincipal)}</span>
-      <span style="background:#dcfce7;color:#1A6B3C;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">0052D0 ${eok(params.tigerPrincipal)}</span>
       <span style="background:#d4ede8;color:#0D7065;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">JEPQ ${eok(params.jepqPrincipal)}</span>
-      <span style="background:#fdeedd;color:#B5711A;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">JEPI ${eok(params.jepiPrincipal)}</span>
       <span style="background:#fce7f3;color:#9d174d;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">GPIQ ${eok(params.gpiqPrincipal)}</span>
       <span style="background:#ede9fb;color:#4A3AA7;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">IQQ ${eok(params.qqqiPrincipal)}(→${eok(params.qqqiTarget)} 목표)</span>
       <span style="background:#f1f5f9;color:#475569;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">TLT ${eok(params.tltPrincipal)}</span>
-      합계 ${eok(total7)} · 가수금 ${eok(params.loanInit)} (장부 확정 필요)
+      합계 ${eok(total5)} · 가수금 ${eok(params.loanInit)} (장부 확정 필요)
     </div>
     <div class="tax-grid">
-      <div><div class="ok-h">✓ 반영됨</div>미국/해외 원천징수세 15% · 국내(0052D0) 세금 15.4% · 잉여배당 ETF 비중별 비례 재투자 · 기간 2026~2065 통일</div>
-      <div><div class="bad-h">✗ 미반영 (별도 검토 필요)</div>법인세 · 가수금 인정이자(4.6%) 과세 · 배당소득 종합과세 · 비상장주식 보충적평가법 · 증여세/상속세 · 환율변동 · ETF 실제 분배금 변동 · 0052D0 실측 분배율(신규상장 2025-05-20, 운용이력 짧음) · 외국납부세액공제 회수율</div>
+      <div><div class="ok-h">✓ 반영됨</div>미국/해외 원천징수세 15% · 잉여배당 ETF 비중별 비례 재투자 · 기간 2026~2065 통일</div>
+      <div><div class="bad-h">✗ 미반영 (별도 검토 필요)</div>법인세 · 가수금 인정이자(4.6%) 과세 · 배당소득 종합과세 · 비상장주식 보충적평가법 · 증여세/상속세 · 환율변동 · ETF 실제 분배금 변동 · 외국납부세액공제 회수율</div>
     </div>
     <div style="margin-top:8px;padding-top:7px;border-top:1px solid rgba(181,133,42,.25);font-size:10px;color:#7A4800">
       모든 수치는 참고용 추정치이며, 실제 세무 판단은 세무사·회계사 확인이 필요합니다.
@@ -819,7 +788,6 @@ function renderVerifyCards() {
   if (!el) return;
   const items = [
     { status:'warn', icon:'🏦', title:'가수금 장부 잔액 확정 필요', body:`현재 시뮬레이션은 <b>₩13억 기준</b>으로 계산됩니다.<br>기존 보고서의 11억/15억 시나리오와 다를 수 있으니 실제 장부 잔액을 확인 후 [가정] 탭에서 <b>초기 가수금</b>을 수정해 재계산하세요.` },
-    { status:'warn', icon:'📋', title:'0052D0 분배율 가정 재검증 필요', body:`TIGER 코리아배당다우존스(0052D0)는 <b>상장일 2025-05-20</b>으로 운용 이력이 짧습니다.<br>초기 분배율 3.5%, 연 7% 성장, 상한 10% 가정은 실측 분배금 누적 후 재검증이 필요합니다. 또한 미국배당다우존스형(458730)과는 성격이 다른 <b>국내 주식형</b> ETF입니다.` },
     { status:'warn', icon:'📊', title:'장기 수치 과신 금지', body:`만99세 법인자산 <b>약 ${eok(rows.at(-1)?.corpAsset||0)}</b>은 분배율 성장, 전액 재투자, 장기 복리 가정에 매우 민감합니다.<br>실행 판단은 <b>가수금 완납 시점 · 초기 10~15년 현금흐름 · 세후 기준</b> 중심으로 하는 것이 안전합니다.` },
     { status:'bad', icon:'⚖️', title:'세무 가정 세무사 확인 필요', body:`미국 원천세 15% 외에 ① 국내 ETF 분배금 법인 수령 시 과세 방식, ② 외국납부세액공제 회수율, ③ 가수금 인정이자(현행 4.6%) 적용 여부, ④ 법인 배당소득 익금산입 처리는 <b>담당 세무사 확인 후</b> 가정치를 조정하세요.` },
     { status:'ok', icon:'✅', title:'기간 표기 2026~2065 통일', body:`원본 엑셀에서 일부 시트가 2027~2065로 표기된 오류를 수정했습니다.<br>시뮬레이션 기준: <b>2026년(만60세) 투자 개시 → 2065년(만99세) · 40개년</b><br>2026년 배당은 포트폴리오 구성 첫 해로 상환액 산정에 포함됩니다.` },
@@ -934,7 +902,7 @@ function renderCrisisCards() {
   }
   el.innerHTML = crises.map(c => {
     const r = rows.find(row => row.yr === c.yr);
-    const afterAsset = r ? (r.sAsset+r.kAsset+r.jqAsset+r.jiAsset+r.gpAsset+r.qiAsset+r.tlAsset) : 0;
+    const afterAsset = r ? (r.sAsset+r.jqAsset+r.gpAsset+r.qiAsset+r.tlAsset) : 0;
     const color = SMAP[c.severity];
     return `<div class="card" style="border-left:4px solid ${color};padding:14px 16px">
       <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;flex-wrap:wrap">
@@ -944,15 +912,15 @@ function renderCrisisCards() {
         ${r?`<span style="font-size:10px;color:var(--muted)">만${r.age}세</span>`:''}
       </div>
       <div style="font-size:10px;color:var(--muted2);margin-bottom:9px;line-height:1.6">📎 ${c.basis}</div>
-      <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:5px;margin-bottom:8px">
+      <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:5px;margin-bottom:8px">
         ${Object.entries(c.drops).map(([k,v]) => `
           <div style="text-align:center;background:${v>0?'#dcfce7':'#fee2e2'};border-radius:6px;padding:4px 3px">
-            <div style="font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase">${k==='tiger'?'0052D0':k.toUpperCase()}</div>
+            <div style="font-size:9px;color:var(--muted);font-weight:700;text-transform:uppercase">${k.toUpperCase()}</div>
             <div style="font-size:11px;font-weight:900;color:${v>0?'#14532d':'#7f1d1d'}">${v>0?'+':''}${(v*100).toFixed(0)}%</div>
           </div>`).join('')}
       </div>
       <div style="font-size:10.5px;color:var(--muted)">
-        배당삭감: SCHD ${(c.divCut.schd*100).toFixed(0)}% · JEPQ ${(c.divCut.jepq*100).toFixed(0)}% · JEPI ${(c.divCut.jepi*100).toFixed(0)}% · 회복기 ${c.recoveryYrs}년
+        배당삭감: SCHD ${(c.divCut.schd*100).toFixed(0)}% · JEPQ ${(c.divCut.jepq*100).toFixed(0)}% · GPIQ ${(c.divCut.gpiq*100).toFixed(0)}% · 회복기 ${c.recoveryYrs}년
         ${r?` &nbsp;·&nbsp; 위기후 법인자산 <b style="color:${color}">${eok(afterAsset)}</b>` : ''}
       </div>
     </div>`;
@@ -963,11 +931,11 @@ function renderBars() {
   const ages = [60,65,70,75,80,85,90,95,99];
   const data = ages.map(a => rows.find(r=>r.age===a));
   const max = Math.max(...data.map(r=>r.corpAsset));
-  const COLORS = ['var(--blue)','var(--green)','var(--teal)','#eda100','#c026d3','var(--purple)','var(--muted2)'];
+  const COLORS = ['var(--blue)','var(--teal)','#c026d3','var(--purple)','var(--muted2)'];
   document.getElementById('assetBars').innerHTML = data.map((r,idx) => {
     const h = Math.max(4, r.corpAsset/max*220);
     const tot = r.corpAsset;
-    const segs = [r.sAsset, r.kAsset, r.jqAsset, r.jiAsset, r.gpAsset, r.qiAsset, r.tlAsset];
+    const segs = [r.sAsset, r.jqAsset, r.gpAsset, r.qiAsset, r.tlAsset];
     const segHtml = segs.map((v,si) =>
       `<div class="seg" style="height:${v/tot*100}%;background:${COLORS[si]}"></div>`
     ).join('');
@@ -979,10 +947,10 @@ function renderDivBars() {
   const ages = [60,65,70,75,80,85,90,95,99];
   const data = ages.map(a => rows.find(r=>r.age===a));
   const max = Math.max(...data.map(r=>r.monthly));
-  const COLORS = ['var(--blue)','var(--green)','var(--teal)','#eda100','#c026d3','var(--purple)','var(--muted2)'];
+  const COLORS = ['var(--blue)','var(--teal)','#c026d3','var(--purple)','var(--muted2)'];
   document.getElementById('divBars').innerHTML = data.map((r,idx) => {
     const tot = r.total;
-    const nets = [r.sNet, r.kNet, r.jqNet, r.jiNet, r.gpNet, r.qiNet, r.tlNet];
+    const nets = [r.sNet, r.jqNet, r.gpNet, r.qiNet, r.tlNet];
     const wPct = r.monthly/max*100;
     const segHtml = nets.map((v,si) =>
       `<div style="height:100%;width:${v/tot*100}%;background:${COLORS[si]}"></div>`
@@ -1014,21 +982,11 @@ const inputSpec = [
   ['SCHD 주가상승률','schdGrowth','%',100],
   ['SCHD 초기 배당률','schdDivRate','%',100],
   ['SCHD 배당성장률','schdDivGrowth','%',100],
-  ['TIGER_GROUP','','',0],
-  ['0052D0 투자원금','tigerPrincipal','원',1],
-  ['0052D0 주가상승률','tigerGrowth','%',100],
-  ['0052D0 초기 배당률','tigerDivRate','%',100],
-  ['0052D0 배당성장률','tigerDivGrowth','%',100],
   ['JEPQ_GROUP','','',0],
   ['JEPQ 투자원금','jepqPrincipal','원',1],
   ['JEPQ 초기 배당률','jepqDivRate','%',100],
   ['JEPQ 배당변동률/년','jepqDivChange','%',100],
   ['JEPQ 주가상승률','jepqGrowth','%',100],
-  ['JEPI_GROUP','','',0],
-  ['JEPI 투자원금','jepiPrincipal','원',1],
-  ['JEPI 초기 배당률','jepiDivRate','%',100],
-  ['JEPI 배당변동률/년','jepiDivChange','%',100],
-  ['JEPI 주가상승률','jepiGrowth','%',100],
   ['GPIQ_GROUP','','',0],
   ['GPIQ 투자원금','gpiqPrincipal','원',1],
   ['GPIQ 초기 배당률','gpiqDivRate','%',100],
@@ -1046,7 +1004,6 @@ const inputSpec = [
   ['TLT 주가상승률','tltGrowth','%',100],
   ['공통_GROUP','','',0],
   ['미국/해외 원천세','usTax','%',100],
-  ['국내(0052D0) 세금','krTax','%',100],
   ['초기 가수금','loanInit','원',1],
   ['기업가치 PBR','pbr','x',1],
   ['지분_GROUP','','',0],
@@ -1059,9 +1016,7 @@ const inputSpec = [
 
 const groupLabels = {
   SCHD_GROUP:  '📘 SCHD — 코어 고배당 성장형 ETF (Schwab, 20,198주 고정)',
-  TIGER_GROUP: '🟢 0052D0 — TIGER 코리아배당다우존스 (국내 코어 · 상장 2025-05-20 · 분배율 재검증 필요)',
   JEPQ_GROUP:  '📗 JEPQ — 나스닥 프리미엄 인컴 ETF (JPMorgan)',
-  JEPI_GROUP:  '🟡 JEPI — S&P500 프리미엄 인컴 ETF (JPMorgan)',
   GPIQ_GROUP:  '🌸 GPIQ — 나스닥100 프리미엄 인컴 ETF (Goldman Sachs · 부분 커버드콜)',
   IQQ_GROUP:   '🟣 IQQ — 나스닥100 저비용 추종 ETF (BlackRock iShares · 2026-07-09 신규상장 · 보수 0.10% · 잔고 2억까지 배당 재투자로 우선 적립)',
   TLT_GROUP:   '⬜ TLT — 장기국채 헤지 ETF (iShares)',
@@ -1092,7 +1047,7 @@ function renderTable() {
   const f = document.getElementById('filter')?.value || 'all';
   const filtered = f==='all' ? rows : rows.filter(r => f==='90' ? r.age>=90 : (r.age>=+f && r.age<+f+10));
   document.getElementById('simTable').innerHTML =
-    `<thead><tr><th>나이</th><th>연도</th><th>위기</th><th>SCHD자산</th><th>SCHD배당</th><th>0052D0자산</th><th>0052D0배당</th><th>JEPQ자산</th><th>JEPQ배당</th><th>JEPI자산</th><th>JEPI배당</th><th>GPIQ자산</th><th>GPIQ배당</th><th>IQQ자산</th><th>IQQ배당</th><th>TLT자산</th><th>TLT배당</th><th>월배당</th><th>가수금</th><th>법인자산</th><th>자녀지분(가수금공제)</th></tr></thead><tbody>` +
+    `<thead><tr><th>나이</th><th>연도</th><th>위기</th><th>SCHD자산</th><th>SCHD배당</th><th>JEPQ자산</th><th>JEPQ배당</th><th>GPIQ자산</th><th>GPIQ배당</th><th>IQQ자산</th><th>IQQ배당</th><th>TLT자산</th><th>TLT배당</th><th>월배당</th><th>가수금</th><th>법인자산</th><th>자녀지분(가수금공제)</th></tr></thead><tbody>` +
     filtered.map(r => {
       const {row, lbl} = get5yr(r.age);
       const loanCell = r.loan ? eok(r.loan) : '<b style="color:var(--green)">완납</b>';
@@ -1107,7 +1062,7 @@ function renderTable() {
       } else {
         crisisCell = '<td></td>';
       }
-      return `<tr style="${rowStyle}"><td style="${lbl}">${lbl?`<b>${r.age}세</b>`:r.age+'세'}</td><td style="${lbl}">${lbl?`<b>${r.yr}</b>`:r.yr}</td>${crisisCell}<td>${eok(r.sAsset)}</td><td>${eok(r.sNet)}</td><td>${eok(r.kAsset)}</td><td>${eok(r.kNet)}</td><td>${eok(r.jqAsset)}</td><td>${eok(r.jqNet)}</td><td>${eok(r.jiAsset)}</td><td>${eok(r.jiNet)}</td><td>${eok(r.gpAsset)}</td><td>${eok(r.gpNet)}</td><td>${eok(r.qiAsset)}${r.qiTargetHit?'':' <span style="color:var(--gold);font-size:9px">▲적립중</span>'}</td><td>${eok(r.qiNet)}</td><td>${eok(r.tlAsset)}</td><td>${eok(r.tlNet)}</td><td style="${lbl}"><b>${eok(r.monthly)}</b></td><td>${loanCell}</td><td style="${lbl}">${eok(r.corpAsset)}</td><td>${eok(r.childShare)}</td></tr>`;
+      return `<tr style="${rowStyle}"><td style="${lbl}">${lbl?`<b>${r.age}세</b>`:r.age+'세'}</td><td style="${lbl}">${lbl?`<b>${r.yr}</b>`:r.yr}</td>${crisisCell}<td>${eok(r.sAsset)}</td><td>${eok(r.sNet)}</td><td>${eok(r.jqAsset)}</td><td>${eok(r.jqNet)}</td><td>${eok(r.gpAsset)}</td><td>${eok(r.gpNet)}</td><td>${eok(r.qiAsset)}${r.qiTargetHit?'':' <span style="color:var(--gold);font-size:9px">▲적립중</span>'}</td><td>${eok(r.qiNet)}</td><td>${eok(r.tlAsset)}</td><td>${eok(r.tlNet)}</td><td style="${lbl}"><b>${eok(r.monthly)}</b></td><td>${loanCell}</td><td style="${lbl}">${eok(r.corpAsset)}</td><td>${eok(r.childShare)}</td></tr>`;
     }).join('') + '</tbody>';
 }
 
@@ -1122,7 +1077,7 @@ function renderCash() {
     card('최종 법인자산', eok(rLast.corpAsset), '만99세 · 2065년'),
   ].join('');
   document.getElementById('cashTable').innerHTML =
-    `<thead><tr><th>나이</th><th>연도</th><th>위기</th><th>SCHD 월</th><th>0052D0 월</th><th>JEPQ 월</th><th>JEPI 월</th><th>GPIQ 월</th><th>IQQ 월</th><th>TLT 월</th><th>합계 월</th><th>월 상환</th><th>월 잉여</th><th>가수금 잔액</th></tr></thead><tbody>` +
+    `<thead><tr><th>나이</th><th>연도</th><th>위기</th><th>SCHD 월</th><th>JEPQ 월</th><th>GPIQ 월</th><th>IQQ 월</th><th>TLT 월</th><th>합계 월</th><th>월 상환</th><th>월 잉여</th><th>가수금 잔액</th></tr></thead><tbody>` +
     rows.map(r => {
       const {row, lbl} = get5yr(r.age);
       const loanCell = r.loan ? eok(r.loan) : '<b style="color:var(--green)">완납</b>';
@@ -1130,7 +1085,7 @@ function renderCash() {
       let crisisCell = '<td></td>';
       if (r.isCrisis) { rowStyle = 'background:#FEF0F0;border-top:2.5px solid #A83030'; crisisCell = `<td style="text-align:center"><span style="background:#A83030;color:#fff;border-radius:4px;padding:1px 5px;font-size:9px;font-weight:800">⚠️위기</span></td>`; }
       else if (r.isRecovery) { crisisCell = `<td style="text-align:center;color:#B5711A;font-size:9px;font-weight:700">회복중</td>`; }
-      return `<tr style="${rowStyle}"><td style="${lbl}">${lbl?`<b>${r.age}세</b>`:r.age+'세'}</td><td style="${lbl}">${lbl?`<b>${r.yr}</b>`:r.yr}</td>${crisisCell}<td>${eok(r.sNet/12)}</td><td>${eok(r.kNet/12)}</td><td>${eok(r.jqNet/12)}</td><td>${eok(r.jiNet/12)}</td><td>${eok(r.gpNet/12)}</td><td>${eok(r.qiNet/12)}</td><td>${eok(r.tlNet/12)}</td><td style="${lbl}"><b>${eok(r.monthly)}</b></td><td>${eok(r.repay/12)}</td><td>${eok(r.surplus/12)}</td><td>${loanCell}</td></tr>`;
+      return `<tr style="${rowStyle}"><td style="${lbl}">${lbl?`<b>${r.age}세</b>`:r.age+'세'}</td><td style="${lbl}">${lbl?`<b>${r.yr}</b>`:r.yr}</td>${crisisCell}<td>${eok(r.sNet/12)}</td><td>${eok(r.jqNet/12)}</td><td>${eok(r.gpNet/12)}</td><td>${eok(r.qiNet/12)}</td><td>${eok(r.tlNet/12)}</td><td style="${lbl}"><b>${eok(r.monthly)}</b></td><td>${eok(r.repay/12)}</td><td>${eok(r.surplus/12)}</td><td>${loanCell}</td></tr>`;
     }).join('') + '</tbody>';
 }
 
@@ -1169,13 +1124,11 @@ function renderRepayPlan() {
     const r = rows[idx];
     if (loanBal <= 0) break;
     const mSchd  = r.sNet  / 12;
-    const mTiger = r.kNet  / 12;
     const mJepq  = r.jqNet / 12;
-    const mJepi  = r.jiNet / 12;
     const mGpiq  = r.gpNet / 12;
     const mQqqi  = r.qiNet / 12;
     const mTlt   = r.tlNet / 12;
-    const mTotal = mSchd + mTiger + mJepq + mJepi + mGpiq + mQqqi + mTlt;
+    const mTotal = mSchd + mJepq + mGpiq + mQqqi + mTlt;
     let yearRepay = 0, paidMonth = null;
     let bal = loanBal;
     for (let m = 1; m <= 12; m++) {
@@ -1186,17 +1139,17 @@ function renderRepayPlan() {
       if (bal === 0 && paidMonth === null) paidMonth = m;
     }
     loanBal = bal;
-    planRows.push({ yr: r.yr, age: r.age, mSchd, mTiger, mJepq, mJepi, mGpiq, mQqqi, mTlt, mTotal, mRepay: yearRepay / 12, mSurplus: mTotal - yearRepay / 12, yearRepay, loanBal, paidMonth });
+    planRows.push({ yr: r.yr, age: r.age, mSchd, mJepq, mGpiq, mQqqi, mTlt, mTotal, mRepay: yearRepay / 12, mSurplus: mTotal - yearRepay / 12, yearRepay, loanBal, paidMonth });
   }
   const paidRow = planRows.find(r => r.loanBal === 0);
   document.getElementById('repayTable').innerHTML =
-    `<thead><tr><th>나이</th><th>연도</th><th>SCHD 월</th><th>0052D0 월</th><th>JEPQ+JEPI 월</th><th>GPIQ+IQQ 월</th><th>TLT 월</th><th>월 배당합계</th><th>월 상환</th><th>연말 가수금 잔액</th></tr></thead><tbody>` +
+    `<thead><tr><th>나이</th><th>연도</th><th>SCHD 월</th><th>JEPQ 월</th><th>GPIQ+IQQ 월</th><th>TLT 월</th><th>월 배당합계</th><th>월 상환</th><th>연말 가수금 잔액</th></tr></thead><tbody>` +
     planRows.map(r => {
       const done = r.loanBal === 0;
       const {row, lbl} = get5yr(r.age);
       const rowStyle = done ? 'background:#dcfce7' : row;
       const balCell  = done ? `<b style="color:#14532d;font-size:12px">완납 ✓ ${r.paidMonth}월</b>` : eok(r.loanBal);
-      return `<tr style="${rowStyle}"><td style="${lbl}">${lbl?`<b style="font-size:13px">${r.age}세</b>`:r.age+'세'}</td><td style="${lbl}">${lbl?`<b>${r.yr}</b>`:r.yr}</td><td>${eok(r.mSchd)}</td><td>${eok(r.mTiger)}</td><td>${eok(r.mJepq+r.mJepi)}</td><td>${eok(r.mGpiq+r.mQqqi)}</td><td>${eok(r.mTlt)}</td><td style="${lbl};font-size:12px">${eok(r.mTotal)}</td><td>${eok(r.mRepay)}</td><td>${balCell}</td></tr>`;
+      return `<tr style="${rowStyle}"><td style="${lbl}">${lbl?`<b style="font-size:13px">${r.age}세</b>`:r.age+'세'}</td><td style="${lbl}">${lbl?`<b>${r.yr}</b>`:r.yr}</td><td>${eok(r.mSchd)}</td><td>${eok(r.mJepq)}</td><td>${eok(r.mGpiq+r.mQqqi)}</td><td>${eok(r.mTlt)}</td><td style="${lbl};font-size:12px">${eok(r.mTotal)}</td><td>${eok(r.mRepay)}</td><td>${balCell}</td></tr>`;
     }).join('') + '</tbody>';
   document.getElementById('repayResult').innerHTML = paidRow
     ? `<div style="background:#dcfce7;border:1px solid #a7f3d0;border-radius:10px;padding:11px 15px;font-size:12.5px;color:#14532d;font-weight:700">🎉 가수금 완납 예상: ${paidRow.yr}년 ${paidRow.paidMonth}월 (만${paidRow.age}세) &nbsp;·&nbsp; 2027년 1월부터 ${Math.round((paidRow.yr - 2027)*12 + paidRow.paidMonth)}개월 소요</div>`
@@ -1212,7 +1165,7 @@ function switchMT(id, el){
   document.getElementById('mt-'+id).classList.add('active');
 }
 function saveManualRecord(){
-  const rec = { id: Date.now(), year: +mYear.value, month: +mMonth.value, schd: +mSchd.value||0, tiger: +mTiger.value||0, jepq: +mJepq.value||0, jepi: +mJepi.value||0, gpiq: +mGpiq.value||0, qqqi: +mQqqi.value||0, tlt: +mTlt.value||0, repay: +mRepay.value||0, usd: +mUsd.value||1380 };
+  const rec = { id: Date.now(), year: +mYear.value, month: +mMonth.value, schd: +mSchd.value||0, jepq: +mJepq.value||0, gpiq: +mGpiq.value||0, qqqi: +mQqqi.value||0, tlt: +mTlt.value||0, repay: +mRepay.value||0, usd: +mUsd.value||1380 };
   if (!rec.year || rec.month<1 || rec.month>12) { toast('연도/월을 확인하세요'); return; }
   manual.unshift(rec); saveLocal(false); renderManualList(); toast('수동 기록 저장 완료');
 }
@@ -1220,7 +1173,7 @@ function renderManualList(){
   const el = document.getElementById('manualList');
   if (!el) return;
   el.innerHTML = manual.length ? manual.slice(0,20).map(r => {
-    const totalDiv = (r.schd||0)+(r.tiger||0)+(r.jepq||0)+(r.jepi||0)+(r.gpiq||0)+(r.qqqi||0)+(r.tlt||0);
+    const totalDiv = (r.schd||0)+(r.jepq||0)+(r.gpiq||0)+(r.qqqi||0)+(r.tlt||0);
     return `<div class="milestone"><div class="badge">${r.month}월</div><div><b>${r.year}년</b><div class="note">배당합계 ${eok(totalDiv)} · 상환 ${eok(r.repay)}</div></div></div>`;
   }).join('') : '기록 없음';
 }
@@ -1342,7 +1295,7 @@ function applyShareURL() {
 }
 
 function exportData(){
-  const data = { params, manual, memos, exportedAt: new Date().toISOString(), version:'v6', note:'유앤김 법인 ETF 시뮬레이터 v6 백업 (SCHD+0052D0+JEPQ+JEPI+GPIQ+IQQ+TLT)' };
+  const data = { params, manual, memos, exportedAt: new Date().toISOString(), version:'v7', note:'유앤김 법인 ETF 시뮬레이터 v7 백업 (SCHD+JEPQ+GPIQ+IQQ+TLT)' };
   const blob = new Blob([JSON.stringify(data,null,2)], { type:'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href=url; a.download=`corp-sim-v5-${new Date().toISOString().slice(0,10)}.json`;
@@ -1395,18 +1348,14 @@ document.getElementById('tabs').addEventListener('click', e => {
 // ══════════════════════════════════════════════
 var ACCT_ETFS = [
   { key:'schd',  label:'SCHD',          ticker:'SCHD',      currency:'USD', simAsset:'sAsset',  simDiv:'sNet',  divRate: params.schdDivRate  },
-  { key:'tiger', label:'TIGER(0052D0)', ticker:'458730.KS', currency:'KRW', simAsset:'kAsset',  simDiv:'kNet',  divRate: params.tigerDivRate },
   { key:'jepq',  label:'JEPQ',          ticker:'JEPQ',      currency:'USD', simAsset:'jqAsset', simDiv:'jqNet', divRate: params.jepqDivRate  },
-  { key:'jepi',  label:'JEPI',          ticker:'JEPI',      currency:'USD', simAsset:'jiAsset', simDiv:'jiNet', divRate: params.jepiDivRate  },
   { key:'gpiq',  label:'GPIQ',          ticker:'GPIQ',      currency:'USD', simAsset:'gpAsset', simDiv:'gpNet', divRate: params.gpiqDivRate  },
   { key:'qqqi',  label:'IQQ',          ticker:'IQQ',      currency:'USD', simAsset:'qiAsset', simDiv:'qiNet', divRate: params.qqqiDivRate  },
   { key:'tlt',   label:'TLT',           ticker:'TLT',       currency:'USD', simAsset:'tlAsset', simDiv:'tlNet', divRate: params.tltDivRate   },
 ];
 var ACCT_LINKS = {
   SCHD:        { yf:'https://finance.yahoo.com/quote/SCHD',       naver:'https://finance.naver.com/world/sise.naver?symbol=SCHD.O',      gf:'https://www.google.com/finance/quote/SCHD:NASDAQ' },
-  '458730.KS': { yf:'https://finance.yahoo.com/quote/458730.KS', naver:'https://finance.naver.com/item/main.naver?code=458730',         gf:'https://www.google.com/finance/quote/458730:KRX' },
   JEPQ:        { yf:'https://finance.yahoo.com/quote/JEPQ',       naver:'https://finance.naver.com/world/sise.naver?symbol=JEPQ.O',      gf:'https://www.google.com/finance/quote/JEPQ:NASDAQ' },
-  JEPI:        { yf:'https://finance.yahoo.com/quote/JEPI',       naver:'https://finance.naver.com/world/sise.naver?symbol=JEPI.O',      gf:'https://www.google.com/finance/quote/JEPI:NYSEARCA' },
   GPIQ:        { yf:'https://finance.yahoo.com/quote/GPIQ',       naver:'https://finance.naver.com/world/sise.naver?symbol=GPIQ.O',      gf:'https://www.google.com/finance/quote/GPIQ:NASDAQ' },
   IQQ:        { yf:'https://finance.yahoo.com/quote/IQQ',       naver:'https://finance.naver.com/world/sise.naver?symbol=IQQ.O',      gf:'https://www.google.com/finance/quote/IQQ:NASDAQ' },
   TLT:         { yf:'https://finance.yahoo.com/quote/TLT',        naver:'https://finance.naver.com/world/sise.naver?symbol=TLT.O',       gf:'https://www.google.com/finance/quote/TLT:NASDAQ' },
@@ -1431,7 +1380,7 @@ function saveAccountHoldings() {
   renderAccountTable();
 }
 
-var ACCT_COLORS = { schd:'var(--blue)', tiger:'var(--green)', jepq:'var(--teal)', jepi:'#eda100', gpiq:'#c026d3', qqqi:'var(--purple)', tlt:'var(--muted2)' };
+var ACCT_COLORS = { schd:'var(--blue)', jepq:'var(--teal)', gpiq:'#c026d3', qqqi:'var(--purple)', tlt:'var(--muted2)' };
 
 function renderAccountInputs() {
   document.getElementById('acctInputs').innerHTML = ACCT_ETFS.map(e => {
@@ -1485,7 +1434,7 @@ async function fetchLivePrices() {
 
     // 종목별 가격 매핑
     const TICKER_MAP = {
-      schd:'SCHD', tiger:'458730.KS', jepq:'JEPQ', jepi:'JEPI', gpiq:'GPIQ', qqqi:'IQQ', tlt:'TLT'
+      schd:'SCHD', jepq:'JEPQ', gpiq:'GPIQ', qqqi:'IQQ', tlt:'TLT'
     };
     ACCT_ETFS.forEach(e => {
       const key = TICKER_MAP[e.key] || e.ticker;
