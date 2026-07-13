@@ -1823,7 +1823,7 @@ async function autoLoadGist() {
     var localAt  = localRaw ? (JSON.parse(localRaw).savedAt || '') : '';
     if (d.savedAt && d.savedAt > localAt) {
       applySyncPayload(d);
-      rows = simulate(); renderAll();
+      rows = simulate(); renderAll(); renderAccountInputs();
       setSyncStatus('☁️ 자동 동기화 완료 · ' + new Date(d.savedAt).toLocaleString('ko-KR'));
       toast('☁️ 클라우드 데이터 자동 적용');
     } else {
@@ -1893,6 +1893,7 @@ const _fromShare = applyShareURL();
 if (!_fromShare) loadLocal();
 recalc();
 renderAll();
+renderAccountInputs(); renderAccountKpis(); // 기본 활성 탭(계좌현황)이 로드 시에도 즉시 렌더링되도록 보정
 if (!_fromShare) autoLoadGist();
 </script>
 
