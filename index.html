@@ -1,4 +1,4 @@
-<!doctype html>
+﻿<!doctype html>
 <html lang="ko"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -1395,59 +1395,89 @@ function renderAccountInputs() {
   renderAccountTable();
 }
 
+// 단일 종목 Yahoo Finance 실시간 조회 (직접 → 프록시 순)
+async function fetchYahooTicker(ticker) {
+  const yUrl = `https://query1.finance.yahoo.com/v8/finance/chart/${ticker}?interval=1d&range=5d`;
+
+  function parseYahoo(data) {
+    const r = data && data.chart && data.chart.result && data.chart.result[0];
+    if (!r) throw new Error('no result');
+    const meta  = r.meta;
+    const price = meta.regularMarketPrice || meta.chartPreviousClose;
+    if (!price) throw new Error('no price');
+    const prev  = meta.previousClose || meta.chartPreviousClose || price;
+    return { price, prev, chg: prev ? Math.round((price - prev) / prev * 10000) / 100 : 0 };
+  }
+
+  // 1차: 직접 호출 (CORS 허용 환경에서 작동)
+  try {
+    const ctrl = new AbortController();
+    const tid  = setTimeout(() => ctrl.abort(), 7000);
+    const res  = await fetch(yUrl, { signal: ctrl.signal });
+    clearTimeout(tid);
+    if (res.ok) return parseYahoo(await res.json());
+  } catch(e) {}
+
+  // 2차: allorigins.win CORS 프록시
+  try {
+    const ctrl = new AbortController();
+    const tid  = setTimeout(() => ctrl.abort(), 12000);
+    const res  = await fetch(`https://api.allorigins.win/get?url=${encodeURIComponent(yUrl)}`, { signal: ctrl.signal });
+    clearTimeout(tid);
+    if (res.ok) { const w = await res.json(); return parseYahoo(JSON.parse(w.contents)); }
+  } catch(e) {}
+
+  return null;
+}
+
 async function fetchLivePrices() {
   const st = document.getElementById('priceStatus');
-  st.innerHTML = '⏳ 시세 불러오는 중...'; st.style.color = 'var(--muted)';
+  st.innerHTML = '⏳ 실시간 시세 조회 중...'; st.style.color = 'var(--muted)';
 
-  // GitHub Action이 2시간마다 갱신하는 prices.json 읽기 (CORS 문제 없음)
-  const PRICES_URL = './prices.json';
+  // 환율 조회 (open.er-api.com — CORS 허용)
   try {
-    const res = await fetch(PRICES_URL + '?t=' + Date.now());
-    if (!res.ok) throw new Error('prices.json ' + res.status);
-    const data = await res.json();
+    const ctrl = new AbortController();
+    const tid  = setTimeout(() => ctrl.abort(), 8000);
+    const res  = await fetch('https://open.er-api.com/v6/latest/USD', { signal: ctrl.signal });
+    clearTimeout(tid);
+    if (res.ok) { const d = await res.json(); liveRate = Math.round(d.rates.KRW * 100) / 100; }
+  } catch(e) {}
 
-    // 환율
-    liveRate = data.USDKRW || 0;
+  // 종목별 실시간 조회 (병렬)
+  const failed = [];
+  await Promise.all(ACCT_ETFS.map(async e => {
+    const r = await fetchYahooTicker(e.ticker);
+    if (r) livePrices[e.ticker] = r;
+    else   failed.push(e.ticker);
+  }));
 
-    // 종목별 가격 매핑
-    const TICKER_MAP = {
-      schd:'SCHD', jepq:'JEPQ', gpiq:'GPIQ', qqqi:'IQQ'
-    };
-    ACCT_ETFS.forEach(e => {
-      const key = TICKER_MAP[e.key] || e.ticker;
-      const d   = data[key];
-      if (d && d.price) {
-        livePrices[e.ticker] = { price: d.price, chg: d.chg || 0, prev: d.prev || d.price };
+  // 실패 종목은 prices.json 캐시에서 보완
+  if (failed.length > 0) {
+    try {
+      const res = await fetch('./prices.json?t=' + Date.now());
+      if (res.ok) {
+        const data = await res.json();
+        if (!liveRate && data.USDKRW) liveRate = data.USDKRW;
+        const MAP = { SCHD:'SCHD', JEPQ:'JEPQ', GPIQ:'GPIQ', IQQ:'IQQ' };
+        failed.forEach(ticker => {
+          const d = data[MAP[ticker] || ticker];
+          if (d && d.price) livePrices[ticker] = { price: d.price, chg: d.chg || 0, prev: d.prev || d.price };
+        });
       }
-    });
-
-    lastFetchTime = data.updatedAt ? new Date(data.updatedAt) : new Date();
-    localStorage.setItem('livePriceCache', JSON.stringify({ livePrices, liveRate, fetchedAt: lastFetchTime.toISOString() }));
-
-    const cnt      = Object.keys(livePrices).length;
-    const total    = ACCT_ETFS.length;
-    const rateStr  = liveRate ? Math.round(liveRate).toLocaleString('ko-KR') + '원' : '—';
-    const updStr   = lastFetchTime.toLocaleString('ko-KR', {month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
-    const errNote  = (data.errors||[]).length ? ` <span style="color:var(--amber)">(조회실패 ${data.errors.join(', ')})</span>` : '';
-    st.innerHTML   = `✅ ${cnt}/${total}종목 · 환율 ${rateStr} · 기준 ${updStr}${errNote}`;
-    st.innerHTML  += ` <span style="color:var(--muted2);font-size:10px">· GitHub Action 2h자동갱신</span>`;
-    st.style.color = cnt === total ? '#16a34a' : 'var(--amber)';
-    renderAccountKpis(); renderAccountInputs();
-
-  } catch(err) {
-    // prices.json 실패 시 캐시 또는 안내
-    const cached = JSON.parse(localStorage.getItem('livePriceCache') || 'null');
-    if (cached && cached.livePrices) {
-      livePrices = cached.livePrices; liveRate = cached.liveRate || 0;
-      const cDate = new Date(cached.fetchedAt).toLocaleString('ko-KR',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'});
-      st.innerHTML  = `⚠️ 자동조회 실패 — 캐시(${cDate}) 사용 중`;
-      st.style.color = 'var(--amber)'; renderAccountKpis(); renderAccountInputs();
-    } else {
-      st.innerHTML  = `❌ 조회 실패 (${err.message}) — 수동입력란에 직접 입력하세요`;
-      st.style.color = 'var(--red)'; renderAccountInputs();
-    }
+    } catch(e) {}
   }
-  renderAccountTable();
+
+  lastFetchTime = new Date();
+  localStorage.setItem('livePriceCache', JSON.stringify({ livePrices, liveRate, fetchedAt: lastFetchTime.toISOString() }));
+
+  const cnt     = Object.keys(livePrices).length;
+  const total   = ACCT_ETFS.length;
+  const rateStr = liveRate ? Math.round(liveRate).toLocaleString('ko-KR') + '원' : '—';
+  const timeStr = lastFetchTime.toLocaleString('ko-KR', {month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit'});
+  const failNote = failed.length ? ` <span style="color:var(--amber)">(캐시사용: ${failed.join(', ')})</span>` : '';
+  st.innerHTML   = `✅ ${cnt}/${total}종목 · USD/KRW ${rateStr} · ${timeStr}${failNote}`;
+  st.style.color = cnt === total ? '#16a34a' : 'var(--amber)';
+  renderAccountKpis(); renderAccountInputs(); renderAccountTable();
 }
 
 function renderAccountKpis() {
