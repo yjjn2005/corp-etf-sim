@@ -4,16 +4,7 @@ on:
   schedule:
     - cron: '0 0,2,4,6,8,10,12,14,16,18,20,22 * * 1-5'   # 평일 2시간마다 (UTC)
     - cron: '0 1,7,13 * * 0,6'                             # 주말 하루 3회
-  workflow_dispatch:                                        # 수동 실행 가능
-
-# ★ 핵심 수정 1: GITHUB_TOKEN에 쓰기 권한 명시 (미설정 시 push 403으로 매번 실패)
-permissions:
-  contents: write
-
-# ★ 핵심 수정 2: 중복 실행 방지 (겹침으로 인한 rebase 충돌 실패 차단)
-concurrency:
-  group: price-update
-  cancel-in-progress: true
+  workflow_dispatch:                                         # 수동 실행 가능
 
 jobs:
   update:
@@ -21,99 +12,79 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      # ★ 핵심 수정 3: yfinance(pip) 의존 제거 — 표준 라이브러리만 사용, 설치 실패 원천 차단
+      - name: yfinance 설치
+        run: pip install yfinance --quiet
+
       - name: 시세 수집 및 prices.json 업데이트
         run: |
           python3 << 'PYEOF'
-          import json, datetime, sys, time, random, urllib.request
+          import json, datetime, sys, time
+          import yfinance as yf
 
-          # v9.0 최종안 6종목 (SCHD+JEPQ+GPIQ+JEPI+IQQ+SGOV)
-          TICKERS = ["SCHD", "JEPQ", "GPIQ", "JEPI", "IQQ", "SGOV"]
-          UA = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36"}
+          TICKERS = ["SCHD", "JEPQ", "GPIQ", "JEPI", "IQQ", "SGOV", "QQQ", "TLT"]
 
-          def yahoo(ticker, host):
-              url = f"https://{host}/v8/finance/chart/{ticker}?interval=1d&range=5d"
-              req = urllib.request.Request(url, headers=UA)
-              with urllib.request.urlopen(req, timeout=12) as r:
-                  d = json.loads(r.read())
-              m = d["chart"]["result"][0]["meta"]
-              price = float(m.get("regularMarketPrice") or m["chartPreviousClose"])
-              prev  = float(m.get("previousClose") or m.get("chartPreviousClose") or price)
-              chg   = round((price - prev) / prev * 100, 4) if prev else 0
-              return {"price": price, "prev": prev, "chg": chg}
+          prices = {}
+          errors = []
 
-          prices, errors = {}, []
           for ticker in TICKERS:
               ok = False
-              for host in ("query1.finance.yahoo.com", "query2.finance.yahoo.com"):
-                  for attempt in range(2):
-                      try:
-                          prices[ticker] = yahoo(ticker, host)
-                          print(f"OK {ticker}: {prices[ticker]['price']} ({prices[ticker]['chg']:+.2f}%)")
-                          ok = True
-                          break
-                      except Exception as e:
-                          print(f"  retry {ticker} @{host}: {e}", file=sys.stderr)
-                          time.sleep(2 + random.random() * 2)
-                  if ok:
+              for attempt in range(3):          # 최대 3회 재시도
+                  try:
+                      t = yf.Ticker(ticker)
+                      info = t.fast_info
+                      price = float(info.last_price)
+                      prev  = float(info.previous_close or price)
+                      chg   = round((price - prev) / prev * 100, 4) if prev else 0
+                      prices[ticker] = {"price": price, "prev": prev, "chg": chg}
+                      print(f"✓ {ticker}: {price} ({chg:+.2f}%)")
+                      ok = True
                       break
+                  except Exception as e:
+                      print(f"  재시도 {attempt+1}/3 — {ticker}: {e}", file=sys.stderr)
+                      time.sleep(3)
               if not ok:
                   errors.append(ticker)
 
-          # 환율: open.er-api.com → 실패 시 Yahoo KRW=X 폴백
+          # 환율 (open.er-api.com — 무료, CORS 허용)
+          import urllib.request
           try:
               with urllib.request.urlopen("https://open.er-api.com/v6/latest/USD", timeout=10) as r:
-                  prices["USDKRW"] = round(json.loads(r.read())["rates"]["KRW"], 2)
-              print(f"OK USDKRW: {prices['USDKRW']}")
-          except Exception:
-              try:
-                  prices["USDKRW"] = round(yahoo("KRW=X", "query1.finance.yahoo.com")["price"], 2)
-                  print(f"OK USDKRW(Yahoo): {prices['USDKRW']}")
-              except Exception as e:
-                  print(f"FAIL USDKRW: {e}", file=sys.stderr)
+                  data = json.loads(r.read())
+              prices["USDKRW"] = round(data["rates"]["KRW"], 2)
+              print(f"✓ USDKRW: {prices['USDKRW']}")
+          except Exception as e:
+              print(f"✗ USDKRW: {e}", file=sys.stderr)
 
-          # 실패 항목은 이전 값 유지 (환율 포함)
+          prices["updatedAt"] = datetime.datetime.utcnow().strftime("%Y-%m-%dT%H:%M:%SZ")
+          prices["errors"]    = errors
+
+          # 실패 종목은 이전 값 유지
           try:
               with open("prices.json") as f:
                   old = json.load(f)
               for k in TICKERS:
                   if k in errors and k in old:
                       prices[k] = old[k]
-                      print(f"  -> {k} 이전 값 유지")
-              if "USDKRW" not in prices and "USDKRW" in old:
-                  prices["USDKRW"] = old["USDKRW"]
+                      print(f"  → {k} 이전 값 유지: {old[k]['price']}")
           except Exception:
               pass
-
-          prices["updatedAt"] = datetime.datetime.now(datetime.timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
-          prices["errors"] = errors
 
           with open("prices.json", "w") as f:
               json.dump(prices, f, ensure_ascii=False, indent=2)
 
-          print(f"\n완료: {len(TICKERS)-len(errors)}/{len(TICKERS)}종목 갱신, 실패 {errors}")
-          # ★ 핵심 수정 4: 어떤 경우에도 실패로 끝내지 않음 (이전 값 유지로 안전) → 실패 메일 차단
-          sys.exit(0)
+          ok_count = len(TICKERS) - len(errors)
+          print(f"\n완료: {ok_count}/{len(TICKERS)}종목 갱신")
+          # 전체 실패 시에만 exit 1 (부분 실패는 허용)
+          if ok_count == 0:
+              sys.exit(1)
           PYEOF
 
-      - name: 커밋 & 푸시 (변경 시에만 · 재시도 3회 · 절대 실패하지 않음)
+      - name: 커밋 & 푸시
         run: |
           git config user.name  "github-actions[bot]"
           git config user.email "github-actions[bot]@users.noreply.github.com"
           git add prices.json
-          if git diff --staged --quiet; then
-            echo "변경 없음 — 커밋 생략"
-            exit 0
-          fi
+          git diff --staged --quiet && echo "변경 없음" && exit 0
           git commit -m "시세 자동 업데이트 $(date -u '+%Y-%m-%d %H:%M') UTC"
-          for i in 1 2 3; do
-            git pull --rebase origin main || true
-            if git push origin main; then
-              echo "푸시 성공"
-              exit 0
-            fi
-            echo "푸시 재시도 $i/3"
-            sleep 5
-          done
-          echo "::warning::푸시 실패 — 다음 스케줄에서 재시도됩니다 (워크플로는 성공 처리)"
-          exit 0
+          git pull --rebase origin main
+          git push

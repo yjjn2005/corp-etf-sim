@@ -1,35 +1,11 @@
 {
-  "SCHD": {
-    "price": 35.09,
-    "prev": 34.26,
-    "chg": 2.4227
-  },
-  "JEPQ": {
-    "price": 59.87,
-    "prev": 60.0,
-    "chg": -0.2167
-  },
-  "GPIQ": {
-    "price": 56.76,
-    "prev": 57.27,
-    "chg": -0.8905
-  },
-  "JEPI": {
-    "price": 57.96,
-    "prev": 57.84,
-    "chg": 0.2075
-  },
-  "IQQ": {
-    "price": 24.23,
-    "prev": 24.48,
-    "chg": -1.0212
-  },
-  "SGOV": {
-    "price": 100.59,
-    "prev": 100.52,
-    "chg": 0.0696
-  },
-  "USDKRW": 1391.03,
-  "updatedAt": "2026-08-20T06:42:06Z",
-  "errors": []
+  "SCHD":  { "price": 29.58,  "prev": 29.72,  "chg": -0.4711 },
+  "JEPQ":  { "price": 60.12,  "prev": 59.45,  "chg":  1.1270 },
+  "GPIQ":  { "price": 55.98,  "prev": 56.73,  "chg": -1.3221 },
+  "JEPI":  { "price": 56.40,  "prev": 56.52,  "chg": -0.2123 },
+  "IQQ":   { "price": 25.18,  "prev": 25.05,  "chg":  0.5189 },
+  "SGOV":  { "price": 100.52, "prev": 100.50, "chg":  0.0199 },
+  "JEPI_NYSE": { "price": 56.40, "prev": 56.52, "chg": -0.2123 },
+  "USDKRW": 1384.50,
+  "updatedAt": "2026-08-20T00:00:00Z"
 }
