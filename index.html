@@ -2163,42 +2163,50 @@ function loadAcctHoldings() {
   } catch(e) { return {}; }
 }
 
-// 매수계획을 실계좌에 반영
+// 매수계획을 실계좌에 반영 (비SCHD 초기화 → 신규수량·평균가 자동입력)
 function applyBuyToAccount() {
   var fx = liveRate || 1380;
-  var applied = [];
 
+  // 시세 확인
+  var hasPrices = BUY_ETFS.some(function(e){
+    return BUY_RATIOS[e.key] > 0 && livePrices && livePrices[e.ticker];
+  });
+  if (!hasPrices) {
+    alert('시세가 조회되지 않았습니다.\n계좌현황 탭의 🔄 실시간 시세 조회 버튼을 먼저 클릭하세요.');
+    return;
+  }
+  if (!confirm('SCHD 이외 5종목(JEPQ/GPIQ/JEPI/IQQ/SGOV)의 기존 수량·평균가를 초기화하고\n추가매수 수량과 현재가를 자동 입력합니다. 계속할까요?')) return;
+
+  // ① 비SCHD 전체 초기화
+  ['jepq','gpiq','jepi','qqqi','sgov'].forEach(function(key) {
+    if (!acctHoldings[key]) acctHoldings[key] = {};
+    acctHoldings[key].qty    = 0;
+    acctHoldings[key].avg    = 0;
+    acctHoldings[key].manual = 0;
+  });
+
+  // ② 신규 매수수량 · 평균매입가($) 입력
+  var applied = [];
   BUY_ETFS.forEach(function(etf) {
     var ratio = BUY_RATIOS[etf.key] || 0;
     if (!ratio) return;
     var lp = livePrices && livePrices[etf.ticker];
     var priceUsd = lp ? lp.price : null;
     if (!priceUsd) return;
-    var priceKrw = priceUsd * fx;
-    var buyKrw = Math.round(_buyAmount * ratio);
-    var newQty = Math.floor(buyKrw / priceKrw);
+    var buyKrw  = Math.round(_buyAmount * ratio);
+    var newQty  = Math.floor(buyKrw / (priceUsd * fx));
     if (!newQty) return;
-    // 비SCHD 종목은 0에서 시작
-    var existQty = etf.key==='schd' ? ((acctHoldings['schd']&&acctHoldings['schd'].qty)||0) : 0;
-    var existAvg = etf.key==='schd' ? ((acctHoldings['schd']&&acctHoldings['schd'].avg)||0) : 0;
-    var totalQty = existQty + newQty;
-    var newAvg = totalQty > 0 ? (existQty * existAvg + newQty * priceUsd) / totalQty : priceUsd;
-    if (!acctHoldings[etf.key]) acctHoldings[etf.key] = {};
-    acctHoldings[etf.key].qty = Math.round(totalQty * 1000) / 1000;
-    acctHoldings[etf.key].avg = Math.round(newAvg * 100) / 100;
-    applied.push(etf.label);
+    acctHoldings[etf.key].qty = newQty;
+    acctHoldings[etf.key].avg = Math.round(priceUsd * 100) / 100; // 매입가 = 현재가($)
+    applied.push(etf.label + ' ' + newQty + '주');
   });
 
-  if (!applied.length) {
-    alert('반영할 수량이 없습니다. 실시간 시세를 먼저 불러오세요.');
-    return;
-  }
   localStorage.setItem('acctHoldings_v2', JSON.stringify(acctHoldings));
   if (typeof saveLocal === 'function') saveLocal(false);
   if (typeof scheduleAutoSync === 'function') scheduleAutoSync();
   renderAccountInputs();
   closeBuyModal();
-  toast('실계좌 반영 완료 (' + applied.join(', ') + ') ✓ 클라우드 동기화 중...');
+  toast('실계좌 반영 완료: ' + applied.join(', ') + ' ✓');
 }
 
 // SCHD 제외 5종목 초기화
