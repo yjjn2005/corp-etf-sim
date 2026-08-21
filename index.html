@@ -1970,10 +1970,10 @@ var BUY_ETFS = [
   { key:'sgov', ticker:'SGOV', label:'SGOV',  simAsset:'sgAsset' },
 ];
 
-// 시나리오별 목표비율
+// 시나리오별 목표비율 — SCHD 고정, 5종목 최적비율 (원래 10/10/15/5/5 → 합계 45% 정규화)
 var BUY_SCENARIOS = {
-  '5': { label:'5억 추가안', total:500_000_000, ratios:{ schd:.55, jepq:.10, gpiq:.10, jepi:.15, qqqi:.05, sgov:.05 }, fixSchd:false },
-  '8': { label:'8억 추가안 (SCHD 고정)', total:800_000_000, ratios:{ schd:0, jepq:.222, gpiq:.222, jepi:.333, qqqi:.111, sgov:.111 }, fixSchd:true },
+  '5': { label:'5억 추가 (SCHD 고정)', total:500_000_000, ratios:{ schd:0, jepq:.2222, gpiq:.2222, jepi:.3333, qqqi:.1111, sgov:.1111 }, fixSchd:true },
+  '8': { label:'8억 추가 (SCHD 고정)', total:800_000_000, ratios:{ schd:0, jepq:.2222, gpiq:.2222, jepi:.3333, qqqi:.1111, sgov:.1111 }, fixSchd:true },
 };
 
 function openBuyModal() {
@@ -2110,6 +2110,12 @@ function renderBuyModal() {
     html += '<div style="margin-top:10px;padding:8px 12px;background:rgba(255,180,0,.1);border:1px solid rgba(255,180,0,.3);border-radius:6px;color:rgba(255,180,0,.9);font-size:11px">⚠️ 현재가 미확인: '+missing.join(', ')+' — 실시간 시세를 먼저 불러오세요</div>';
   }
 
+  // 실계좌 반영 + 초기화 버튼
+  html += '<div style="display:flex;gap:8px;margin-top:16px">';
+  html += '<button onclick="applyBuyToAccount()" style="flex:2;padding:10px;border-radius:8px;border:none;background:#16a34a;color:#fff;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer">✅ 실계좌 반영</button>';
+  html += '<button onclick="resetNonSchdHoldings()" style="flex:1;padding:10px;border-radius:8px;border:1px solid rgba(220,50,50,.5);background:rgba(220,50,50,.1);color:#ef4444;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer" title="SCHD는 유지, 나머지 5종목 수량·평균가 초기화">🗑️ SCHD 제외 초기화</button>';
+  html += '</div>';
+
   el.innerHTML = html;
 }
 
@@ -2119,6 +2125,61 @@ function loadAcctHoldings() {
     var raw = localStorage.getItem('acctHoldings_v2');
     return raw ? JSON.parse(raw) : {};
   } catch(e) { return {}; }
+}
+
+// 매수계획을 실계좌에 반영
+function applyBuyToAccount() {
+  var sc = BUY_SCENARIOS[_buyTab];
+  var fx = liveRate || 1380;
+  var applied = [];
+
+  BUY_ETFS.forEach(function(etf) {
+    var ratio = sc.ratios[etf.key] || 0;
+    if (!ratio) return;
+    var lp = livePrices && livePrices[etf.ticker];
+    var priceUsd = lp ? lp.price : null;
+    if (!priceUsd) return;
+    var priceKrw = priceUsd * fx;
+    var buyKrw = Math.round(sc.total * ratio);
+    var newQty = Math.floor(buyKrw / priceKrw);
+    if (!newQty) return;
+    var existQty = (acctHoldings[etf.key] && acctHoldings[etf.key].qty) ? acctHoldings[etf.key].qty : 0;
+    var existAvg = (acctHoldings[etf.key] && acctHoldings[etf.key].avg) ? acctHoldings[etf.key].avg : 0;
+    var totalQty = existQty + newQty;
+    var newAvg = totalQty > 0 ? (existQty * existAvg + newQty * priceUsd) / totalQty : priceUsd;
+    if (!acctHoldings[etf.key]) acctHoldings[etf.key] = {};
+    acctHoldings[etf.key].qty = Math.round(totalQty * 1000) / 1000;
+    acctHoldings[etf.key].avg = Math.round(newAvg * 100) / 100;
+    applied.push(etf.label);
+  });
+
+  if (!applied.length) {
+    alert('반영할 수량이 없습니다. 실시간 시세를 먼저 불러오세요.');
+    return;
+  }
+  localStorage.setItem('acctHoldings_v2', JSON.stringify(acctHoldings));
+  if (typeof saveLocal === 'function') saveLocal(false);
+  if (typeof scheduleAutoSync === 'function') scheduleAutoSync();
+  renderAccountInputs();
+  closeBuyModal();
+  toast('실계좌 반영 완료 (' + applied.join(', ') + ') ✓ 클라우드 동기화 중...');
+}
+
+// SCHD 제외 5종목 초기화
+function resetNonSchdHoldings() {
+  if (!confirm('SCHD를 제외한 5종목(JEPQ/GPIQ/JEPI/IQQ/SGOV)의 수량·평균가를 초기화합니다.\nSCHD는 유지됩니다. 계속할까요?')) return;
+  ['jepq','gpiq','jepi','qqqi','sgov'].forEach(function(key) {
+    if (!acctHoldings[key]) acctHoldings[key] = {};
+    acctHoldings[key].qty = 0;
+    acctHoldings[key].avg = 0;
+    acctHoldings[key].manual = 0;
+  });
+  localStorage.setItem('acctHoldings_v2', JSON.stringify(acctHoldings));
+  if (typeof saveLocal === 'function') saveLocal(false);
+  if (typeof scheduleAutoSync === 'function') scheduleAutoSync();
+  renderAccountInputs();
+  renderBuyModal();
+  toast('SCHD 제외 5종목 초기화 완료 ✓');
 }
 </script>
 
