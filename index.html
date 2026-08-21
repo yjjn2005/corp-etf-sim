@@ -2080,13 +2080,16 @@ function renderBuyModal() {
   html += ' oninput="setBuyAmountCustom()"><span style="font-size:11px;color:var(--muted)">억원</span></div>';
   html += '</div></div>';
 
-  // ── 시세 상태 + 조회 버튼 ──
+  // ── 시세 현황 (이미 조회된 livePrices 사용) ──
   var hasPrices = BUY_ETFS.some(function(e){ return prices[e.ticker]; });
-  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:8px 10px;background:rgba(255,255,255,.04);border-radius:7px;border:1px solid var(--line)">';
-  html += '<div style="font-size:11px;color:var(--muted)">환율: <b style="color:var(--text)">1 USD = '+w(fx)+'원</b>'+(liveRate?' <span style="color:#16a34a">실시간</span>':' <span style="color:var(--amber)">기본값</span>')+'&nbsp;|&nbsp;';
-  var priceInfo = BUY_ETFS.map(function(e){ return e.label+': '+(prices[e.ticker]?'$'+prices[e.ticker].toFixed(2):'<span style="color:var(--amber)">-</span>'); });
-  html += priceInfo.join(' &nbsp;') + '</div>';
-  html += '<button id="buyFetchBtn" onclick="buyFetchPrices()" style="white-space:nowrap;padding:6px 12px;border-radius:6px;border:1px solid rgba(100,160,255,.4);background:#1e3a6e;color:#cfe4ff;font-family:var(--font);font-size:11px;font-weight:700;cursor:pointer">🔄 시세 조회</button>';
+  html += '<div style="margin-bottom:12px;padding:8px 10px;background:rgba(255,255,255,.04);border-radius:7px;border:1px solid var(--line);font-size:11px">';
+  if (hasPrices) {
+    html += '<span style="color:var(--muted)">적용환율: <b style="color:var(--text)">1 USD = '+w(fx)+'원</b>'+(liveRate?' <span style="color:#16a34a">● 실시간</span>':' <span style="color:var(--amber)">기본값</span>')+'</span><br><span style="color:var(--muted)">현재가: ';
+    html += BUY_ETFS.map(function(e){ return '<b>'+e.label+'</b> '+(prices[e.ticker]?'<span style="color:#16a34a">$'+prices[e.ticker].toFixed(2)+'</span>':'<span style="color:var(--amber)">-</span>'); }).join(' &nbsp;');
+    html += '</span>';
+  } else {
+    html += '<span style="color:var(--amber)">⚠️ 시세 미조회 — 계좌현황 탭의 <b>🔄 실시간 시세 조회</b> 버튼을 먼저 클릭하세요</span>';
+  }
   html += '</div>';
 
   // ── ① 매수계획표 (SCHD 제외) ──
