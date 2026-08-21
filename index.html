@@ -2010,14 +2010,11 @@ function renderBuyModal() {
     prices[e.ticker] = lp ? lp.price : null;
   });
 
-  // 현재 보유 평가금액 계산 (계좌현황 데이터 기준)
-  var holdings = {}; // ticker → { qty, avgPrice }
-  var acctData = loadAcctHoldings();
+  // 현재 보유 평가금액 계산 (acctHoldings 전역변수 기준 — {qty, avg, manual} 객체)
+  var holdings = {};
   BUY_ETFS.forEach(function(etf) {
-    var arr = acctData[etf.key] || [];
-    var totalQty = 0, totalCost = 0;
-    arr.forEach(function(h){ totalQty += (h.qty||0); totalCost += (h.qty||0)*(h.avgPrice||0); });
-    holdings[etf.key] = { qty: totalQty, avgPrice: totalQty ? totalCost/totalQty : 0 };
+    var h = acctHoldings[etf.key] || {};
+    holdings[etf.key] = { qty: h.qty || 0, avgPrice: h.avg || 0 };
   });
 
   // 매수계획 계산
@@ -2050,13 +2047,14 @@ function renderBuyModal() {
   // 환율 표시
   html += '<div style="margin-bottom:10px;color:var(--muted);font-size:11px">적용환율: 1 USD = '+w(fx)+'원'+(liveRate?' (실시간)':' (기본값)')+'</div>';
 
-  // ① 매수계획표
-  html += '<div style="font-weight:700;font-size:12px;margin-bottom:6px;color:var(--gold)">① '+sc.label+' 매수계획</div>';
+  // ① 매수계획표 (ratio > 0 종목만)
+  var buyRows = rows.filter(function(r){ return r.ratio > 0; });
+  html += '<div style="font-weight:700;font-size:12px;margin-bottom:6px;color:var(--gold)">① '+sc.label+' 매수계획 <span style="font-weight:400;color:var(--muted)">(SCHD 고정)</span></div>';
   html += '<div style="overflow-x:auto;margin-bottom:18px"><table style="width:100%;border-collapse:collapse;font-size:11px">';
   html += '<thead><tr style="color:var(--muted);border-bottom:1px solid var(--line)">';
   ['종목','비율','매수금액(원)','현재가($)','현재가(원)','매수주수','실매수금액(원)'].forEach(function(h){ html+='<th style="padding:6px 8px;text-align:right;white-space:nowrap">'+h+'</th>'; });
   html += '</tr></thead><tbody>';
-  rows.forEach(function(r, i) {
+  buyRows.forEach(function(r, i) {
     var bg = i%2===0 ? 'rgba(255,255,255,.03)' : 'transparent';
     html += '<tr style="border-bottom:1px solid rgba(255,255,255,.05);background:'+bg+'">';
     html += '<td style="padding:6px 8px;font-weight:600;color:var(--gold)">'+r.label+'</td>';
