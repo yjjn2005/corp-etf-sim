@@ -1958,23 +1958,17 @@ renderAccountInputs(); renderAccountKpis(); // 기본 활성 탭(계좌현황)�
 if (!_fromShare) autoLoadGist();
 
 // ─── 추가매수 툴 ──────────────────────────────────────────────────────────────
-var _buyTab = '5';
-
-// 6종목 정의: key, 티커, 레이블
+// 5종목 비율: JEPQ 22.2% / GPIQ 22.2% / JEPI 33.3% / IQQ 11.1% / SGOV 11.1% (SCHD 고정)
+var BUY_RATIOS = { schd:0, jepq:.2222, gpiq:.2222, jepi:.3333, qqqi:.1111, sgov:.1111 };
 var BUY_ETFS = [
-  { key:'schd', ticker:'SCHD', label:'SCHD',  simAsset:'sAsset' },
-  { key:'jepq', ticker:'JEPQ', label:'JEPQ',  simAsset:'jqAsset' },
-  { key:'gpiq', ticker:'GPIQ', label:'GPIQ',  simAsset:'gpAsset' },
-  { key:'jepi', ticker:'JEPI', label:'JEPI',  simAsset:'jpAsset' },
-  { key:'qqqi', ticker:'IQQ',  label:'IQQ',   simAsset:'qiAsset' },
-  { key:'sgov', ticker:'SGOV', label:'SGOV',  simAsset:'sgAsset' },
+  { key:'schd', ticker:'SCHD', label:'SCHD' },
+  { key:'jepq', ticker:'JEPQ', label:'JEPQ' },
+  { key:'gpiq', ticker:'GPIQ', label:'GPIQ' },
+  { key:'jepi', ticker:'JEPI', label:'JEPI' },
+  { key:'qqqi', ticker:'IQQ',  label:'IQQ'  },
+  { key:'sgov', ticker:'SGOV', label:'SGOV' },
 ];
-
-// 시나리오별 목표비율 — SCHD 고정, 5종목 최적비율 (원래 10/10/15/5/5 → 합계 45% 정규화)
-var BUY_SCENARIOS = {
-  '5': { label:'5억 추가 (SCHD 고정)', total:500_000_000, ratios:{ schd:0, jepq:.2222, gpiq:.2222, jepi:.3333, qqqi:.1111, sgov:.1111 }, fixSchd:true },
-  '8': { label:'8억 추가 (SCHD 고정)', total:800_000_000, ratios:{ schd:0, jepq:.2222, gpiq:.2222, jepi:.3333, qqqi:.1111, sgov:.1111 }, fixSchd:true },
-};
+var _buyAmount = 500_000_000; // 기본 5억
 
 function openBuyModal() {
   document.getElementById('buyModal').style.display = 'flex';
@@ -1985,134 +1979,173 @@ function closeBuyModal(e) {
     document.getElementById('buyModal').style.display = 'none';
   }
 }
-function switchBuyTab(tab) {
-  _buyTab = tab;
-  document.getElementById('buyTab5').style.background = tab==='5' ? '#1e4d8c' : 'rgba(255,255,255,.07)';
-  document.getElementById('buyTab5').style.color = tab==='5' ? '#cfe4ff' : 'rgba(255,255,255,.7)';
-  document.getElementById('buyTab5').style.borderColor = tab==='5' ? 'rgba(100,160,255,.5)' : 'rgba(255,255,255,.15)';
-  document.getElementById('buyTab5').style.fontWeight = tab==='5' ? '700' : '600';
-  document.getElementById('buyTab8').style.background = tab==='8' ? '#1e4d8c' : 'rgba(255,255,255,.07)';
-  document.getElementById('buyTab8').style.color = tab==='8' ? '#cfe4ff' : 'rgba(255,255,255,.7)';
-  document.getElementById('buyTab8').style.borderColor = tab==='8' ? 'rgba(100,160,255,.5)' : 'rgba(255,255,255,.15)';
-  document.getElementById('buyTab8').style.fontWeight = tab==='8' ? '700' : '600';
+function setBuyAmount(amt) {
+  _buyAmount = amt;
+  // 프리셋 버튼 스타일 동기화
+  [500000000,800000000,1000000000].forEach(function(v){
+    var btn = document.getElementById('buyAmt_'+v);
+    if (!btn) return;
+    btn.style.background  = v===amt ? '#1e4d8c' : 'rgba(255,255,255,.07)';
+    btn.style.color       = v===amt ? '#cfe4ff' : 'rgba(255,255,255,.7)';
+    btn.style.borderColor = v===amt ? 'rgba(100,160,255,.5)' : 'rgba(255,255,255,.15)';
+    btn.style.fontWeight  = v===amt ? '700' : '600';
+  });
+  // 직접입력 필드 동기화
+  var inp = document.getElementById('buyAmtCustom');
+  if (inp) inp.value = Math.round(amt/100000000*10)/10;
+  renderBuyModal();
+}
+function setBuyAmountCustom() {
+  var inp = document.getElementById('buyAmtCustom');
+  var v = parseFloat(inp.value);
+  if (!v || v<=0) return;
+  _buyAmount = Math.round(v * 100000000);
+  // 프리셋 버튼 해제
+  [500000000,800000000,1000000000].forEach(function(preset){
+    var btn = document.getElementById('buyAmt_'+preset);
+    if (!btn) return;
+    btn.style.background  = 'rgba(255,255,255,.07)';
+    btn.style.color       = 'rgba(255,255,255,.7)';
+    btn.style.borderColor = 'rgba(255,255,255,.15)';
+    btn.style.fontWeight  = '600';
+  });
+  renderBuyModal();
+}
+
+// 모달 내 시세 조회 (fetchLivePrices 호출 후 모달 재렌더)
+async function buyFetchPrices() {
+  var btn = document.getElementById('buyFetchBtn');
+  if (btn) { btn.disabled=true; btn.textContent='⏳ 조회 중...'; }
+  await fetchLivePrices();
+  if (btn) { btn.disabled=false; btn.textContent='🔄 시세 조회'; }
   renderBuyModal();
 }
 
 function renderBuyModal() {
-  var sc = BUY_SCENARIOS[_buyTab];
-  var fx = liveRate || 1380;
-  var el = document.getElementById('buyModalContent');
+  var fx  = liveRate || 1380;
+  var el  = document.getElementById('buyModalContent');
+  function w(n) { return n!=null ? Math.round(n).toLocaleString() : '-'; }
+  function p(r) { return r>0 ? (r*100).toFixed(1)+'%' : '-'; }
 
-  // 현재가 가져오기
+  // 현재가 (livePrices 또는 prices.json 캐시)
   var prices = {};
   BUY_ETFS.forEach(function(e) {
     var lp = livePrices && livePrices[e.ticker];
     prices[e.ticker] = lp ? lp.price : null;
   });
 
-  // 현재 보유 평가금액 계산 (acctHoldings 전역변수 기준 — {qty, avg, manual} 객체)
-  var holdings = {};
-  BUY_ETFS.forEach(function(etf) {
-    var h = acctHoldings[etf.key] || {};
-    holdings[etf.key] = { qty: h.qty || 0, avgPrice: h.avg || 0 };
-  });
+  // SCHD 기존 보유수량 (acctHoldings), 나머지 5종목은 0으로 처리
+  var schdHolding = acctHoldings['schd'] || {};
+  var schdQty     = schdHolding.qty  || 0;
+  var schdAvg     = schdHolding.avg  || 0;
 
-  // 매수계획 계산
+  // 매수계획 계산 (SCHD 제외 5종목)
   var rows = BUY_ETFS.map(function(etf) {
-    var ratio = sc.ratios[etf.key] || 0;
-    var buyKrw = Math.round(sc.total * ratio);
+    var ratio    = BUY_RATIOS[etf.key] || 0;
+    var buyKrw   = Math.round(_buyAmount * ratio);
     var priceUsd = prices[etf.ticker];
     var priceKrw = priceUsd ? priceUsd * fx : null;
-    var newQty = (priceKrw && buyKrw) ? Math.floor(buyKrw / priceKrw) : null;
-    var actualKrw = (newQty && priceKrw) ? Math.round(newQty * priceKrw) : 0;
-    var existQty = holdings[etf.key].qty;
+    var newQty   = (priceKrw && buyKrw) ? Math.floor(buyKrw / priceKrw) : (ratio>0 ? null : 0);
+    var actualKrw= (newQty && priceKrw) ? Math.round(newQty * priceKrw) : 0;
+    // 기존수량: SCHD만 실보유, 나머지는 0
+    var existQty = etf.key==='schd' ? schdQty : 0;
     var totalQty = existQty + (newQty || 0);
-    var evalKrw = priceKrw ? Math.round(totalQty * priceKrw) : null;
-    var costKrw = Math.round(existQty * (holdings[etf.key].avgPrice || 0) * fx);
-    return {
-      label: etf.label, ticker: etf.ticker, ratio: ratio,
-      buyKrw, priceUsd, priceKrw, newQty, actualKrw,
-      existQty, totalQty, evalKrw, costKrw
-    };
+    var evalKrw  = priceKrw ? Math.round(totalQty * priceKrw) : null;
+    return { label:etf.label, ticker:etf.ticker, key:etf.key, ratio,
+             buyKrw, priceUsd, priceKrw, newQty, actualKrw,
+             existQty, totalQty, evalKrw };
   });
 
-  var totalBuyActual = rows.reduce(function(s,r){ return s + (r.actualKrw||0); }, 0);
-  var totalEval = rows.reduce(function(s,r){ return s + (r.evalKrw||0); }, 0);
-  var totalExistQty = rows.reduce(function(s,r){ return s + r.existQty; }, 0);
-
-  function w(n) { return n!=null ? Math.round(n).toLocaleString() : '-'; }
-  function p(r) { return r>0 ? (r*100).toFixed(1)+'%' : '-'; }
+  var totalBuyActual = rows.reduce(function(s,r){ return s+(r.actualKrw||0); },0);
+  var totalEval      = rows.reduce(function(s,r){ return s+(r.evalKrw||0); },0);
 
   var html = '';
-  // 환율 표시
-  html += '<div style="margin-bottom:10px;color:var(--muted);font-size:11px">적용환율: 1 USD = '+w(fx)+'원'+(liveRate?' (실시간)':' (기본값)')+'</div>';
 
-  // ① 매수계획표 (ratio > 0 종목만)
-  var buyRows = rows.filter(function(r){ return r.ratio > 0; });
-  html += '<div style="font-weight:700;font-size:12px;margin-bottom:6px;color:var(--gold)">① '+sc.label+' 매수계획 <span style="font-weight:400;color:var(--muted)">(SCHD 고정)</span></div>';
-  html += '<div style="overflow-x:auto;margin-bottom:18px"><table style="width:100%;border-collapse:collapse;font-size:11px">';
-  html += '<thead><tr style="color:var(--muted);border-bottom:1px solid var(--line)">';
-  ['종목','비율','매수금액(원)','현재가($)','현재가(원)','매수주수','실매수금액(원)'].forEach(function(h){ html+='<th style="padding:6px 8px;text-align:right;white-space:nowrap">'+h+'</th>'; });
-  html += '</tr></thead><tbody>';
-  buyRows.forEach(function(r, i) {
-    var bg = i%2===0 ? 'rgba(255,255,255,.03)' : 'transparent';
-    html += '<tr style="border-bottom:1px solid rgba(255,255,255,.05);background:'+bg+'">';
-    html += '<td style="padding:6px 8px;font-weight:600;color:var(--gold)">'+r.label+'</td>';
-    html += '<td style="padding:6px 8px;text-align:right">'+p(r.ratio)+'</td>';
-    html += '<td style="padding:6px 8px;text-align:right;font-variant-numeric:tabular-nums">'+w(r.buyKrw)+'</td>';
-    html += '<td style="padding:6px 8px;text-align:right;font-variant-numeric:tabular-nums">'+(r.priceUsd!=null ? r.priceUsd.toFixed(2) : '-')+'</td>';
-    html += '<td style="padding:6px 8px;text-align:right;font-variant-numeric:tabular-nums">'+(r.priceKrw!=null ? w(r.priceKrw) : '-')+'</td>';
-    html += '<td style="padding:6px 8px;text-align:right;font-variant-numeric:tabular-nums">'+(r.newQty!=null ? r.newQty+'주' : '-')+'</td>';
-    html += '<td style="padding:6px 8px;text-align:right;font-variant-numeric:tabular-nums">'+w(r.actualKrw)+'</td>';
-    html += '</tr>';
+  // ── 금액 선택 컨트롤 ──
+  var btnStyle = 'border-radius:6px;border:1px solid rgba(255,255,255,.15);padding:7px 14px;font-family:var(--font);font-size:12px;cursor:pointer;transition:all .15s';
+  var presets = [[500000000,'5억'],[800000000,'8억'],[1000000000,'10억']];
+  html += '<div style="margin-bottom:14px">';
+  html += '<div style="font-size:11px;color:var(--muted);margin-bottom:6px;font-weight:600">투자금액 선택</div>';
+  html += '<div style="display:flex;gap:6px;align-items:center;flex-wrap:wrap">';
+  presets.forEach(function(ps){
+    var v=ps[0], lb=ps[1];
+    var active = v===_buyAmount;
+    html += '<button id="buyAmt_'+v+'" onclick="setBuyAmount('+v+')" style="'+btnStyle+';background:'+(active?'#1e4d8c':'rgba(255,255,255,.07)')+';color:'+(active?'#cfe4ff':'rgba(255,255,255,.7)')+';border-color:'+(active?'rgba(100,160,255,.5)':'rgba(255,255,255,.15)')+';font-weight:'+(active?'700':'600')+'">'+lb+'</button>';
   });
-  html += '<tr style="border-top:2px solid var(--gold);font-weight:700">';
-  html += '<td style="padding:6px 8px" colspan="2">합계</td>';
-  html += '<td style="padding:6px 8px;text-align:right;font-variant-numeric:tabular-nums">'+w(sc.total)+'</td>';
-  html += '<td colspan="2"></td>';
-  html += '<td></td>';
-  html += '<td style="padding:6px 8px;text-align:right;font-variant-numeric:tabular-nums">'+w(totalBuyActual)+'</td>';
-  html += '</tr></tbody></table></div>';
+  html += '<div style="display:flex;align-items:center;gap:4px">';
+  html += '<input id="buyAmtCustom" type="number" min="0.1" step="0.1" value="'+(Math.round(_buyAmount/10000000)/10)+'" placeholder="직접입력(억)"';
+  html += ' style="width:90px;padding:7px 9px;border:1px solid var(--line);border-radius:6px;font-size:12px;font-family:var(--font);background:var(--card);color:var(--text)"';
+  html += ' oninput="setBuyAmountCustom()"><span style="font-size:11px;color:var(--muted)">억원</span></div>';
+  html += '</div></div>';
 
-  // ② 매수 후 전체 포트폴리오 요약
-  html += '<div style="font-weight:700;font-size:12px;margin-bottom:6px;color:var(--blue)">② 매수 후 전체 포트폴리오 현황</div>';
-  html += '<div style="overflow-x:auto"><table style="width:100%;border-collapse:collapse;font-size:11px">';
-  html += '<thead><tr style="color:var(--muted);border-bottom:1px solid var(--line)">';
-  ['종목','티커','기존수량','신규매수','합계수량','현재가($)','평가금액(원)','비율'].forEach(function(h){ html+='<th style="padding:6px 8px;text-align:right;white-space:nowrap">'+h+'</th>'; });
-  html += '</tr></thead><tbody>';
-  rows.forEach(function(r, i) {
-    var bg = i%2===0 ? 'rgba(255,255,255,.03)' : 'transparent';
-    var portRatio = (totalEval && r.evalKrw) ? r.evalKrw/totalEval : null;
-    html += '<tr style="border-bottom:1px solid rgba(255,255,255,.05);background:'+bg+'">';
-    html += '<td style="padding:6px 8px;font-weight:600;color:var(--gold)">'+r.label+'</td>';
-    html += '<td style="padding:6px 8px;text-align:right">'+r.ticker+'</td>';
-    html += '<td style="padding:6px 8px;text-align:right;font-variant-numeric:tabular-nums">'+w(r.existQty)+'주</td>';
-    html += '<td style="padding:6px 8px;text-align:right;font-variant-numeric:tabular-nums;color:rgba(100,200,130,.9)">'+(r.newQty!=null ? '+'+r.newQty+'주' : '-')+'</td>';
-    html += '<td style="padding:6px 8px;text-align:right;font-variant-numeric:tabular-nums;font-weight:600">'+w(r.totalQty)+'주</td>';
-    html += '<td style="padding:6px 8px;text-align:right;font-variant-numeric:tabular-nums">'+(r.priceUsd!=null ? r.priceUsd.toFixed(2) : '-')+'</td>';
-    html += '<td style="padding:6px 8px;text-align:right;font-variant-numeric:tabular-nums">'+(r.evalKrw!=null ? w(r.evalKrw) : '-')+'</td>';
-    html += '<td style="padding:6px 8px;text-align:right">'+(portRatio!=null ? p(portRatio) : '-')+'</td>';
-    html += '</tr>';
-  });
-  html += '<tr style="border-top:2px solid var(--blue);font-weight:700">';
-  html += '<td style="padding:6px 8px" colspan="4">합계</td>';
-  html += '<td style="padding:6px 8px;text-align:right;font-variant-numeric:tabular-nums">-</td>';
-  html += '<td style="padding:6px 8px;text-align:right;font-variant-numeric:tabular-nums">-</td>';
-  html += '<td style="padding:6px 8px;text-align:right;font-variant-numeric:tabular-nums">'+w(totalEval)+'</td>';
-  html += '<td style="padding:6px 8px;text-align:right">100%</td>';
-  html += '</tr></tbody></table></div>';
-
-  // 현재가 없는 종목 경고
-  var missing = BUY_ETFS.filter(function(e){ return !prices[e.ticker]; }).map(function(e){ return e.ticker; });
-  if (missing.length) {
-    html += '<div style="margin-top:10px;padding:8px 12px;background:rgba(255,180,0,.1);border:1px solid rgba(255,180,0,.3);border-radius:6px;color:rgba(255,180,0,.9);font-size:11px">⚠️ 현재가 미확인: '+missing.join(', ')+' — 실시간 시세를 먼저 불러오세요</div>';
-  }
-
-  // 실계좌 반영 + 초기화 버튼
-  html += '<div style="display:flex;gap:8px;margin-top:16px">';
-  html += '<button onclick="applyBuyToAccount()" style="flex:2;padding:10px;border-radius:8px;border:none;background:#16a34a;color:#fff;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer">✅ 실계좌 반영</button>';
-  html += '<button onclick="resetNonSchdHoldings()" style="flex:1;padding:10px;border-radius:8px;border:1px solid rgba(220,50,50,.5);background:rgba(220,50,50,.1);color:#ef4444;font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer" title="SCHD는 유지, 나머지 5종목 수량·평균가 초기화">🗑️ SCHD 제외 초기화</button>';
+  // ── 시세 상태 + 조회 버튼 ──
+  var hasPrices = BUY_ETFS.some(function(e){ return prices[e.ticker]; });
+  html += '<div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;padding:8px 10px;background:rgba(255,255,255,.04);border-radius:7px;border:1px solid var(--line)">';
+  html += '<div style="font-size:11px;color:var(--muted)">환율: <b style="color:var(--text)">1 USD = '+w(fx)+'원</b>'+(liveRate?' <span style="color:#16a34a">실시간</span>':' <span style="color:var(--amber)">기본값</span>')+'&nbsp;|&nbsp;';
+  var priceInfo = BUY_ETFS.map(function(e){ return e.label+': '+(prices[e.ticker]?'$'+prices[e.ticker].toFixed(2):'<span style="color:var(--amber)">-</span>'); });
+  html += priceInfo.join(' &nbsp;') + '</div>';
+  html += '<button id="buyFetchBtn" onclick="buyFetchPrices()" style="white-space:nowrap;padding:6px 12px;border-radius:6px;border:1px solid rgba(100,160,255,.4);background:#1e3a6e;color:#cfe4ff;font-family:var(--font);font-size:11px;font-weight:700;cursor:pointer">🔄 시세 조회</button>';
   html += '</div>';
+
+  // ── ① 매수계획표 (SCHD 제외) ──
+  var buyRows = rows.filter(function(r){ return r.ratio>0; });
+  html += '<div style="font-weight:700;font-size:12px;margin-bottom:6px;color:var(--gold)">① 신규 매수계획 <span style="font-size:11px;font-weight:400;color:var(--muted)">('+w(_buyAmount)+'원 · SCHD 고정)</span></div>';
+  html += '<div style="overflow-x:auto;margin-bottom:16px"><table style="width:100%;border-collapse:collapse;font-size:11px">';
+  html += '<thead><tr style="color:var(--muted);border-bottom:1px solid var(--line)">';
+  ['종목','비율','배분금액(원)','현재가($)','현재가(원)','매수주수','실매수금액(원)'].forEach(function(h){ html+='<th style="padding:5px 7px;text-align:right;white-space:nowrap">'+h+'</th>'; });
+  html += '</tr></thead><tbody>';
+  buyRows.forEach(function(r,i){
+    var bg=i%2===0?'rgba(255,255,255,.03)':'transparent';
+    html+='<tr style="border-bottom:1px solid rgba(255,255,255,.04);background:'+bg+'">';
+    html+='<td style="padding:5px 7px;font-weight:700;color:var(--gold)">'+r.label+'</td>';
+    html+='<td style="padding:5px 7px;text-align:right">'+p(r.ratio)+'</td>';
+    html+='<td style="padding:5px 7px;text-align:right;font-variant-numeric:tabular-nums">'+w(r.buyKrw)+'</td>';
+    html+='<td style="padding:5px 7px;text-align:right;font-variant-numeric:tabular-nums">'+(r.priceUsd!=null?'$'+r.priceUsd.toFixed(2):'<span style="color:var(--amber)">미조회</span>')+'</td>';
+    html+='<td style="padding:5px 7px;text-align:right;font-variant-numeric:tabular-nums">'+(r.priceKrw!=null?w(r.priceKrw):'-')+'</td>';
+    html+='<td style="padding:5px 7px;text-align:right;font-variant-numeric:tabular-nums;font-weight:700">'+(r.newQty!=null?r.newQty+'주':'<span style="color:var(--amber)">-</span>')+'</td>';
+    html+='<td style="padding:5px 7px;text-align:right;font-variant-numeric:tabular-nums">'+w(r.actualKrw)+'</td>';
+    html+='</tr>';
+  });
+  html+='<tr style="border-top:2px solid var(--gold);font-weight:700;background:rgba(255,255,255,.04)">';
+  html+='<td style="padding:5px 7px" colspan="2">합계</td>';
+  html+='<td style="padding:5px 7px;text-align:right;font-variant-numeric:tabular-nums">'+w(_buyAmount)+'</td>';
+  html+='<td colspan="2"></td><td></td>';
+  html+='<td style="padding:5px 7px;text-align:right;font-variant-numeric:tabular-nums">'+w(totalBuyActual)+'</td>';
+  html+='</tr></tbody></table></div>';
+
+  // ── ② 매수 후 전체 포트폴리오 요약 ──
+  html+='<div style="font-weight:700;font-size:12px;margin-bottom:6px;color:var(--blue)">② 매수 후 전체 포트폴리오 현황</div>';
+  html+='<div style="overflow-x:auto;margin-bottom:14px"><table style="width:100%;border-collapse:collapse;font-size:11px">';
+  html+='<thead><tr style="color:var(--muted);border-bottom:1px solid var(--line)">';
+  ['종목','티커','기존','+신규','합계','현재가($)','평가금액(원)','비율'].forEach(function(h){ html+='<th style="padding:5px 7px;text-align:right;white-space:nowrap">'+h+'</th>'; });
+  html+='</tr></thead><tbody>';
+  rows.forEach(function(r,i){
+    var bg=i%2===0?'rgba(255,255,255,.03)':'transparent';
+    var portRatio=(totalEval&&r.evalKrw)?r.evalKrw/totalEval:null;
+    var isSchd=r.key==='schd';
+    html+='<tr style="border-bottom:1px solid rgba(255,255,255,.04);background:'+bg+'">';
+    html+='<td style="padding:5px 7px;font-weight:700;color:'+(isSchd?'var(--blue)':'var(--gold)')+'">'+r.label+(isSchd?' <span style="font-size:9px;color:var(--muted)">(고정)</span>':'')+'</td>';
+    html+='<td style="padding:5px 7px;text-align:right;color:var(--muted)">'+r.ticker+'</td>';
+    html+='<td style="padding:5px 7px;text-align:right;font-variant-numeric:tabular-nums">'+w(r.existQty)+'주</td>';
+    html+='<td style="padding:5px 7px;text-align:right;font-variant-numeric:tabular-nums;color:rgba(100,200,130,.9)">'+(r.newQty?'+'+r.newQty+'주':isSchd?'-':'<span style="color:var(--amber)">-</span>')+'</td>';
+    html+='<td style="padding:5px 7px;text-align:right;font-variant-numeric:tabular-nums;font-weight:700">'+w(r.totalQty)+'주</td>';
+    html+='<td style="padding:5px 7px;text-align:right;font-variant-numeric:tabular-nums">'+(r.priceUsd!=null?'$'+r.priceUsd.toFixed(2):'-')+'</td>';
+    html+='<td style="padding:5px 7px;text-align:right;font-variant-numeric:tabular-nums">'+(r.evalKrw!=null?w(r.evalKrw):'-')+'</td>';
+    html+='<td style="padding:5px 7px;text-align:right">'+(portRatio!=null?p(portRatio):'-')+'</td>';
+    html+='</tr>';
+  });
+  html+='<tr style="border-top:2px solid var(--blue);font-weight:700;background:rgba(255,255,255,.04)">';
+  html+='<td style="padding:5px 7px" colspan="4">합계</td>';
+  html+='<td colspan="2" style="padding:5px 7px"></td>';
+  html+='<td style="padding:5px 7px;text-align:right;font-variant-numeric:tabular-nums">'+w(totalEval)+'</td>';
+  html+='<td style="padding:5px 7px;text-align:right">100%</td>';
+  html+='</tr></tbody></table></div>';
+
+  // ── 액션 버튼 ──
+  html+='<div style="display:flex;gap:8px">';
+  html+='<button onclick="applyBuyToAccount()" style="flex:2;padding:10px;border-radius:8px;border:none;background:#16a34a;color:#fff;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer">✅ 실계좌 반영</button>';
+  html+='<button onclick="resetNonSchdHoldings()" style="flex:1;padding:10px;border-radius:8px;border:1px solid rgba(220,50,50,.4);background:rgba(220,50,50,.08);color:#ef4444;font-family:var(--font);font-size:11px;font-weight:600;cursor:pointer">🗑️ SCHD 제외 초기화</button>';
+  html+='</div>';
 
   el.innerHTML = html;
 }
@@ -2127,22 +2160,22 @@ function loadAcctHoldings() {
 
 // 매수계획을 실계좌에 반영
 function applyBuyToAccount() {
-  var sc = BUY_SCENARIOS[_buyTab];
   var fx = liveRate || 1380;
   var applied = [];
 
   BUY_ETFS.forEach(function(etf) {
-    var ratio = sc.ratios[etf.key] || 0;
+    var ratio = BUY_RATIOS[etf.key] || 0;
     if (!ratio) return;
     var lp = livePrices && livePrices[etf.ticker];
     var priceUsd = lp ? lp.price : null;
     if (!priceUsd) return;
     var priceKrw = priceUsd * fx;
-    var buyKrw = Math.round(sc.total * ratio);
+    var buyKrw = Math.round(_buyAmount * ratio);
     var newQty = Math.floor(buyKrw / priceKrw);
     if (!newQty) return;
-    var existQty = (acctHoldings[etf.key] && acctHoldings[etf.key].qty) ? acctHoldings[etf.key].qty : 0;
-    var existAvg = (acctHoldings[etf.key] && acctHoldings[etf.key].avg) ? acctHoldings[etf.key].avg : 0;
+    // 비SCHD 종목은 0에서 시작
+    var existQty = etf.key==='schd' ? ((acctHoldings['schd']&&acctHoldings['schd'].qty)||0) : 0;
+    var existAvg = etf.key==='schd' ? ((acctHoldings['schd']&&acctHoldings['schd'].avg)||0) : 0;
     var totalQty = existQty + newQty;
     var newAvg = totalQty > 0 ? (existQty * existAvg + newQty * priceUsd) / totalQty : priceUsd;
     if (!acctHoldings[etf.key]) acctHoldings[etf.key] = {};
@@ -2183,18 +2216,12 @@ function resetNonSchdHoldings() {
 
 <!-- ─── 추가매수 모달 ──────────────────── -->
 <div class="modal" id="buyModal" onclick="closeBuyModal(event)" style="display:none">
-  <div class="modal-card" style="max-width:680px;width:95vw">
+  <div class="modal-card" style="max-width:700px;width:95vw;max-height:90vh;overflow-y:auto">
     <div class="modal-head">
-      <h2>📊 추가투자 매수툴</h2>
+      <h2>📊 추가투자 매수툴 <span style="font-size:12px;font-weight:400;color:var(--muted)">SCHD 고정 · 5종목 최적비율</span></h2>
       <button class="close" onclick="closeBuyModal()">✕</button>
     </div>
     <div class="modal-body">
-      <div style="display:flex;gap:6px;margin-bottom:16px">
-        <button id="buyTab5" onclick="switchBuyTab('5')"
-          style="flex:1;padding:8px;border-radius:7px;border:1px solid rgba(100,160,255,.5);background:#1e4d8c;color:#cfe4ff;font-family:var(--font);font-size:12px;font-weight:700;cursor:pointer">5억 추가안</button>
-        <button id="buyTab8" onclick="switchBuyTab('8')"
-          style="flex:1;padding:8px;border-radius:7px;border:1px solid rgba(255,255,255,.15);background:rgba(255,255,255,.07);color:rgba(255,255,255,.7);font-family:var(--font);font-size:12px;font-weight:600;cursor:pointer">8억 추가안 (SCHD 고정)</button>
-      </div>
       <div id="buyModalContent" style="font-size:12px;color:var(--text)">계산 중...</div>
     </div>
   </div>
