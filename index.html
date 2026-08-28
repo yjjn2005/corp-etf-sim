@@ -2248,15 +2248,17 @@ async function exportToCashflow(){
   growth=Math.max(-0.05,Math.min(0.10,Math.round(growth*1000)/1000)); // -5%~10% 제한
   const amtMan=Math.round(r.monthly/1e4);
   const sc=SCENARIOS[currentScenario]?SCENARIOS[currentScenario].label:currentScenario;
+  const principalMan=Math.round((r.corpAsset||((r.sAsset||0)+(r.jqAsset||0)+(r.gpAsset||0)+(r.jpAsset||0)+(r.qiAsset||0)+(r.sgAsset||0)))/1e4);
   if(!confirm('100세 캐시플로우 [법인배당] 탭으로 내보낼까요?\n\n'
     +'· 세후 월배당: '+amtMan.toLocaleString('ko-KR')+'만원 ('+nowYr+'년 · '+sc+' 시나리오)\n'
-    +'· 연 증가율(시뮬 CAGR): '+(growth*100).toFixed(1)+'%\n\n'
+    +'· 연 증가율(시뮬 CAGR): '+(growth*100).toFixed(1)+'%\n'
+    +'· 법인 투자원금: '+(principalMan/1e4).toFixed(1)+'억\n\n'
     +'모든 기기의 캐시플로우 앱에 수신됩니다.'))return;
   const pin=cfhubGetPin(); if(!pin)return;
   try{
     const res=await fetch(CFHUB_API+'/feed/'+encodeURIComponent(pin)+'/corp',{
       method:'PUT',headers:{'Content-Type':'application/json'},
-      body:JSON.stringify({amt:amtMan,start:nowYr,growth:growth,src:'corp-etf-sim'})});
+      body:JSON.stringify({amt:amtMan,start:nowYr,growth:growth,principal:principalMan,src:'corp-etf-sim'})});
     if(!res.ok)throw new Error(res.status);
     toast('✅ 캐시플로우로 내보냈습니다 ('+amtMan.toLocaleString('ko-KR')+'만/월)');
   }catch(e){
