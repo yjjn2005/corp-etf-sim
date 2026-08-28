@@ -209,6 +209,7 @@ th:first-child{background:rgba(7,17,32,.05);z-index:2}
     </div>
     <div class="actions">
       <button class="btn green" onclick="openGistModal()" title="클라우드 동기화">☁️ 연동</button>
+      <button class="btn white" onclick="exportToCashflow()" title="100세 캐시플로우 법인배당 탭으로 내보내기">🔗 캐시플로우</button>
       <button class="btn" style="background:#1e4d8c;border:1px solid rgba(100,160,255,.4);color:#cfe4ff;font-weight:700" onclick="openBuyModal()">📊 추가매수</button>
       <!-- 시나리오 선택 -->
       <div style="display:flex;gap:4px;background:rgba(255,255,255,.06);padding:4px;border-radius:9px;border:1px solid rgba(255,255,255,.1)">
@@ -2224,6 +2225,44 @@ function resetNonSchdHoldings() {
   renderAccountInputs();
   renderBuyModal();
   toast('SCHD 제외 5종목 초기화 완료 ✓');
+}
+/* ===================== 100세 캐시플로우 연동 (cashflow-hub-api) ===================== */
+const CFHUB_API='https://cashflow-hub-api.yjjn2005.workers.dev';
+const CFHUB_PIN_KEY='cfhub_pin';
+function cfhubGetPin(){
+  let p=localStorage.getItem(CFHUB_PIN_KEY);
+  if(!p){
+    p=prompt('100세 캐시플로우 동기화 PIN을 입력하세요 (캐시플로우 앱과 동일)');
+    if(p&&p.trim().length>=4)localStorage.setItem(CFHUB_PIN_KEY,p.trim());
+    else return null;
+  }
+  return localStorage.getItem(CFHUB_PIN_KEY);
+}
+async function exportToCashflow(){
+  if(!rows||!rows.length){toast('시뮬레이션 데이터가 없습니다');return;}
+  const nowYr=new Date().getFullYear();
+  const r=rows.find(x=>x.yr===nowYr)||rows[0];
+  const rL=rows[rows.length-1];
+  const span=rL.yr-r.yr;
+  let growth=(span>0&&r.monthly>0)?Math.pow(rL.monthly/r.monthly,1/span)-1:0;
+  growth=Math.max(-0.05,Math.min(0.10,Math.round(growth*1000)/1000)); // -5%~10% 제한
+  const amtMan=Math.round(r.monthly/1e4);
+  const sc=SCENARIOS[currentScenario]?SCENARIOS[currentScenario].label:currentScenario;
+  if(!confirm('100세 캐시플로우 [법인배당] 탭으로 내보낼까요?\n\n'
+    +'· 세후 월배당: '+amtMan.toLocaleString('ko-KR')+'만원 ('+nowYr+'년 · '+sc+' 시나리오)\n'
+    +'· 연 증가율(시뮬 CAGR): '+(growth*100).toFixed(1)+'%\n\n'
+    +'모든 기기의 캐시플로우 앱에 수신됩니다.'))return;
+  const pin=cfhubGetPin(); if(!pin)return;
+  try{
+    const res=await fetch(CFHUB_API+'/feed/'+encodeURIComponent(pin)+'/corp',{
+      method:'PUT',headers:{'Content-Type':'application/json'},
+      body:JSON.stringify({amt:amtMan,start:nowYr,growth:growth,src:'corp-etf-sim'})});
+    if(!res.ok)throw new Error(res.status);
+    toast('✅ 캐시플로우로 내보냈습니다 ('+amtMan.toLocaleString('ko-KR')+'만/월)');
+  }catch(e){
+    toast('❌ 내보내기 실패 — 네트워크/PIN 확인');
+    localStorage.removeItem(CFHUB_PIN_KEY);
+  }
 }
 </script>
 
