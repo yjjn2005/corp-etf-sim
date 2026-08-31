@@ -1722,7 +1722,7 @@ function applySyncPayload(d) {
 function scheduleAutoSync() { scheduleAutoPush(); }
 
 async function cfFetch(method, body) {
-  const opts = { method, headers: { 'X-Secret': CF_SEC, 'Cache-Control': 'no-cache' } };
+  const opts = { method, headers: { 'X-Secret': CF_SEC } };
   if (body !== undefined) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
   const res = await fetch(CF_URL + '?t=' + Date.now(), opts);
   if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
