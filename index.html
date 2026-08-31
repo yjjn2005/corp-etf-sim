@@ -1,4 +1,4 @@
-﻿<!doctype html>
+﻿﻿<!doctype html>
 <html lang="ko"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
@@ -208,7 +208,7 @@ th:first-child{background:rgba(7,17,32,.05);z-index:2}
       </div>
     </div>
     <div class="actions">
-      <button class="btn green" onclick="openGistModal()" title="클라우드 동기화">☁️ 연동</button>
+      <button class="btn green" onclick="syncNow()" title="클라우드 동기화">☁️ 지금 동기화</button>
       <button class="btn white" onclick="exportToCashflow()" title="100세 캐시플로우 법인배당 탭으로 내보내기">🔗 캐시플로우</button>
       <button class="btn" style="background:#1e4d8c;border:1px solid rgba(100,160,255,.4);color:#cfe4ff;font-weight:700" onclick="openBuyModal()">📊 추가매수</button>
       <!-- 시나리오 선택 -->
@@ -1247,6 +1247,7 @@ var STORAGE_KEY = 'corp_etf_sim_v5';
 function saveLocal(show=true){
   localStorage.setItem(STORAGE_KEY, JSON.stringify({ params, manual, memos, acctHoldings, savedAt: new Date().toISOString() }));
   if (show) toast('이 기기에 저장 완료');
+  scheduleAutoPush();
 }
 function loadLocal(){
   try {
@@ -1654,304 +1655,90 @@ function renderAccountTable() {
 // GitHub Gist 클라우드 동기화 (단순화 버전)
 // 토큰 1회 입력 → 자동 Gist 탐색/생성 → 모든 기기 연동
 // ══════════════════════════════════════════════
-var GIST_FILE = 'corp_etf_sim_backup.json';
-var GIST_DESC = 'corp-etf-sim-backup';
-
-function _gistToken() { return localStorage.getItem('githubToken')  || ''; }
-function _gistId()    { return localStorage.getItem('githubGistId') || ''; }
+// ===== ☁️ Cloudflare Workers KV 자동 동기화 =====
+const CF_URL  = 'https://corp-etf-sync.yjjn2005.workers.dev';
+const CF_SEC  = ['Kp9mX','v2rLq','W8nHdT'].join('');
+let autoPushTimer = null, autoPushInflight = false;
+let autoPullTimer = null, autoPullInflight = false;
+const PULL_INTERVAL_MS = 60000;
 
 function setSyncStatus(msg) {
   var el = document.getElementById('syncStatus');
   if (el) el.textContent = msg;
 }
 
-function buildSyncPayload() {
-  return { params: params, manual: manual, memos: memos, scenario: currentScenario, acctHoldings: acctHoldings, savedAt: new Date().toISOString(), version: 'v5.5' };
+async function cfFetch(method, body) {
+  const opts = { method, headers: { 'X-Secret': CF_SEC, 'Cache-Control': 'no-cache' } };
+  if (body !== undefined) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
+  const res = await fetch(CF_URL + '?t=' + Date.now(), opts);
+  if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
+  return res.json();
 }
 
-function applySyncPayload(d) {
-  if (d.params) params = { ...structuredClone(defaults), ...d.params, shareholders: { ...defaults.shareholders, ...(d.params.shareholders||{}) } };
-  if (d.manual) manual = d.manual;
-  if (d.memos)  memos  = d.memos;
-  if (d.scenario && SCENARIOS[d.scenario]) currentScenario = d.scenario;
-  if (d.acctHoldings) {
-    acctHoldings = d.acctHoldings;
-    localStorage.setItem('acctHoldings_v2', JSON.stringify(acctHoldings));
-  }
-  document.querySelectorAll('.scenario-btn').forEach(function(b) {
-    var active = b.dataset.scenario === currentScenario;
-    var sc = SCENARIOS[b.dataset.scenario];
-    b.style.background = active ? sc.color : 'rgba(255,255,255,.09)';
-    b.style.color      = active ? '#fff'   : 'rgba(255,255,255,.75)';
-    b.style.border     = active ? '1px solid ' + sc.color : '1px solid rgba(255,255,255,.15)';
-    b.style.fontWeight = active ? '800' : '600';
-  });
-}
-
-// 토큰 문자열에서 ghp_ 부분만 추출
-function extractToken(raw) {
-  var clean = (raw || '').replace(/[^\x20-\x7E]/g, '');
-  var m = clean.match(/(ghp_[A-Za-z0-9]+|github_pat_[A-Za-z0-9_]+)/);
-  return m ? m[1] : clean.trim();
-}
-
-// XHR 기반 GitHub API 호출
-function xhrGist(method, url, token, bodyObj) {
-  return new Promise(function(resolve, reject) {
-    var xhr = new XMLHttpRequest();
-    xhr.timeout = 15000;
-    xhr.open(method, url);
-    xhr.setRequestHeader('Accept', 'application/vnd.github.v3+json');
-    if (method !== 'GET') xhr.setRequestHeader('Content-Type', 'application/json');
-    xhr.setRequestHeader('Authorization', 'Bearer ' + token);
-    xhr.onload = function() {
-      try {
-        var json = JSON.parse(xhr.responseText);
-        if (xhr.status >= 200 && xhr.status < 300) resolve(json);
-        else reject(new Error(json.message || 'HTTP ' + xhr.status));
-      } catch(e) { reject(new Error('응답 파싱 오류')); }
-    };
-    xhr.onerror   = function() { reject(new Error('네트워크 오류')); };
-    xhr.ontimeout = function() { reject(new Error('시간 초과 (15초)')); };
-    xhr.send(bodyObj ? JSON.stringify(bodyObj) : null);
-  });
-}
-
-// 기존 Gist 탐색 (없으면 null 반환)
-async function findExistingGist(token) {
-  var list = await xhrGist('GET', 'https://api.github.com/gists?per_page=100', token, null);
-  var found = list.find(function(g) { return g.files && g.files[GIST_FILE]; });
-  return found ? found.id : null;
-}
-
-// Gist에 데이터 저장 (gistId 없으면 자동 생성)
-async function pushToGist(token, gistId) {
-  var payload = buildSyncPayload();
-  var fileContent = JSON.stringify(payload, null, 2);
-  if (gistId) {
-    var result = await xhrGist('PATCH', 'https://api.github.com/gists/' + gistId, token,
-      { files: { [GIST_FILE]: { content: fileContent } } });
-    return result.id;
-  } else {
-    var result2 = await xhrGist('POST', 'https://api.github.com/gists', token,
-      { description: GIST_DESC, public: false, files: { [GIST_FILE]: { content: fileContent } } });
-    return result2.id;
-  }
-}
-
-// Gist에서 데이터 불러오기
-async function pullFromGist(token, gistId) {
-  var result = await xhrGist('GET', 'https://api.github.com/gists/' + gistId, token, null);
-  var file = result.files[GIST_FILE];
-  if (!file) throw new Error('백업 파일 없음');
-  return JSON.parse(file.content);
-}
-
-// ── 연동 시작 버튼 ──────────────────────────
-async function startSync() {
-  var raw   = document.getElementById('syncTokenInput').value;
-  var token = extractToken(raw);
-  document.getElementById('syncTokenInput').value = token;
-
-  var msgEl = document.getElementById('syncMsg');
-  if (!token) { msgEl.textContent = '토큰을 입력해주세요.'; msgEl.style.color = 'var(--red)'; return; }
-
-  var btn = document.getElementById('btnStartSync');
-  btn.textContent = '연동 중... ⏳'; btn.disabled = true;
-  msgEl.textContent = '토큰 확인 중...'; msgEl.style.color = 'var(--muted)';
-
+async function doAutoPush() {
+  if (autoPushInflight) return;
+  autoPushInflight = true;
   try {
-    // 1) 토큰 유효성 확인
-    var user = await xhrGist('GET', 'https://api.github.com/user', token, null);
-
-    msgEl.textContent = '✅ ' + user.login + ' · Gist 탐색 중...';
-
-    // 2) 기존 Gist 탐색
-    var gistId = _gistId() || await findExistingGist(token);
-
-    // 3) 저장 또는 불러오기 결정
-    if (gistId) {
-      // 클라우드 데이터 확인
-      var d = await pullFromGist(token, gistId);
-      var localRaw = localStorage.getItem(STORAGE_KEY);
-      var localAt  = localRaw ? (JSON.parse(localRaw).savedAt || '') : '';
-
-      if (d.savedAt && d.savedAt > localAt) {
-        // 클라우드가 더 최신 → 불러오기
-        applySyncPayload(d);
-        rows = simulate(); renderAll();
-        msgEl.textContent = '☁️ 클라우드 데이터 적용 완료 (' + new Date(d.savedAt).toLocaleString('ko-KR') + ')';
-        msgEl.style.color = 'var(--green)';
-        toast('☁️ 클라우드 데이터 적용 완료');
-      } else {
-        // 로컬이 최신 → 업로드
-        await pushToGist(token, gistId);
-        msgEl.textContent = '☁️ 클라우드 업로드 완료';
-        msgEl.style.color = 'var(--green)';
-        toast('☁️ 클라우드 저장 완료 ✓');
-      }
-    } else {
-      // Gist 없음 → 새로 생성
-      msgEl.textContent = 'Gist 생성 중...'; msgEl.style.color = 'var(--muted)';
-      gistId = await pushToGist(token, null);
-      msgEl.textContent = '☁️ Gist 생성 완료 — 연동 시작!';
-      msgEl.style.color = 'var(--green)';
-      toast('☁️ 클라우드 연동 시작!');
-    }
-
-    // 4) 저장
-    localStorage.setItem('githubToken',  token);
-    localStorage.setItem('githubGistId', gistId);
-    saveLocal(false);
-    setSyncStatus('☁️ 연동됨 · ' + user.login);
-    renderSyncModal();  // 버튼 상태 갱신
-
+    await cfFetch('PUT', buildSyncPayload());
+    setSyncStatus('☁️ 동기화 완료 · ' + new Date().toLocaleString('ko-KR'));
+    console.log('[CF Push] 업로드 완료');
   } catch(e) {
-    msgEl.textContent = '❌ ' + e.message;
-    msgEl.style.color = 'var(--red)';
-  } finally {
-    btn.textContent = '연동 시작'; btn.disabled = false;
-  }
+    setSyncStatus('⚠️ 동기화 실패 — ' + e.message);
+    console.warn('[CF Push] 실패', e.message);
+  } finally { autoPushInflight = false; }
 }
 
-// ── 지금 동기화 버튼 ─────────────────────────
-async function syncNow() {
-  var token  = _gistToken();
-  var gistId = _gistId();
-  if (!token || !gistId) { toast('먼저 연동 설정을 해주세요'); return; }
+function scheduleAutoPush() {
+  clearTimeout(autoPushTimer);
+  autoPushTimer = setTimeout(doAutoPush, 2000);
+}
 
+async function doAutoPull(silent) {
+  if (autoPullInflight) return;
+  autoPullInflight = true;
+  try {
+    const remote = await cfFetch('GET');
+    if (!remote || !remote.params) { scheduleAutoPush(); return; }
+    const remoteAt = remote.savedAt || '';
+    const localRaw = localStorage.getItem(STORAGE_KEY);
+    const localAt  = localRaw ? (JSON.parse(localRaw).savedAt || '') : '';
+    if (remoteAt > localAt) {
+      applySyncPayload(remote);
+      saveLocal(false);
+      recalc(); renderAll();
+      if (!silent) toast('☁️ 최신 데이터 동기화 완료');
+      setSyncStatus('☁️ 서버 최신 · ' + new Date(remoteAt).toLocaleString('ko-KR'));
+    } else if (localAt > remoteAt) {
+      scheduleAutoPush();
+    } else {
+      setSyncStatus('☁️ 동기화 완료 · ' + new Date().toLocaleString('ko-KR'));
+    }
+  } catch(e) {
+    console.warn('[CF Pull] 실패', e.message);
+  } finally { autoPullInflight = false; }
+}
+
+function startAutoPull() {
+  clearInterval(autoPullTimer);
+  autoPullTimer = setInterval(() => doAutoPull(true), PULL_INTERVAL_MS);
+}
+
+localStorage.removeItem('githubToken');
+localStorage.removeItem('githubGistId');
+
+function syncNow() {
   var btn = document.getElementById('btnSyncNow');
   if (btn) { btn.textContent = '동기화 중... ⏳'; btn.disabled = true; }
-  setSyncStatus('☁️ 동기화 중...');
-
-  try {
-    await pushToGist(token, gistId);
-    saveLocal(false);
-    setSyncStatus('☁️ 동기화 완료 · ' + new Date().toLocaleString('ko-KR'));
-    toast('☁️ 클라우드 동기화 완료 ✓');
-    var msgEl = document.getElementById('syncMsg');
-    if (msgEl) { msgEl.textContent = '☁️ 동기화 완료 · ' + new Date().toLocaleString('ko-KR'); msgEl.style.color = 'var(--green)'; }
-  } catch(e) {
-    setSyncStatus('⚠️ 동기화 실패');
-    toast('동기화 실패: ' + e.message);
-  } finally {
-    if (btn) { btn.textContent = '지금 동기화'; btn.disabled = false; }
-  }
+  setSyncStatus('☁️ 동기화 중…');
+  doAutoPull(false).then(() => doAutoPush()).finally(() => {
+    if (btn) { btn.textContent = '☁️ 지금 동기화'; btn.disabled = false; }
+  });
 }
 
-// ── 연동 해제 ────────────────────────────────
-function disconnectSync() {
-  localStorage.removeItem('githubToken');
-  localStorage.removeItem('githubGistId');
-  setSyncStatus('⚙️ 클라우드 미연동 — ☁️ 버튼 클릭');
-  renderSyncModal();
-}
-
-// ── 자동 동기화 (계좌 저장 후 3초 디바운스) ──
-var _autoSyncTimer = null;
-function scheduleAutoSync() {
-  var token = _gistToken(), gistId = _gistId();
-  if (!token || !gistId) return;
-  clearTimeout(_autoSyncTimer);
-  _autoSyncTimer = setTimeout(async function() {
-    try {
-      await pushToGist(token, gistId);
-      saveLocal(false);
-      setSyncStatus('☁️ 자동저장 · ' + new Date().toLocaleString('ko-KR'));
-    } catch(e) { /* 자동저장 실패 무시 */ }
-  }, 3000);
-}
-
-// ── 페이지 로드 시 자동 불러오기 ─────────────
-async function autoLoadGist() {
-  var token = _gistToken(), gistId = _gistId();
-  if (!token || !gistId) {
-    setSyncStatus('⚙️ 클라우드 미연동 — ☁️ 버튼 클릭');
-    return;
-  }
-  setSyncStatus('☁️ 클라우드 확인 중...');
-  try {
-    var d = await pullFromGist(token, gistId);
-    var localRaw = localStorage.getItem(STORAGE_KEY);
-    var localAt  = localRaw ? (JSON.parse(localRaw).savedAt || '') : '';
-    if (d.savedAt && d.savedAt > localAt) {
-      applySyncPayload(d);
-      rows = simulate(); renderAll(); renderAccountInputs();
-      setSyncStatus('☁️ 자동 동기화 완료 · ' + new Date(d.savedAt).toLocaleString('ko-KR'));
-      toast('☁️ 클라우드 데이터 자동 적용');
-    } else {
-      setSyncStatus('☁️ 연동됨 (로컬 최신)');
-    }
-  } catch(e) { setSyncStatus('⚠️ 동기화 실패 — ☁️ 버튼으로 재시도'); }
-}
-
-// ── 모달 렌더링 (연동 상태에 따라 UI 변경) ───
-function renderSyncModal() {
-  var token  = _gistToken();
-  var gistId = _gistId();
-  var body   = document.getElementById('syncModalBody');
-  if (!body) return;
-
-  // 토큰 형식 검증 — 잘못된 값이면 미연동으로 처리
-  var validToken = /^(ghp_[A-Za-z0-9]+|github_pat_[A-Za-z0-9_]+)$/.test(token);
-  if (!validToken && token) {
-    localStorage.removeItem('githubToken');
-    localStorage.removeItem('githubGistId');
-    token = ''; gistId = '';
-  }
-
-  var cfUrl = localStorage.getItem('cfWorkerUrl') || '';
-  var cfSection = '<hr style="margin:16px 0;border:0;border-top:1px solid var(--line)">' +
-    '<div style="font-size:11px;font-weight:800;color:var(--muted);letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px">⚡ Cloudflare Worker CORS 프록시 (선택)</div>' +
-    '<div style="font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.6">Yahoo Finance 실시간 시세를 더 안정적으로 가져오려면<br>Cloudflare Worker URL을 입력하세요. (미입력 시 공개 프록시 사용)</div>' +
-    '<input id="cfWorkerInput" type="url" placeholder="https://your-worker.workers.dev" value="' + cfUrl + '"' +
-      ' style="width:100%;padding:9px 11px;border:1.5px solid var(--line2);border-radius:7px;font-size:12px;font-family:monospace;box-sizing:border-box;margin-bottom:8px"' +
-      ' oninput="localStorage.setItem(\'cfWorkerUrl\',this.value.trim())">' +
-    '<div style="font-size:10px;color:var(--muted2)">Worker 배포: <a href="https://dash.cloudflare.com/" target="_blank" style="color:var(--blue)">dash.cloudflare.com</a> → Workers → 새 Worker → 아래 코드 붙여넣기 → 배포</div>' +
-    '<pre style="font-size:9.5px;background:var(--bg);border-radius:6px;padding:8px;margin:6px 0 0;overflow-x:auto;color:var(--muted)">addEventListener(\'fetch\',e=>e.respondWith(handle(e.request)))\nasync function handle(req){\n  const url=new URL(req.url).searchParams.get(\'url\')\n  const r=await fetch(url,{headers:{\'User-Agent\':\'Mozilla/5.0\'}})\n  const data=await r.json()\n  return new Response(JSON.stringify(data),{headers:{\'Content-Type\':\'application/json\',\'Access-Control-Allow-Origin\':\'*\'}})\n}</pre>';
-
-  if (token && gistId) {
-    // 연동 완료 상태
-    body.innerHTML =
-      '<div style="text-align:center;padding:10px 0 18px">' +
-        '<div style="font-size:36px;margin-bottom:8px">☁️</div>' +
-        '<div style="font-size:15px;font-weight:800;color:var(--ebony);margin-bottom:4px">클라우드 연동 중</div>' +
-        '<div style="font-size:12px;color:var(--muted);margin-bottom:18px">이 기기의 모든 변경사항이 자동으로 동기화됩니다</div>' +
-        '<button id="btnSyncNow" class="btn gold" style="width:100%;padding:12px;font-size:14px;margin-bottom:10px" onclick="syncNow()">☁️ 지금 동기화</button>' +
-        '<button class="btn white" style="width:100%;padding:10px;font-size:13px;margin-bottom:8px" onclick="disconnectSync()">연동 해제 (토큰 재입력)</button>' +
-        '<div id="syncMsg" style="margin-top:12px;font-size:12px;color:var(--muted)"></div>' +
-      '</div>' + cfSection;
-  } else {
-    // 미연동 상태
-    body.innerHTML =
-      '<div style="background:#EBF3FB;border-radius:10px;padding:14px 16px;font-size:12px;line-height:2;margin-bottom:16px;color:#1558A0">' +
-        '<b>📋 GitHub Gist 설정 (1회)</b><br>' +
-        '① <a href="https://github.com/settings/tokens/new" target="_blank" style="color:#1558A0;font-weight:700">github.com/settings/tokens/new ↗</a> 접속<br>' +
-        '② Note: 아무 이름 · Expiration: <b>No expiration</b><br>' +
-        '③ <b>gist</b> 항목만 체크 → Generate token<br>' +
-        '④ 생성된 <b>ghp_xxxx...</b> 값만 복사 → 아래 붙여넣기' +
-      '</div>' +
-      '<div class="field" style="margin-bottom:12px">' +
-        '<label style="font-size:12px;font-weight:700;margin-bottom:6px;display:block">GitHub Token</label>' +
-        '<input id="syncTokenInput" type="password" placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"' +
-          ' style="width:100%;padding:10px 12px;border:2px solid var(--line2);border-radius:8px;font-size:14px;font-family:monospace;box-sizing:border-box"' +
-          ' autocomplete="off" autocorrect="off" autocapitalize="off" spellcheck="false">' +
-      '</div>' +
-      '<button id="btnStartSync" class="btn gold" style="width:100%;padding:13px;font-size:14px;margin-bottom:10px" onclick="startSync()">연동 시작</button>' +
-      '<div id="syncMsg" style="font-size:12px;color:var(--muted);min-height:18px"></div>' +
-      cfSection;
-  }
-}
-
-// ── 모달 열기/닫기 ──────────────────────────
-function openGistModal() {
-  document.getElementById('gistModal').classList.add('open');
-  renderSyncModal();
-}
-function closeGistModal(e) {
-  if (!e || e.target.id === 'gistModal') document.getElementById('gistModal').classList.remove('open');
-}
-
+document.addEventListener('visibilitychange', function() {
+  if (document.visibilityState === 'visible') setTimeout(() => doAutoPull(true), 300);
+});
+window.addEventListener('focus', () => doAutoPull(true));
 // 공유링크 우선 적용 → 없으면 로컬 로드
 const _fromShare = applyShareURL();
 if (!_fromShare) loadLocal();
@@ -2266,6 +2053,13 @@ async function exportToCashflow(){
     localStorage.removeItem(CFHUB_PIN_KEY);
   }
 }
+
+// ===== CF KV 부팅 동기화 =====
+(function bootSync() {
+  setSyncStatus('☁️ 서버 연결 중…');
+  doAutoPull(true);
+  startAutoPull();
+})();
 </script>
 
 <!-- ─── 추가매수 모달 ──────────────────── -->
@@ -2282,14 +2076,8 @@ async function exportToCashflow(){
 </div>
 
 <!-- ─── 클라우드 연동 모달 ──────────────────── -->
-<div class="modal" id="gistModal" onclick="closeGistModal(event)">
-  <div class="modal-card" style="max-width:420px">
-    <div class="modal-head">
-      <h2>☁️ 클라우드 연동</h2>
-      <button class="close" onclick="closeGistModal()">✕</button>
-    </div>
-    <div class="modal-body" id="syncModalBody"></div>
-  </div>
+
 </div>
 
 </body></html>
+
