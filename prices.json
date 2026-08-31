@@ -5,7 +5,9 @@
   "JEPI":  { "price": 56.40,  "prev": 56.52,  "chg": -0.2123 },
   "IQQ":   { "price": 25.18,  "prev": 25.05,  "chg":  0.5189 },
   "SGOV":  { "price": 100.52, "prev": 100.50, "chg":  0.0199 },
-  "JEPI_NYSE": { "price": 56.40, "prev": 56.52, "chg": -0.2123 },
+  "TLT":   { "price": 82.56,  "prev": 82.56,  "chg":  0.0 },
+  "GLD":   { "price": 426.69, "prev": 426.69, "chg":  0.0 },
+  "BITO":  { "price": 10.63,  "prev": 10.63,  "chg":  0.0 },
   "USDKRW": 1384.50,
   "updatedAt": "2026-08-20T00:00:00Z"
 }

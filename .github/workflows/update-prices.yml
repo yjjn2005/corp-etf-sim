@@ -21,7 +21,7 @@ jobs:
           import json, datetime, sys, time
           import yfinance as yf
 
-          TICKERS = ["SCHD", "JEPQ", "GPIQ", "JEPI", "IQQ", "SGOV", "QQQ", "TLT"]
+          TICKERS = ["SCHD", "JEPQ", "GPIQ", "JEPI", "IQQ", "SGOV", "TLT", "GLD", "BITO"]
 
           prices = {}
           errors = []

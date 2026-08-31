@@ -202,7 +202,7 @@ th:first-child{background:rgba(7,17,32,.05);z-index:2}
       <div class="logo">U&amp;K</div>
       <div>
         <h1>유앤김 법인 자금운용 시뮬레이터</h1>
-        <p>비관 시나리오 v8.1 · 역사적 경제위기 5회 보정 · 만60세(2026)→만100세(2066) · 4종목(SCHD+JEPQ+GPIQ+IQQ) · 가수금 13억</p>
+        <p>비관 시나리오 v8.2 · 역사적 경제위기 5회 보정 · 만60세(2026)→만100세(2066) · 9종목(SCHD·JEPQ·GPIQ·JEPI·IQQ·SGOV·TLT·GLD·BITO) · 가수금 13억</p>
         <div class="status" id="saveStatus">저장 데이터 없음</div>
         <div class="status" id="syncStatus" style="color:rgba(100,200,130,.55)"></div>
       </div>
@@ -469,22 +469,22 @@ const SCENARIOS = {
       {
         yr: 2032, name: '경기침체', severity: 'moderate',
         basis: '역사적 평균 침체 참조 · S&P500 평균 -35%, SCHD 방어적',
-        drops: { schd:-.25, jepq:-.33, gpiq:-.37, jepi:-.22, qqqi:-.40, sgov:-.01 },
-        divCut: { schd:-.10, jepq:-.20, gpiq:-.13, jepi:-.12, qqqi:-.05, sgov:0 },
+        drops: { schd:-.25, jepq:-.33, gpiq:-.37, jepi:-.22, qqqi:-.40, sgov:-.01, tlt:.12, gld:.08, bito:-.50 },
+        divCut: { schd:-.10, jepq:-.20, gpiq:-.13, jepi:-.12, qqqi:-.05, sgov:0, tlt:0, gld:0, bito:0 },
         recoveryYrs: 2
       },
       {
         yr: 2044, name: '금융위기', severity: 'severe',
         basis: '2008 GFC 수준 참조 · S&P500 -57%, QQQ -49.7% (실측)',
-        drops: { schd:-.35, jepq:-.44, gpiq:-.47, jepi:-.30, qqqi:-.50, sgov:-.01 },
-        divCut: { schd:-.15, jepq:-.27, gpiq:-.17, jepi:-.18, qqqi:-.07, sgov:0 },
+        drops: { schd:-.35, jepq:-.44, gpiq:-.47, jepi:-.30, qqqi:-.50, sgov:-.01, tlt:.18, gld:.12, bito:-.60 },
+        divCut: { schd:-.15, jepq:-.27, gpiq:-.17, jepi:-.18, qqqi:-.07, sgov:0, tlt:0, gld:0, bito:0 },
         recoveryYrs: 3
       },
       {
         yr: 2057, name: '경기침체', severity: 'moderate',
         basis: '후기 주기 침체 · 고령화·저성장 환경',
-        drops: { schd:-.24, jepq:-.31, gpiq:-.34, jepi:-.20, qqqi:-.37, sgov:-.01 },
-        divCut: { schd:-.09, jepq:-.18, gpiq:-.11, jepi:-.10, qqqi:-.04, sgov:0 },
+        drops: { schd:-.24, jepq:-.31, gpiq:-.34, jepi:-.20, qqqi:-.37, sgov:-.01, tlt:.10, gld:.07, bito:-.50 },
+        divCut: { schd:-.09, jepq:-.18, gpiq:-.11, jepi:-.10, qqqi:-.04, sgov:0, tlt:0, gld:0, bito:0 },
         recoveryYrs: 2
       },
     ]
@@ -496,36 +496,36 @@ const SCENARIOS = {
       {
         yr: 2028, name: '금리긴축 조정', severity: 'mild',
         basis: '2022 Fed 금리인상 사이클 참조 · SCHD -22.5%, JEPQ -31.7% (실측)',
-        drops: { schd:-.22, jepq:-.30, gpiq:-.32, jepi:-.18, qqqi:-.33, sgov:-.005 },
-        divCut: { schd:-.08, jepq:-.20, gpiq:-.12, jepi:-.10, qqqi:-.04, sgov:0 },
+        drops: { schd:-.22, jepq:-.30, gpiq:-.32, jepi:-.18, qqqi:-.33, sgov:-.005, tlt:-.20, gld:.05, bito:-.55 },
+        divCut: { schd:-.08, jepq:-.20, gpiq:-.12, jepi:-.10, qqqi:-.04, sgov:0, tlt:0, gld:0, bito:0 },
         recoveryYrs: 2
       },
       {
         yr: 2035, name: '경기침체', severity: 'moderate',
         basis: '2001~2002 IT버블 / 역사적 평균 침체 참조 · S&P500 -49% (2년 누적)',
-        drops: { schd:-.30, jepq:-.38, gpiq:-.42, jepi:-.25, qqqi:-.45, sgov:-.01 },
-        divCut: { schd:-.12, jepq:-.22, gpiq:-.14, jepi:-.14, qqqi:-.06, sgov:0 },
+        drops: { schd:-.30, jepq:-.38, gpiq:-.42, jepi:-.25, qqqi:-.45, sgov:-.01, tlt:.15, gld:.10, bito:-.50 },
+        divCut: { schd:-.12, jepq:-.22, gpiq:-.14, jepi:-.14, qqqi:-.06, sgov:0, tlt:0, gld:0, bito:0 },
         recoveryYrs: 3
       },
       {
         yr: 2041, name: '금융위기', severity: 'severe',
         basis: '2008~2009 글로벌 금융위기 참조 · S&P500 -57%, QQQ -49.7% (실측)',
-        drops: { schd:-.38, jepq:-.48, gpiq:-.52, jepi:-.33, qqqi:-.55, sgov:-.01 },
-        divCut: { schd:-.18, jepq:-.30, gpiq:-.19, jepi:-.20, qqqi:-.08, sgov:0 },
+        drops: { schd:-.38, jepq:-.48, gpiq:-.52, jepi:-.33, qqqi:-.55, sgov:-.01, tlt:.20, gld:.15, bito:-.60 },
+        divCut: { schd:-.18, jepq:-.30, gpiq:-.19, jepi:-.20, qqqi:-.08, sgov:0, tlt:0, gld:0, bito:0 },
         recoveryYrs: 4
       },
       {
         yr: 2050, name: '경기침체', severity: 'moderate',
         basis: '중간 주기 침체 · 8~10년 주기 기준 · 2041 위기 후 9년',
-        drops: { schd:-.28, jepq:-.35, gpiq:-.39, jepi:-.23, qqqi:-.42, sgov:-.01 },
-        divCut: { schd:-.10, jepq:-.20, gpiq:-.13, jepi:-.12, qqqi:-.05, sgov:0 },
+        drops: { schd:-.28, jepq:-.35, gpiq:-.39, jepi:-.23, qqqi:-.42, sgov:-.01, tlt:.12, gld:.08, bito:-.50 },
+        divCut: { schd:-.10, jepq:-.20, gpiq:-.13, jepi:-.12, qqqi:-.05, sgov:0, tlt:0, gld:0, bito:0 },
         recoveryYrs: 2
       },
       {
         yr: 2060, name: '경기침체', severity: 'moderate',
         basis: '후기 주기 침체 · 고령화·저성장·재정리스크 환경',
-        drops: { schd:-.25, jepq:-.32, gpiq:-.35, jepi:-.20, qqqi:-.38, sgov:-.01 },
-        divCut: { schd:-.08, jepq:-.18, gpiq:-.11, jepi:-.10, qqqi:-.04, sgov:0 },
+        drops: { schd:-.25, jepq:-.32, gpiq:-.35, jepi:-.20, qqqi:-.38, sgov:-.01, tlt:.10, gld:.07, bito:-.50 },
+        divCut: { schd:-.08, jepq:-.18, gpiq:-.11, jepi:-.10, qqqi:-.04, sgov:0, tlt:0, gld:0, bito:0 },
         recoveryYrs: 2
       },
     ]
@@ -541,7 +541,7 @@ function buildCrisisMap(crises) {
   const map = {};
   for (let i = 0; i <= END_AGE - START_AGE; i++) {
     const yr = START_YEAR + i;
-    map[yr] = { divMult:{schd:1,jepq:1,gpiq:1,jepi:1,qqqi:1,sgov:1}, isCrisis:false, crisis:null, isRecovery:false };
+    map[yr] = { divMult:{schd:1,jepq:1,gpiq:1,jepi:1,qqqi:1,sgov:1,tlt:1,gld:1,bito:1}, isCrisis:false, crisis:null, isRecovery:false };
   }
   for (const c of crises) {
     if (map[c.yr]) {
@@ -569,48 +569,52 @@ function buildCrisisMap(crises) {
 
 // 플랜별 원금 설정 (엑셀 기반)
 const PLANS = {
-  p15: {
-    label: '15억안', total: 1_500_000_000, loan: 1_300_000_000,
-    schd: 825_000_000, jepq: 150_000_000, gpiq: 150_000_000,
-    jepi: 225_000_000, qqqi: 75_000_000,  sgov: 75_000_000,
-  },
   p18: {
-    label: '18억안 (SCHD고정)', total: 1_810_912_284, loan: 1_614_910_528,
-    schd: 996_001_756, jepq: 181_091_228, gpiq: 181_091_228,
-    jepi: 271_636_843, qqqi: 90_545_614,  sgov: 90_545_614,
+    label:'18억안 (SCHD 10억+추가8억)', total:1_800_000_000, loan:1_614_910_528,
+    schd:1_000_000_000, jepq:95_944_548, gpiq:95_943_684, jepi:127_937_176,
+    qqqi:79_989_260, sgov:39_949_640, tlt:159_918_125, gld:119_514_810, bito:79_990_835,
   }
 };
 var currentPlan = 'p18';
 
 const defaults = {
-  schdPrincipal:  996_001_756,
+  schdPrincipal:  1_000_000_000,
   schdGrowth:     .05,
   schdDivRate:    .033,
   schdDivGrowth:  .04,
   schdDivCap:     .12,
-  jepqPrincipal:  181_091_228,
+  jepqPrincipal:  95_944_548,
   jepqGrowth:     .03,
   jepqDivRate:    .10,
   jepqDivChange:  -.015,
   jepqDivFloor:   .07,
-  gpiqPrincipal:  181_091_228,
+  gpiqPrincipal:  95_943_684,
   gpiqGrowth:     .045,
   gpiqDivRate:    .10,
   gpiqDivChange:  -.012,
   gpiqDivFloor:   .075,
-  jepiPrincipal:  271_636_843,
+  jepiPrincipal:  127_937_176,
   jepiGrowth:     .035,
   jepiDivRate:    .075,
   jepiDivChange:  -.008,
   jepiDivFloor:   .05,
-  qqqiPrincipal:  90_545_614,
+  qqqiPrincipal:  79_989_260,
   qqqiTarget:     200_000_000,
   qqqiGrowth:     .075,
   qqqiDivRate:    .005,
   qqqiDivGrowth:  .10,
-  sgovPrincipal:  90_545_614,
+  sgovPrincipal:  39_949_640,
   sgovGrowth:     .0,
   sgovDivRate:    .04,
+  tltPrincipal:   159_918_125,
+  tltGrowth:      .01,
+  tltDivRate:     .043,
+  gldPrincipal:   119_514_810,
+  gldGrowth:      .05,
+  gldDivRate:     .0,
+  bitoPrincipal:  79_990_835,
+  bitoGrowth:     .0,
+  bitoDivRate:    .0,
   usTax:          .15,
   loanInit:       1_614_910_528,
   pbr:            1,
@@ -626,6 +630,9 @@ function applyPlan(planKey) {
   params.jepiPrincipal  = p.jepi;
   params.qqqiPrincipal  = p.qqqi;
   params.sgovPrincipal  = p.sgov;
+  params.tltPrincipal   = p.tlt;
+  params.gldPrincipal   = p.gld;
+  params.bitoPrincipal  = p.bito;
   params.loanInit       = p.loan;
   // 플랜 버튼 상태 갱신
   document.querySelectorAll('.plan-btn').forEach(b => {
@@ -672,25 +679,30 @@ function simulate() {
   const out = [];
   let sB  = P.schdPrincipal,  jqB  = P.jepqPrincipal,
       gpB = P.gpiqPrincipal,  jpB  = P.jepiPrincipal,
-      qiB = P.qqqiPrincipal,  sgB  = P.sgovPrincipal;
+      qiB = P.qqqiPrincipal,  sgB  = P.sgovPrincipal,
+      tB  = P.tltPrincipal,   gdB  = P.gldPrincipal,
+      btB = P.bitoPrincipal;
   let loan = P.loanInit;
   let qiTargetHitYr = null;
 
   for (let i = 0; i <= END_AGE - START_AGE; i++) {
     const age = START_AGE + i;
     const yr  = START_YEAR + i;
-    const cm  = crisisMap[yr] || { divMult:{schd:1,jepq:1,gpiq:1,jepi:1,qqqi:1,sgov:1}, isCrisis:false, crisis:null, isRecovery:false };
+    const cm  = crisisMap[yr] || { divMult:{schd:1,jepq:1,gpiq:1,jepi:1,qqqi:1,sgov:1,tlt:1,gld:1,bito:1}, isCrisis:false, crisis:null, isRecovery:false };
 
     // ① 경제위기 충격
     let preCrisisAsset = null;
     if (cm.isCrisis && cm.crisis) {
-      preCrisisAsset = sB + jqB + gpB + jpB + qiB + sgB;
+      preCrisisAsset = sB + jqB + gpB + jpB + qiB + sgB + tB + gdB + btB;
       sB  *= (1 + (cm.crisis.drops.schd || 0));
       jqB *= (1 + (cm.crisis.drops.jepq || 0));
       gpB *= (1 + (cm.crisis.drops.gpiq || 0));
       jpB *= (1 + (cm.crisis.drops.jepi || 0));
       qiB *= (1 + (cm.crisis.drops.qqqi || 0));
       sgB *= (1 + (cm.crisis.drops.sgov || 0));
+      tB  *= (1 + (cm.crisis.drops.tlt  || 0));
+      gdB *= (1 + (cm.crisis.drops.gld  || 0));
+      btB *= (1 + (cm.crisis.drops.bito || 0));
     }
 
     // ② 배당률 계산
@@ -702,28 +714,33 @@ function simulate() {
     const qiRate = P.qqqiDivRate * Math.pow(1+P.qqqiDivGrowth, i) * (dm.qqqi||1);
     const sgRate = P.sgovDivRate * (dm.sgov||1);  // SGOV: 단기국채, 성장 없음
 
-    // SGOV는 원천세 없음 (엑셀 기준)
-    const sNet  = sB  * sRate  * (1-P.usTax);
-    const jqNet = jqB * jqRate * (1-P.usTax);
-    const gpNet = gpB * gpRate * (1-P.usTax);
-    const jpNet = jpB * jpRate * (1-P.usTax);
-    const qiNet = qiB * qiRate * (1-P.usTax);
+    // SGOV는 원천세 없음 (엑셀 기준), TLT는 원천세 15%, GLD/BITO는 무배당
+    const tltRate  = P.tltDivRate * (dm.tlt||1);
+    const sNet  = sB  * sRate    * (1-P.usTax);
+    const jqNet = jqB * jqRate   * (1-P.usTax);
+    const gpNet = gpB * gpRate   * (1-P.usTax);
+    const jpNet = jpB * jpRate   * (1-P.usTax);
+    const qiNet = qiB * qiRate   * (1-P.usTax);
     const sgNet = sgB * sgRate;  // 원천세 0
-    const total = sNet + jqNet + gpNet + jpNet + qiNet + sgNet;
+    const tltNet = tB  * tltRate * (1-P.usTax);
+    const gldNet = 0;            // 무배당
+    const bitoNet = 0;           // 무배당
+    const total = sNet + jqNet + gpNet + jpNet + qiNet + sgNet + tltNet + gldNet + bitoNet;
 
     const repay = Math.min(total, loan);
     loan = Math.max(loan - repay, 0);
     const surplus = total - repay;
 
     // ③ 잉여 배당 재투자 (IQQ 목표 달성까지 우선 배분)
-    const totalP = sB + jqB + gpB + jpB + qiB + sgB;
+    const totalP = sB + jqB + gpB + jpB + qiB + sgB + tB + gdB + btB;
     const qiGap  = Math.max(P.qqqiTarget - qiB, 0);
     const toQiPriority  = Math.min(surplus, qiGap);
     const remainSurplus = surplus - toQiPriority;
     if (toQiPriority > 0 && qiGap - toQiPriority <= 0 && qiTargetHitYr === null) qiTargetHitYr = yr;
 
     const sShare  = sB /totalP, jqShare = jqB/totalP, gpShare = gpB/totalP,
-          jpShare = jpB/totalP, qiShare = qiB/totalP, sgShare = sgB/totalP;
+          jpShare = jpB/totalP, qiShare = qiB/totalP, sgShare = sgB/totalP,
+          tShare  = tB /totalP, gdShare = gdB/totalP, btShare = btB/totalP;
 
     const sEnd  = (sB  + remainSurplus*sShare)  * (1+P.schdGrowth);
     const jqEnd = (jqB + remainSurplus*jqShare) * (1+P.jepqGrowth);
@@ -731,16 +748,20 @@ function simulate() {
     const jpEnd = (jpB + remainSurplus*jpShare) * (1+P.jepiGrowth);
     const qiEnd = (qiB + toQiPriority + remainSurplus*qiShare) * (1+P.qqqiGrowth);
     const sgEnd = (sgB + remainSurplus*sgShare) * (1+P.sgovGrowth);  // 성장 0%
+    const tEnd  = (tB  + remainSurplus*tShare)  * (1+P.tltGrowth);
+    const gdEnd = (gdB + remainSurplus*gdShare) * (1+P.gldGrowth);
+    const btEnd = (btB + remainSurplus*btShare) * (1+P.bitoGrowth);
 
-    const corpAsset = sEnd + jqEnd + gpEnd + jpEnd + qiEnd + sgEnd;
+    const corpAsset = sEnd + jqEnd + gpEnd + jpEnd + qiEnd + sgEnd + tEnd + gdEnd + btEnd;
     const corpValue = corpAsset * P.pbr;
-    const crisisLoss = preCrisisAsset ? (preCrisisAsset - (sB+jqB+gpB+jpB+qiB+sgB)) : 0;
+    const crisisLoss = preCrisisAsset ? (preCrisisAsset - (sB+jqB+gpB+jpB+qiB+sgB+tB+gdB+btB)) : 0;
 
     out.push({
       i, age, yr,
       sAsset:sEnd, jqAsset:jqEnd, gpAsset:gpEnd, jpAsset:jpEnd, qiAsset:qiEnd, sgAsset:sgEnd,
+      tltAsset:tEnd, gldAsset:gdEnd, bitoAsset:btEnd,
       sRate, jqRate, gpRate, jpRate, qiRate, sgRate,
-      sNet, jqNet, gpNet, jpNet, qiNet, sgNet, total,
+      sNet, jqNet, gpNet, jpNet, qiNet, sgNet, tltNet, gldNet, bitoNet, total,
       monthly: total/12,
       repay, loan, surplus,
       qiPriorityAlloc: toQiPriority, qiTargetHit: qiGap - toQiPriority <= 0,
@@ -753,7 +774,7 @@ function simulate() {
       crisisLoss,
     });
 
-    sB=sEnd; jqB=jqEnd; gpB=gpEnd; jpB=jpEnd; qiB=qiEnd; sgB=sgEnd;
+    sB=sEnd; jqB=jqEnd; gpB=gpEnd; jpB=jpEnd; qiB=qiEnd; sgB=sgEnd; tB=tEnd; gdB=gdEnd; btB=btEnd;
   }
   return out;
 }
@@ -806,18 +827,21 @@ function card(label, value, sub, cls='') {
 }
 
 function renderTaxDisclosure() {
-  const total6 = params.schdPrincipal + params.jepqPrincipal + params.gpiqPrincipal + params.jepiPrincipal + params.qqqiPrincipal + params.sgovPrincipal;
+  const total9 = params.schdPrincipal + params.jepqPrincipal + params.gpiqPrincipal + params.jepiPrincipal + params.qqqiPrincipal + params.sgovPrincipal + params.tltPrincipal + params.gldPrincipal + params.bitoPrincipal;
   const planLabel = PLANS[currentPlan]?.label || '';
   document.getElementById('taxDisclosure').innerHTML = `
     <div class="ttl">⚠️ 포트폴리오 구성 [${planLabel}] · 시뮬레이션 반영 세금 / 미반영 세금</div>
     <div style="margin-bottom:8px;font-size:11px;color:#7A4800;line-height:1.9">
-      <span style="background:#ddeefb;color:#1558A0;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">SCHD ${eok(params.schdPrincipal)} (55%)</span>
-      <span style="background:#d4ede8;color:#0D7065;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">JEPQ ${eok(params.jepqPrincipal)} (10%)</span>
-      <span style="background:#fce7f3;color:#9d174d;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">GPIQ ${eok(params.gpiqPrincipal)} (10%)</span>
-      <span style="background:#fef3c7;color:#b45309;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">JEPI ${eok(params.jepiPrincipal)} (15%)</span>
-      <span style="background:#ede9fb;color:#4A3AA7;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">IQQ ${eok(params.qqqiPrincipal)} (5%)</span>
-      <span style="background:#f1f5f9;color:#475569;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">SGOV ${eok(params.sgovPrincipal)} (5%)</span>
-      합계 ${eok(total6)} · 가수금 ${eok(params.loanInit)}
+      <span style="background:#ddeefb;color:#1558A0;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">SCHD ${eok(params.schdPrincipal)} (56%)</span>
+      <span style="background:#d4ede8;color:#0D7065;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">JEPQ ${eok(params.jepqPrincipal)} (5%)</span>
+      <span style="background:#fce7f3;color:#9d174d;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">GPIQ ${eok(params.gpiqPrincipal)} (5%)</span>
+      <span style="background:#fef3c7;color:#b45309;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">JEPI ${eok(params.jepiPrincipal)} (7%)</span>
+      <span style="background:#ede9fb;color:#4A3AA7;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">IQQ ${eok(params.qqqiPrincipal)} (4%)</span>
+      <span style="background:#f1f5f9;color:#475569;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">SGOV ${eok(params.sgovPrincipal)} (2%)</span>
+      <span style="background:#e0f2fe;color:#0891b2;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">TLT ${eok(params.tltPrincipal)} (9%)</span>
+      <span style="background:#fef9c3;color:#ca8a04;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">GLD ${eok(params.gldPrincipal)} (7%)</span>
+      <span style="background:#fff7ed;color:#f97316;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">BITO ${eok(params.bitoPrincipal)} (4%)</span>
+      합계 ${eok(total9)} · 가수금 ${eok(params.loanInit)}
     </div>
     <div class="tax-grid">
       <div><div class="ok-h">✓ 반영됨</div>미국/해외 원천징수세 15% · 잉여배당 ETF 비중별 비례 재투자 · 기간 2026~2066 통일</div>
@@ -1345,7 +1369,7 @@ function applyShareURL() {
 }
 
 function exportData(){
-  const data = { params, manual, memos, exportedAt: new Date().toISOString(), version:'v8', note:'유앤김 법인 ETF 시뮬레이터 v8 백업 (SCHD+JEPQ+GPIQ+IQQ)' };
+  const data = { params, manual, memos, exportedAt: new Date().toISOString(), version:'v8.2', note:'유앤김 법인 ETF 시뮬레이터 v8.2 백업 (9종목: SCHD·JEPQ·GPIQ·JEPI·IQQ·SGOV·TLT·GLD·BITO)' };
   const blob = new Blob([JSON.stringify(data,null,2)], { type:'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href=url; a.download=`corp-sim-v5-${new Date().toISOString().slice(0,10)}.json`;
@@ -1397,12 +1421,15 @@ document.getElementById('tabs').addEventListener('click', e => {
 // 실제 계좌현황 탭
 // ══════════════════════════════════════════════
 var ACCT_ETFS = [
-  { key:'schd',  label:'SCHD', ticker:'SCHD', currency:'USD', simAsset:'sAsset',  simDiv:'sNet',  divRate: params.schdDivRate  },
-  { key:'jepq',  label:'JEPQ', ticker:'JEPQ', currency:'USD', simAsset:'jqAsset', simDiv:'jqNet', divRate: params.jepqDivRate  },
-  { key:'gpiq',  label:'GPIQ', ticker:'GPIQ', currency:'USD', simAsset:'gpAsset', simDiv:'gpNet', divRate: params.gpiqDivRate  },
-  { key:'jepi',  label:'JEPI', ticker:'JEPI', currency:'USD', simAsset:'jpAsset', simDiv:'jpNet', divRate: params.jepiDivRate  },
-  { key:'qqqi',  label:'IQQ',  ticker:'IQQ',  currency:'USD', simAsset:'qiAsset', simDiv:'qiNet', divRate: params.qqqiDivRate  },
-  { key:'sgov',  label:'SGOV', ticker:'SGOV', currency:'USD', simAsset:'sgAsset', simDiv:'sgNet', divRate: params.sgovDivRate  },
+  { key:'schd',  label:'SCHD', ticker:'SCHD', currency:'USD', simAsset:'sAsset',    simDiv:'sNet',    divRate: params.schdDivRate  },
+  { key:'jepq',  label:'JEPQ', ticker:'JEPQ', currency:'USD', simAsset:'jqAsset',   simDiv:'jqNet',   divRate: params.jepqDivRate  },
+  { key:'gpiq',  label:'GPIQ', ticker:'GPIQ', currency:'USD', simAsset:'gpAsset',   simDiv:'gpNet',   divRate: params.gpiqDivRate  },
+  { key:'jepi',  label:'JEPI', ticker:'JEPI', currency:'USD', simAsset:'jpAsset',   simDiv:'jpNet',   divRate: params.jepiDivRate  },
+  { key:'qqqi',  label:'IQQ',  ticker:'IQQ',  currency:'USD', simAsset:'qiAsset',   simDiv:'qiNet',   divRate: params.qqqiDivRate  },
+  { key:'sgov',  label:'SGOV', ticker:'SGOV', currency:'USD', simAsset:'sgAsset',   simDiv:'sgNet',   divRate: params.sgovDivRate  },
+  { key:'tlt',   label:'TLT',  ticker:'TLT',  currency:'USD', simAsset:'tltAsset',  simDiv:'tltNet',  divRate: params.tltDivRate   },
+  { key:'gld',   label:'GLD',  ticker:'GLD',  currency:'USD', simAsset:'gldAsset',  simDiv:'gldNet',  divRate: params.gldDivRate   },
+  { key:'bito',  label:'BITO', ticker:'BITO', currency:'USD', simAsset:'bitoAsset', simDiv:'bitoNet', divRate: params.bitoDivRate  },
 ];
 var ACCT_LINKS = {
   SCHD: { yf:'https://finance.yahoo.com/quote/SCHD', naver:'https://finance.naver.com/world/sise.naver?symbol=SCHD.O', gf:'https://www.google.com/finance/quote/SCHD:NASDAQ' },
@@ -1411,6 +1438,9 @@ var ACCT_LINKS = {
   JEPI: { yf:'https://finance.yahoo.com/quote/JEPI', naver:'https://finance.naver.com/world/sise.naver?symbol=JEPI.O', gf:'https://www.google.com/finance/quote/JEPI:NYSE' },
   IQQ:  { yf:'https://finance.yahoo.com/quote/IQQ',  naver:'https://finance.naver.com/world/sise.naver?symbol=IQQ.O',  gf:'https://www.google.com/finance/quote/IQQ:NASDAQ'  },
   SGOV: { yf:'https://finance.yahoo.com/quote/SGOV', naver:'https://finance.naver.com/world/sise.naver?symbol=SGOV.O', gf:'https://www.google.com/finance/quote/SGOV:NASDAQ' },
+  TLT:  { yf:'https://finance.yahoo.com/quote/TLT',  naver:'https://finance.naver.com/world/sise.naver?symbol=TLT.O',  gf:'https://www.google.com/finance/quote/TLT:NASDAQ'  },
+  GLD:  { yf:'https://finance.yahoo.com/quote/GLD',  naver:'https://finance.naver.com/world/sise.naver?symbol=GLD.O',  gf:'https://www.google.com/finance/quote/GLD:NYSE'    },
+  BITO: { yf:'https://finance.yahoo.com/quote/BITO', naver:'https://finance.naver.com/world/sise.naver?symbol=BITO.O', gf:'https://www.google.com/finance/quote/BITO:NYSE'   },
 };
 
 function _acctGet(key, field) {
@@ -1432,7 +1462,7 @@ function saveAccountHoldings() {
   renderAccountTable();
 }
 
-var ACCT_COLORS = { schd:'var(--blue)', jepq:'var(--teal)', gpiq:'#c026d3', jepi:'#b45309', qqqi:'var(--purple)', sgov:'#475569' };
+var ACCT_COLORS = { schd:'var(--blue)', jepq:'var(--teal)', gpiq:'#c026d3', jepi:'#b45309', qqqi:'var(--purple)', sgov:'#475569', tlt:'#0891b2', gld:'#ca8a04', bito:'#f97316' };
 
 function renderAccountInputs() {
   document.getElementById('acctInputs').innerHTML = ACCT_ETFS.map(e => {
@@ -1554,7 +1584,7 @@ async function fetchLivePrices() {
       if (res.ok) {
         const data = await res.json();
         if (!liveRate && data.USDKRW) liveRate = data.USDKRW;
-        const MAP = { SCHD:'SCHD', JEPQ:'JEPQ', GPIQ:'GPIQ', JEPI:'JEPI', IQQ:'IQQ', SGOV:'SGOV' };
+        const MAP = { SCHD:'SCHD', JEPQ:'JEPQ', GPIQ:'GPIQ', JEPI:'JEPI', IQQ:'IQQ', SGOV:'SGOV', TLT:'TLT', GLD:'GLD', BITO:'BITO' };
         failed.forEach(ticker => {
           const d = data[MAP[ticker] || ticker];
           if (d && d.price) livePrices[ticker] = { price: d.price, chg: d.chg || 0, prev: d.prev || d.price };
@@ -1748,8 +1778,8 @@ renderAccountInputs(); renderAccountKpis(); // 기본 활성 탭(계좌현황)�
 if (!_fromShare) autoLoadGist();
 
 // ─── 추가매수 툴 ──────────────────────────────────────────────────────────────
-// 5종목 비율: JEPQ 22.2% / GPIQ 22.2% / JEPI 33.3% / IQQ 11.1% / SGOV 11.1% (SCHD 고정)
-var BUY_RATIOS = { schd:0, jepq:.2222, gpiq:.2222, jepi:.3333, qqqi:.1111, sgov:.1111 };
+// 8종목 비율: JEPQ 12% / GPIQ 12% / JEPI 16% / IQQ 10% / SGOV 5% / TLT 20% / GLD 15% / BITO 10% (SCHD 고정)
+var BUY_RATIOS = { schd:0, jepq:.12, gpiq:.12, jepi:.16, qqqi:.10, sgov:.05, tlt:.20, gld:.15, bito:.10 };
 var BUY_ETFS = [
   { key:'schd', ticker:'SCHD', label:'SCHD' },
   { key:'jepq', ticker:'JEPQ', label:'JEPQ' },
@@ -1757,6 +1787,9 @@ var BUY_ETFS = [
   { key:'jepi', ticker:'JEPI', label:'JEPI' },
   { key:'qqqi', ticker:'IQQ',  label:'IQQ'  },
   { key:'sgov', ticker:'SGOV', label:'SGOV' },
+  { key:'tlt',  ticker:'TLT',  label:'TLT'  },
+  { key:'gld',  ticker:'GLD',  label:'GLD'  },
+  { key:'bito', ticker:'BITO', label:'BITO' },
 ];
 var _buyAmount = 500_000_000; // 기본 5억
 
@@ -1963,10 +1996,10 @@ function applyBuyToAccount() {
     alert('시세가 조회되지 않았습니다.\n계좌현황 탭의 🔄 실시간 시세 조회 버튼을 먼저 클릭하세요.');
     return;
   }
-  if (!confirm('SCHD 이외 5종목(JEPQ/GPIQ/JEPI/IQQ/SGOV)의 기존 수량·평균가를 초기화하고\n추가매수 수량과 현재가를 자동 입력합니다. 계속할까요?')) return;
+  if (!confirm('SCHD 이외 8종목(JEPQ/GPIQ/JEPI/IQQ/SGOV/TLT/GLD/BITO)의 기존 수량·평균가를 초기화하고\n추가매수 수량과 현재가를 자동 입력합니다. 계속할까요?')) return;
 
   // ① 비SCHD 전체 초기화
-  ['jepq','gpiq','jepi','qqqi','sgov'].forEach(function(key) {
+  ['jepq','gpiq','jepi','qqqi','sgov','tlt','gld','bito'].forEach(function(key) {
     if (!acctHoldings[key]) acctHoldings[key] = {};
     acctHoldings[key].qty    = 0;
     acctHoldings[key].avg    = 0;
@@ -1997,10 +2030,10 @@ function applyBuyToAccount() {
   toast('실계좌 반영 완료: ' + applied.join(', ') + ' ✓');
 }
 
-// SCHD 제외 5종목 초기화
+// SCHD 제외 8종목 초기화
 function resetNonSchdHoldings() {
-  if (!confirm('SCHD를 제외한 5종목(JEPQ/GPIQ/JEPI/IQQ/SGOV)의 수량·평균가를 초기화합니다.\nSCHD는 유지됩니다. 계속할까요?')) return;
-  ['jepq','gpiq','jepi','qqqi','sgov'].forEach(function(key) {
+  if (!confirm('SCHD를 제외한 8종목(JEPQ/GPIQ/JEPI/IQQ/SGOV/TLT/GLD/BITO)의 수량·평균가를 초기화합니다.\nSCHD는 유지됩니다. 계속할까요?')) return;
+  ['jepq','gpiq','jepi','qqqi','sgov','tlt','gld','bito'].forEach(function(key) {
     if (!acctHoldings[key]) acctHoldings[key] = {};
     acctHoldings[key].qty = 0;
     acctHoldings[key].avg = 0;
