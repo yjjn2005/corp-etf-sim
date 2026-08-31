@@ -1697,6 +1697,30 @@ function setSyncStatus(msg) {
   if (el) el.textContent = msg;
 }
 
+// 동기화 페이로드 생성/적용 (params + 수동입력 + 메모 + 계좌현황 + 시나리오)
+function buildSyncPayload() {
+  // 계좌 입력 중인 값도 최신으로 반영
+  ACCT_ETFS.forEach(e => {
+    if (!acctHoldings[e.key]) acctHoldings[e.key] = {};
+    acctHoldings[e.key].qty    = _acctGet(e.key,'qty');
+    acctHoldings[e.key].avg    = _acctGet(e.key,'avg');
+    acctHoldings[e.key].manual = _acctGet(e.key,'manual');
+  });
+  return { params, manual, memos, acctHoldings, scenario: currentScenario,
+           savedAt: new Date().toISOString(), version: 'v8.2' };
+}
+function applySyncPayload(d) {
+  if (d.params) params = { ...structuredClone(defaults), ...d.params, shareholders: { ...defaults.shareholders, ...(d.params.shareholders||{}) } };
+  manual = d.manual || []; memos = d.memos || [];
+  if (d.acctHoldings) {
+    acctHoldings = d.acctHoldings;
+    localStorage.setItem('acctHoldings_v2', JSON.stringify(acctHoldings));
+  }
+  if (d.scenario && SCENARIOS[d.scenario]) currentScenario = d.scenario;
+}
+// 구버전 호출명 호환 (계좌저장·추가매수툴에서 사용)
+function scheduleAutoSync() { scheduleAutoPush(); }
+
 async function cfFetch(method, body) {
   const opts = { method, headers: { 'X-Secret': CF_SEC, 'Cache-Control': 'no-cache' } };
   if (body !== undefined) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
@@ -1775,7 +1799,29 @@ if (!_fromShare) loadLocal();
 recalc();
 renderAll();
 renderAccountInputs(); renderAccountKpis(); // 기본 활성 탭(계좌현황)이 로드 시에도 즉시 렌더링되도록 보정
-if (!_fromShare) autoLoadGist();
+if (!_fromShare) doAutoPull(true);  // 로드 시 서버 최신 데이터 자동 반영
+startAutoPull();                     // 60초마다 자동 폴링 (모든 디바이스 연동)
+
+// ☁️ 연동 모달 (Cloudflare 자동 동기화 상태)
+function openGistModal() {
+  var body = document.getElementById('syncModalBody');
+  if (body) {
+    body.innerHTML =
+      '<div style="font-size:12px;line-height:1.9;color:var(--text)">' +
+      '<div style="padding:10px 12px;background:rgba(22,163,74,.08);border:1px solid rgba(22,163,74,.3);border-radius:8px;margin-bottom:12px">' +
+      '✅ <b>Cloudflare 자동 동기화 사용 중</b><br>' +
+      '<span style="font-size:11px;color:var(--muted)">토큰·설정 불필요 — 입력하면 2초 후 자동 저장, 다른 기기에서 열면 자동 반영됩니다 (60초 주기 + 화면 복귀 시 즉시).</span></div>' +
+      '<div style="font-size:11px;color:var(--muted);margin-bottom:12px">서버: corp-etf-sync.yjjn2005.workers.dev<br>상태: <span id="syncModalStatus">' + (document.getElementById('syncStatus')?.textContent || '대기') + '</span></div>' +
+      '<button id="btnSyncNow" onclick="syncNow()" style="width:100%;padding:10px;border:none;border-radius:8px;background:#16a34a;color:#fff;font-family:var(--font);font-size:13px;font-weight:700;cursor:pointer">☁️ 지금 동기화</button>' +
+      '</div>';
+  }
+  document.getElementById('gistModal').style.display = 'grid';
+}
+function closeGistModal(e) {
+  if (!e || e.target === document.getElementById('gistModal')) {
+    document.getElementById('gistModal').style.display = 'none';
+  }
+}
 
 // ─── 추가매수 툴 ──────────────────────────────────────────────────────────────
 // 8종목 비율: JEPQ 12% / GPIQ 12% / JEPI 16% / IQQ 10% / SGOV 5% / TLT 20% / GLD 15% / BITO 10% (SCHD 고정)
@@ -1794,7 +1840,7 @@ var BUY_ETFS = [
 var _buyAmount = 500_000_000; // 기본 5억
 
 function openBuyModal() {
-  document.getElementById('buyModal').style.display = 'flex';
+  document.getElementById('buyModal').style.display = 'grid';
   renderBuyModal();
 }
 function closeBuyModal(e) {
