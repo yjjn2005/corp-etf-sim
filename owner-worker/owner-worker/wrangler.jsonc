@@ -1,0 +1,19 @@
+{
+  "name": "corp-etf-sync",
+  "main": "worker.mjs",
+  "compatibility_date": "2026-10-12",
+  "workers_dev": true,
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "corp-etf-owner-sync",
+      "database_id": "ebad75d4-a7f9-415c-aa70-fb7d6cb3edea"
+    }
+  ],
+  "kv_namespaces": [
+    {
+      "binding": "KV",
+      "id": "4ae3cda7366e4bd18114d94d56affdac"
+    }
+  ]
+}
