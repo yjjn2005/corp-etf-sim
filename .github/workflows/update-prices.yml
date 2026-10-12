@@ -6,6 +6,13 @@ on:
     - cron: '0 1,7,13 * * 0,6'                             # 주말 하루 3회
   workflow_dispatch:                                         # 수동 실행 가능
 
+permissions:
+  contents: write
+
+concurrency:
+  group: price-update
+  cancel-in-progress: false
+
 jobs:
   update:
     runs-on: ubuntu-latest
