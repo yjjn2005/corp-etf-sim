@@ -25,12 +25,22 @@ function validData(d){
  return true;
 }
 async function initDB(db){await db.prepare('CREATE TABLE IF NOT EXISTS owner_state (id TEXT PRIMARY KEY, revision INTEGER NOT NULL, data TEXT NOT NULL, updated_at TEXT NOT NULL)').run();await db.prepare('CREATE TABLE IF NOT EXISTS state_history (id INTEGER PRIMARY KEY AUTOINCREMENT, revision INTEGER, data TEXT, updated_at TEXT)').run();}
-async function serveApp(){const r=await fetch('https://yjjn2005.github.io/corp-etf-sim/owner-app.html',{cf:{cacheTtl:0}});const text=await r.text();const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))).map(x=>x.toString(16).padStart(2,'0')).join('');if(!r.ok||digest!='dbce403384be2f8f6f57b0be0e3373e34c3734952019317aba01a2f5749f0eb1')return json({error:'App source validation failed'},503);return new Response(text,{headers:{...headers,'Content-Type':'text/html; charset=utf-8'}});}
+async function serveApp(){const r=await fetch('https://yjjn2005.github.io/corp-etf-sim/owner-app.html',{cf:{cacheTtl:0}});const text=await r.text();const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))).map(x=>x.toString(16).padStart(2,'0')).join('');if(!r.ok||digest!=='2dd93f40be98c31597b5675e701828e182dd26a921da4bdd5a4fcc20bcf95d3f')return json({error:'App source validation failed'},503);return new Response(text,{headers:{...headers,'Content-Type':'text/html; charset=utf-8'}});}
+let quoteCache=null;
+async function getLatestQuotes(){
+ if(quoteCache&&Date.now()-quoteCache.cachedAt<60000)return quoteCache.data;
+ const tickers=['CRSP','TWST','CRCL','SPCX','O','SCHD','JEPQ'],quotes={},errors=[];
+ await Promise.all(tickers.map(async ticker=>{try{const r=await fetch('https://query1.finance.yahoo.com/v8/finance/chart/'+ticker+'?interval=1d&range=5d',{signal:AbortSignal.timeout(8000),headers:{'User-Agent':'Mozilla/5.0'}});if(!r.ok)throw Error('quote');const m=(await r.json()).chart.result[0].meta;if(m.currency!=='USD'||!Number.isFinite(m.regularMarketPrice)||m.regularMarketPrice<=0||!Number.isFinite(m.regularMarketTime))throw Error('quote');quotes[ticker]={price:m.regularMarketPrice,asOf:new Date(m.regularMarketTime*1000).toISOString(),source:'Yahoo',delayedBy:m.exchangeDataDelayedBy??null};}catch{errors.push(ticker);}}));
+ let fx=null;try{const r=await fetch('https://open.er-api.com/v6/latest/USD',{signal:AbortSignal.timeout(8000)});const j=await r.json();if(!r.ok||j.result!=='success'||!Number.isFinite(j.rates?.KRW)||j.rates.KRW<=0)throw Error('fx');fx={rate:j.rates.KRW,asOf:j.time_last_update_utc,source:'ExchangeRate-API'};}catch{errors.push('USDKRW');}
+ const data={quotes,fx,retrievedAt:new Date().toISOString(),errors};if(fx&&Object.keys(quotes).length)quoteCache={cachedAt:Date.now(),data};return data;
+}
+
 export default {async fetch(request,env){
  try{await verifyOwner(request);}catch{return json({error:'Owner login required'},403);}
  const url=new URL(request.url);
  if(request.method==='GET'&&url.pathname==='/')return await serveApp();
  if(request.method==='GET'&&url.pathname==='/prices.json'){const r=await fetch('https://yjjn2005.github.io/corp-etf-sim/prices.json',{cf:{cacheTtl:0}});return new Response(await r.text(),{status:r.status,headers:{...headers,'Content-Type':'application/json'}});}
+ if(request.method==='GET'&&url.pathname==='/api/quotes')return json(await getLatestQuotes());
  if(request.method==='GET'&&url.pathname==='/api/account-snapshot'){if(!env.DB)return json({error:'Storage unavailable'},503);try{const r=await env.DB.prepare('SELECT data FROM account_snapshot WHERE id=?').bind(OWNER).first();return r?json(JSON.parse(r.data)):json({error:'Account snapshot not found'},404);}catch{return json({error:'Account snapshot unavailable'},503);}}
 if(url.pathname!=='/api/state')return json({error:'Not found'},404);
  if(!env.DB)return json({error:'Storage unavailable'},503);
