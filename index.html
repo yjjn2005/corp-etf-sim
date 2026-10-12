@@ -1,8 +1,8 @@
-﻿﻿<!doctype html>
+<!doctype html>
 <html lang="ko"><head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>유앤김 법인 자금운용 시뮬레이터 (비관 시나리오)</title>
+<title>유앤김 법인 자금운용 시뮬레이터</title>
 <meta name="theme-color" content="#071120">
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700;900&display=swap');
@@ -192,6 +192,12 @@ th:first-child{background:rgba(7,17,32,.05);z-index:2}
 
 /* ─── FOOTER ─────────────────────────────────── */
 .footer{color:var(--muted2);font-size:11px;text-align:center;margin-top:40px;line-height:1.8;padding-top:20px;border-top:1px solid var(--line)}
+/* 화면 깨짐 보정 초안: 기존 스타일 유지 */
+@media(max-width:600px){
+  .kpis {grid-template-columns:repeat(2,minmax(0,1fr)) !important;}
+  #verifyCards {grid-template-columns:1fr !important;}
+  .kpi .value {font-size:clamp(16px,5vw,24px);overflow-wrap:anywhere;}
+}
 </style>
 </head>
 <body>
@@ -202,13 +208,13 @@ th:first-child{background:rgba(7,17,32,.05);z-index:2}
       <div class="logo">U&amp;K</div>
       <div>
         <h1>유앤김 법인 자금운용 시뮬레이터</h1>
-        <p>비관 시나리오 v8.1 · 역사적 경제위기 5회 보정 · 만60세(2026)→만100세(2066) · 4종목(SCHD+JEPQ+GPIQ+IQQ) · 가수금 13억</p>
+        <p>시뮬레이터 v8.2 · 만60세(2026)→만100세(2066) · 6종목(SCHD·JEPQ·GPIQ·JEPI·IQQ·SGOV)</p>
         <div class="status" id="saveStatus">저장 데이터 없음</div>
         <div class="status" id="syncStatus" style="color:rgba(100,200,130,.55)"></div>
       </div>
     </div>
     <div class="actions">
-      <button class="btn green" onclick="syncNow()" title="클라우드 동기화">☁️ 지금 동기화</button>
+      <button class="btn green" id="btnSyncNow" onclick="syncNow()" title="클라우드 동기화">☁️ 지금 동기화</button>
       <button class="btn white" onclick="exportToCashflow()" title="100세 캐시플로우 법인배당 탭으로 내보내기">🔗 캐시플로우</button>
       <button class="btn" style="background:#1e4d8c;border:1px solid rgba(100,160,255,.4);color:#cfe4ff;font-weight:700" onclick="openBuyModal()">📊 추가매수</button>
       <!-- 시나리오 선택 -->
@@ -261,7 +267,7 @@ th:first-child{background:rgba(7,17,32,.05);z-index:2}
       합계 ₩17.5억 · 가수금 ₩13.0억 (장부 확정 필요)
     </div>
     <div class="tax-grid">
-      <div><div class="ok-h">✓ 반영됨</div>미국/해외 원천징수세 15% · 잉여배당 ETF 비중별 비례 재투자 · 기간 2026~2066 통일</div>
+      <div><div class="ok-h">✓ 반영됨</div>미국/해외 원천징수세 ${pct(params.usTax)} (SGOV 0% 가정) · IQQ 목표 우선 적립 후 잉여배당 비례 재투자 · 기간 2026~2066 통일</div>
       <div><div class="bad-h">✗ 미반영 (별도 검토 필요)</div>법인세 · 가수금 인정이자(4.6%) 과세 · 배당소득 종합과세 · 비상장주식 보충적평가법 · 증여세/상속세 · 환율변동 · ETF 실제 분배금 변동 · 외국납부세액공제 회수율</div>
     </div>
     <div style="margin-top:8px;padding-top:7px;border-top:1px solid rgba(181,133,42,.25);font-size:10px;color:#7A4800">
@@ -277,7 +283,9 @@ th:first-child{background:rgba(7,17,32,.05);z-index:2}
             <span><i class="dot" style="background:var(--blue)"></i>SCHD</span>
             <span><i class="dot" style="background:var(--teal)"></i>JEPQ</span>
             <span><i class="dot" style="background:#c026d3"></i>GPIQ</span>
+            <span><i class="dot" style="background:#b45309"></i>JEPI</span>
             <span><i class="dot" style="background:var(--purple)"></i>IQQ</span>
+            <span><i class="dot" style="background:#475569"></i>SGOV</span>
           </div>
         </div>
         <div class="chartbox"><div class="bars" id="assetBars"></div></div>
@@ -365,17 +373,17 @@ th:first-child{background:rgba(7,17,32,.05);z-index:2}
     <div class="table-wrap"><table id="acctTable">
       <thead><tr style="background:rgba(7,17,32,.05)">
         <th>종목</th><th>현재가</th><th>보유수량</th><th>평가금액</th><th>매입금액</th>
-        <th>평가손익(%)</th><th>예상연배당</th>
+        <th>평가손익(%)</th><th>예상연배당(세후)</th>
         <th>2026년 시뮬자산</th><th>2026년 시뮬배당</th>
         <th>실제 vs 시뮬 자산차이</th>
       </tr></thead><tbody id="acctTbody"></tbody>
     </table></div>
     <div class="card risk" style="margin-top:12px;font-size:12px">
-      ⚠️ <b>시세 출처:</b> Yahoo Finance API (US ETF). 지연 최대 15분. 환율은 Yahoo Finance USDKRW=X. 실시간 연동 실패 시 수동 입력란에 직접 현재가를 넣으세요.
+      ⚠️ <b>시세 출처:</b> Yahoo Finance 조회값 또는 prices.json 캐시입니다. 종목별 기준시각을 확인하세요. 환율은 open.er-api.com 또는 캐시/기본 가정값이며 과거 매입원화 금액과는 다를 수 있습니다.
     </div>
   </section>
 
-  <div class="footer">© 유앤김 자산관리 · corp-etf-sim v8.1 (0052D0·JEPI·TLT 제외 · 만100세까지 확장) · SCHD + JEPQ + GPIQ + IQQ · 가수금 13억 · 2026~2066 · 데이터는 이 브라우저(localStorage)에만 저장됩니다</div>
+  <div class="footer">© 유앤김 자산관리 · corp-etf-sim v8.2 · SCHD + JEPQ + GPIQ + JEPI + IQQ + SGOV · 2026~2066 · 투자·배당 가정에 따른 참고용 계산</div>
 </main>
 
 <!-- 수동입력 모달 -->
@@ -396,6 +404,8 @@ th:first-child{background:rgba(7,17,32,.05);z-index:2}
         <div class="field"><label><span class="etf-tag tag-schd">SCHD</span> 세후 배당(원)</label><input id="mSchd" type="number" value="0"></div>
         <div class="field"><label><span class="etf-tag tag-jepq">JEPQ</span> 세후 배당(원)</label><input id="mJepq" type="number" value="0"></div>
         <div class="field"><label><span class="etf-tag tag-gpiq">GPIQ</span> 세후 배당(원)</label><input id="mGpiq" type="number" value="0"></div>
+        <div class="field"><label>JEPI 세후 배당(원)</label><input id="mJepi" type="number" min="0" value="0"></div>
+        <div class="field"><label>SGOV 배당(원)</label><input id="mSgov" type="number" min="0" value="0"></div>
         <div class="field"><label><span class="etf-tag tag-qqqi">IQQ</span> 세후 배당(원)</label><input id="mQqqi" type="number" value="0"></div>
         <div class="field"><label>가수금 상환액(원)</label><input id="mRepay" type="number" value="0"></div>
         <div class="field"><label>원/달러 환율</label><input id="mUsd" type="number" value="1380"></div>
@@ -418,12 +428,12 @@ th:first-child{background:rgba(7,17,32,.05);z-index:2}
 <div class="modal" id="repayModal" onclick="closeRepayModal(event)">
   <div class="modal-card" style="max-width:1000px">
     <div class="modal-head">
-      <h2>가수금 월별 상환계획 (2027~완납)</h2>
+      <h2>가수금 월평균 상환계획 (2026~완납)</h2>
       <button class="close" onclick="closeRepayModal()">✕</button>
     </div>
     <div class="modal-body">
       <div style="background:var(--pb);border-radius:10px;padding:12px 15px;font-size:11.5px;color:#1558A0;line-height:1.9;margin-bottom:14px">
-        <b>운용 구조</b><br>
+        <b>운용 구조</b> · 모든 종목의 연간 세후 배당을 12개월로 나눈 추정치입니다. 실제 지급월과 완납월은 다를 수 있습니다.<br>
         <span style="background:#ddeefb;border:1px solid #b5d4f4;border-radius:5px;padding:1px 7px;font-weight:800;margin-right:4px">SCHD</span>분기 수령(3·6·9·12월) · 월평균 활용<br>
         <span style="background:#d4ede8;border:1px solid #9fe1cb;border-radius:5px;padding:1px 7px;font-weight:800;margin-right:4px">JEPQ</span><span style="background:#fce7f3;border:1px solid #f9a8d4;border-radius:5px;padding:1px 7px;font-weight:800;margin-right:4px">GPIQ</span>매월 수령 · 즉시 상환 투입<br>
         <span style="background:#ede9fb;border:1px solid #c4b5fd;border-radius:5px;padding:1px 7px;font-weight:800;margin-right:4px">IQQ</span>분기 수령(저배당 성장형) · 잔고 2억 도달까지 잉여 배당 우선 적립식 매수<br>
@@ -641,7 +651,7 @@ function applyPlan(planKey) {
 
 let params = structuredClone(defaults);
 let rows = [], manual = [], memos = [];
-var acctHoldings = JSON.parse(localStorage.getItem('acctHoldings_v2') || 'null') || {};
+var acctHoldings = loadAcctHoldings();
 let livePrices = {}, liveRate = 0, lastFetchTime = null;
 
 const won = v => '₩' + Math.round(v).toLocaleString('ko-KR');
@@ -722,8 +732,8 @@ function simulate() {
     const remainSurplus = surplus - toQiPriority;
     if (toQiPriority > 0 && qiGap - toQiPriority <= 0 && qiTargetHitYr === null) qiTargetHitYr = yr;
 
-    const sShare  = sB /totalP, jqShare = jqB/totalP, gpShare = gpB/totalP,
-          jpShare = jpB/totalP, qiShare = qiB/totalP, sgShare = sgB/totalP;
+    const sShare  = (totalP > 0 ? sB /totalP : 0), jqShare = (totalP > 0 ? jqB/totalP : 0), gpShare = (totalP > 0 ? gpB/totalP : 0),
+          jpShare = (totalP > 0 ? jpB/totalP : 0), qiShare = (totalP > 0 ? qiB/totalP : 0), sgShare = (totalP > 0 ? sgB/totalP : 0);
 
     const sEnd  = (sB  + remainSurplus*sShare)  * (1+P.schdGrowth);
     const jqEnd = (jqB + remainSurplus*jqShare) * (1+P.jepqGrowth);
@@ -799,6 +809,8 @@ function renderAll() {
   }
   renderInputs(); renderTable(); renderCash(); renderShares(); renderVerifyCards();
   renderManualList(); renderMemoList();
+  document.querySelectorAll('.scenario-btn').forEach(b=>{const sc=SCENARIOS[b.dataset.scenario],active=b.dataset.scenario===currentScenario;b.style.background=active?sc.color:'rgba(255,255,255,.09)';b.style.color=active?'#fff':'rgba(255,255,255,.75)';});
+  if (typeof ACCT_ETFS !== "undefined" && ACCT_ETFS) { renderAccountKpis(); renderAccountTable(); }
 }
 
 function card(label, value, sub, cls='') {
@@ -807,20 +819,22 @@ function card(label, value, sub, cls='') {
 
 function renderTaxDisclosure() {
   const total6 = params.schdPrincipal + params.jepqPrincipal + params.gpiqPrincipal + params.jepiPrincipal + params.qqqiPrincipal + params.sgovPrincipal;
-  const planLabel = PLANS[currentPlan]?.label || '';
+  const planned = PLANS[currentPlan];
+  const isPlan = planned && ['schd','jepq','gpiq','jepi','qqqi','sgov'].every(k=>params[k+'Principal']===planned[k]) && params.loanInit===planned.loan;
+  const planLabel = isPlan ? planned.label : '사용자 설정';
   document.getElementById('taxDisclosure').innerHTML = `
     <div class="ttl">⚠️ 포트폴리오 구성 [${planLabel}] · 시뮬레이션 반영 세금 / 미반영 세금</div>
     <div style="margin-bottom:8px;font-size:11px;color:#7A4800;line-height:1.9">
-      <span style="background:#ddeefb;color:#1558A0;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">SCHD ${eok(params.schdPrincipal)} (55%)</span>
-      <span style="background:#d4ede8;color:#0D7065;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">JEPQ ${eok(params.jepqPrincipal)} (10%)</span>
-      <span style="background:#fce7f3;color:#9d174d;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">GPIQ ${eok(params.gpiqPrincipal)} (10%)</span>
-      <span style="background:#fef3c7;color:#b45309;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">JEPI ${eok(params.jepiPrincipal)} (15%)</span>
-      <span style="background:#ede9fb;color:#4A3AA7;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">IQQ ${eok(params.qqqiPrincipal)} (5%)</span>
-      <span style="background:#f1f5f9;color:#475569;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">SGOV ${eok(params.sgovPrincipal)} (5%)</span>
+      <span style="background:#ddeefb;color:#1558A0;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">SCHD ${eok(params.schdPrincipal)} (${total6 > 0 ? (params.schdPrincipal/total6*100).toFixed(1) : "0.0"}%)</span>
+      <span style="background:#d4ede8;color:#0D7065;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">JEPQ ${eok(params.jepqPrincipal)} (${total6 > 0 ? (params.jepqPrincipal/total6*100).toFixed(1) : "0.0"}%)</span>
+      <span style="background:#fce7f3;color:#9d174d;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">GPIQ ${eok(params.gpiqPrincipal)} (${total6 > 0 ? (params.gpiqPrincipal/total6*100).toFixed(1) : "0.0"}%)</span>
+      <span style="background:#fef3c7;color:#b45309;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">JEPI ${eok(params.jepiPrincipal)} (${total6 > 0 ? (params.jepiPrincipal/total6*100).toFixed(1) : "0.0"}%)</span>
+      <span style="background:#ede9fb;color:#4A3AA7;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">IQQ ${eok(params.qqqiPrincipal)} (${total6 > 0 ? (params.qqqiPrincipal/total6*100).toFixed(1) : "0.0"}%)</span>
+      <span style="background:#f1f5f9;color:#475569;border-radius:5px;padding:2px 7px;font-weight:800;margin-right:4px">SGOV ${eok(params.sgovPrincipal)} (${total6 > 0 ? (params.sgovPrincipal/total6*100).toFixed(1) : "0.0"}%)</span>
       합계 ${eok(total6)} · 가수금 ${eok(params.loanInit)}
     </div>
     <div class="tax-grid">
-      <div><div class="ok-h">✓ 반영됨</div>미국/해외 원천징수세 15% · 잉여배당 ETF 비중별 비례 재투자 · 기간 2026~2066 통일</div>
+      <div><div class="ok-h">✓ 반영됨</div>미국/해외 원천징수세 ${pct(params.usTax)} (SGOV 0% 가정) · IQQ 목표 우선 적립 후 잉여배당 비례 재투자 · 기간 2026~2066 통일</div>
       <div><div class="bad-h">✗ 미반영 (별도 검토 필요)</div>법인세 · 가수금 인정이자(4.6%) 과세 · 배당소득 종합과세 · 비상장주식 보충적평가법 · 증여세/상속세 · 환율변동 · ETF 실제 분배금 변동 · 외국납부세액공제 회수율</div>
     </div>
     <div style="margin-top:8px;padding-top:7px;border-top:1px solid rgba(181,133,42,.25);font-size:10px;color:#7A4800">
@@ -832,11 +846,11 @@ function renderVerifyCards() {
   const el = document.getElementById('verifyCards');
   if (!el) return;
   const items = [
-    { status:'warn', icon:'🏦', title:'가수금 장부 잔액 확정 필요', body:`현재 시뮬레이션은 <b>₩13억 기준</b>으로 계산됩니다.<br>기존 보고서의 11억/15억 시나리오와 다를 수 있으니 실제 장부 잔액을 확인 후 [가정] 탭에서 <b>초기 가수금</b>을 수정해 재계산하세요.` },
+    { status:'warn', icon:'🏦', title:'가수금 장부 잔액 확정 필요', body:`현재 시뮬레이션은 <b>${eok(params.loanInit)} 기준</b>으로 계산됩니다.<br>기존 보고서의 11억/15억 시나리오와 다를 수 있으니 실제 장부 잔액을 확인 후 [가정] 탭에서 <b>초기 가수금</b>을 수정해 재계산하세요.` },
     { status:'warn', icon:'📊', title:'장기 수치 과신 금지', body:`만100세 법인자산 <b>약 ${eok(rows.at(-1)?.corpAsset||0)}</b>은 분배율 성장, 전액 재투자, 장기 복리 가정에 매우 민감합니다.<br>실행 판단은 <b>가수금 완납 시점 · 초기 10~15년 현금흐름 · 세후 기준</b> 중심으로 하는 것이 안전합니다.` },
     { status:'bad', icon:'⚖️', title:'세무 가정 세무사 확인 필요', body:`미국 원천세 15% 외에 ① 국내 ETF 분배금 법인 수령 시 과세 방식, ② 외국납부세액공제 회수율, ③ 가수금 인정이자(현행 4.6%) 적용 여부, ④ 법인 배당소득 익금산입 처리는 <b>담당 세무사 확인 후</b> 가정치를 조정하세요.` },
     { status:'ok', icon:'✅', title:'기간 표기 2026~2066 통일', body:`시뮬레이션 기준: <b>2026년(만60세) 투자 개시 → 2066년(만100세) · 41개년</b><br>2026년 배당은 포트폴리오 구성 첫 해로 상환액 산정에 포함됩니다.` },
-    { status:'ok', icon:'🔄', title:'잉여배당 비례 재투자 로직 반영', body:`세후 배당에서 가수금 상환분을 제외한 잉여금은 <b>각 ETF 원금 비중에 비례해 자동 재투자</b>됩니다.<br>이는 엑셀 계산 원장(계산 시트)의 기말자산 산출 방식과 동일하며, 단순 유보금 적립 방식보다 복리 효과가 큽니다.` },
+    { status:'ok', icon:'🔄', title:'잉여배당 비례 재투자 로직 반영', body:`세후 배당에서 가수금 상환분을 제외한 잉여금은 <b>IQQ 목표잔고까지 우선 적립한 뒤, 나머지를 각 ETF 자산 비중에 비례해 자동 재투자</b>됩니다.<br>이는 엑셀 계산 원장(계산 시트)의 기말자산 산출 방식과 동일하며, 단순 유보금 적립 방식보다 복리 효과가 큽니다.` },
   ];
   el.innerHTML = items.map(({status,icon,title,body}) => `
     <div class="card" style="border-left:4px solid ${status==='ok'?'var(--green)':status==='warn'?'var(--amber)':'var(--red)'}">
@@ -853,7 +867,7 @@ function renderKpis() {
   const paid = rows.find(r=>r.loan===0);
   const totalCrisisLoss = rows.reduce((a,r)=>a+r.crisisLoss,0);
   const paidCard = paid
-    ? card('가수금 완납', `만${paid.age}세`, `${paid.yr}년 · ₩13억 완상환`, 'ok')
+    ? card('가수금 완납', `만${paid.age}세`, `${paid.yr}년 · ${eok(params.loanInit)} 완상환`, 'ok')
     : card('가수금 완납', '미도달', `잔액 ${eok(rLast.loan)}`, 'bad');
   document.getElementById('kpis').innerHTML = [
     card('초기 월배당(세후)', eok(r0.monthly), `만60세 · 2026년`),
@@ -912,7 +926,7 @@ function renderScenarioCompare() {
           ['만80세 월배당 (2046)', m => eok(m.r20.monthly), false],
           ['만100세 월배당 (2066)', m => eok(m.rLast.monthly), false],
           ['가수금 완납', m => m.paid ? `만${m.paid.age}세 (${m.paid.yr})` : '미도달', true],
-          ['40년 누계 배당', m => eok(m.cum), false],
+          ['41개년 누계 배당', m => eok(m.cum), false],
           ['최종 법인자산 (2066)', m => eok(m.rLast.corpAsset), false],
           ['자녀 순지분 (2066)', m => eok(m.rLast.childShare), false],
           ['위기 누적 자산충격', m => m.loss > 0 ? eok(m.loss) : '없음', true],
@@ -978,11 +992,11 @@ function renderBars() {
   const max = Math.max(...data.map(r=>r.corpAsset));
   const COLORS6 = ['var(--blue)','var(--teal)','#c026d3','#b45309','var(--purple)','#475569'];
   document.getElementById('assetBars').innerHTML = data.map((r,idx) => {
-    const h = Math.max(4, r.corpAsset/max*220);
+    const h = Math.max(4, (max > 0 ? r.corpAsset/max : 0)*220);
     const tot = r.corpAsset;
     const segs = [r.sAsset, r.jqAsset, r.gpAsset, r.jpAsset||0, r.qiAsset, r.sgAsset||0];
     const segHtml = segs.map((v,si) =>
-      `<div class="seg" style="height:${v/tot*100}%;background:${COLORS6[si]}"></div>`
+      `<div class="seg" style="height:${(tot > 0 ? v/tot : 0)*100}%;background:${COLORS6[si]}"></div>`
     ).join('');
     return `<div class="barcol"><div class="stack" title="만${ages[idx]}세 ${eok(r.corpAsset)}" style="height:${h}px">${segHtml}</div><div class="xlabel">${ages[idx]}</div></div>`;
   }).join('');
@@ -996,9 +1010,9 @@ function renderDivBars() {
   document.getElementById('divBars').innerHTML = data.map((r,idx) => {
     const tot = r.total;
     const nets = [r.sNet, r.jqNet, r.gpNet, r.jpNet||0, r.qiNet, r.sgNet||0];
-    const wPct = r.monthly/max*100;
+    const wPct = (max > 0 ? r.monthly/max : 0)*100;
     const segHtml = nets.map((v,si) =>
-      `<div style="height:100%;width:${v/tot*100}%;background:${COLORS6[si]}"></div>`
+      `<div style="height:100%;width:${(tot > 0 ? v/tot : 0)*100}%;background:${COLORS6[si]}"></div>`
     ).join('');
     return `<div class="hbar-row"><div class="hbar-label">만${ages[idx]}세</div><div class="hbar-track" style="position:relative"><div style="height:100%;display:flex;width:${wPct}%">${segHtml}</div><div class="hbar-val">${eok(r.monthly)}/월</div></div></div>`;
   }).join('');
@@ -1008,9 +1022,9 @@ function renderMilestones() {
   const paid = rows.find(r=>r.loan===0);
   const rLast = rows.at(-1);
   const data = [
-    ['만60세','2026','포트폴리오 시작 (7종목)', eok(rows[0].monthly)+'/월'],
+    ['만60세','2026','포트폴리오 시작 (6종목)', eok(rows[0].monthly)+'/월'],
     ['만70세','2036','월배당', eok(rows[10].monthly)+'/월'],
-    [paid?'만'+paid.age+'세':'미도달', paid?paid.yr:'', '가수금 완납', paid?'₩13억 상환 완료':eok(rLast.loan)+' 남음'],
+    [paid?'만'+paid.age+'세':'미도달', paid?paid.yr:'', '가수금 완납', paid?eok(params.loanInit)+' 상환 완료':eok(rLast.loan)+' 남음'],
     ['만80세','2046','월배당', eok(rows[20].monthly)+'/월'],
     ['만100세','2066','최종 기업가치', eok(rLast.corpValue)],
   ];
@@ -1086,7 +1100,14 @@ function renderInputs() {
 
 function changeParam(el) {
   const v = Number(el.value);
-  if (!Number.isFinite(v)) { toast('숫자만 입력하세요'); return; }
+  if (!el.value.trim() || !Number.isFinite(v)) { toast('숫자를 입력하세요'); renderInputs(); return; }
+  const key = el.dataset.k, scaled = v/Number(el.dataset.m);
+  const signed = /Growth|Change/.test(key);
+  if ((!signed && scaled < 0) || (signed && scaled <= -1) || (key === 'usTax' && scaled > 1) || (key.startsWith('sh_') && scaled > 1)) { toast('입력 범위를 확인하세요'); renderInputs(); return; }
+  if (key.startsWith('sh_')) {
+    const sum = Object.entries(params.shareholders).reduce((n,[k,x])=>n+(k===key.slice(3)?scaled:x),0);
+    if (sum > 1.000001) { toast('지분 합계는 100%를 넘을 수 없습니다'); renderInputs(); return; }
+  }
   setVal(el.dataset.k, v/Number(el.dataset.m));
   rows = simulate();
   renderAll();
@@ -1151,7 +1172,7 @@ function renderShares() {
     card('지분율 합계', (total*100).toFixed(1)+'%', Math.abs(total-1)<.0001?'정상':'⚠️ 100%가 아닙니다', Math.abs(total-1)<.0001?'ok':'bad');
 
   document.getElementById('shareTable').innerHTML =
-    '<thead><tr><th>나이</th><th>연도</th><th>가수금 잔액</th><th>총 기업가치</th><th>순 기업가치<br><small style="font-weight:400;color:#888">(가수금 공제)</small></th><th>자녀A<br><small>30%</small></th><th>자녀B<br><small>25%</small></th><th>자녀C<br><small>25%</small></th><th>본인<br><small>10%</small></th><th>배우자<br><small>10%</small></th></tr></thead><tbody>' +
+    `<thead><tr><th>나이</th><th>연도</th><th>가수금 잔액</th><th>총 기업가치</th><th>순 기업가치<br><small style="font-weight:400;color:#888">(가수금 공제)</small></th><th>자녀A<br><small>${pct(params.shareholders.A)}</small></th><th>자녀B<br><small>${pct(params.shareholders.B)}</small></th><th>자녀C<br><small>${pct(params.shareholders.C)}</small></th><th>본인<br><small>${pct(params.shareholders.dad)}</small></th><th>배우자<br><small>${pct(params.shareholders.mom)}</small></th></tr></thead><tbody>` +
     rows.map(r => {
       const {row, lbl} = get5yr(r.age);
       const loanCell = r.loan ? eok(r.loan) : '<b style="color:var(--green)">완납</b>';
@@ -1168,40 +1189,43 @@ function closeRepayModal(e) {
 }
 function renderRepayPlan() {
   if (!rows.length) return;
-  let loanBal = rows[0].loan;
+  if (params.loanInit <= 0) {document.getElementById('repayTable').innerHTML='';document.getElementById('repayResult').textContent='가수금 잔액이 0원입니다. 상환할 금액이 없습니다.';return;}
+  let loanBal = params.loanInit;
   const planRows = [];
-  for (let idx = 1; idx < rows.length; idx++) {
+  for (let idx = 0; idx < rows.length; idx++) {
     const r = rows[idx];
     if (loanBal <= 0) break;
     const mSchd  = r.sNet  / 12;
     const mJepq  = r.jqNet / 12;
     const mGpiq  = r.gpNet / 12;
     const mQqqi  = r.qiNet / 12;
-    const mTotal = mSchd + mJepq + mGpiq + mQqqi;
+    const mTotal = r.total / 12;
+    const mOther = (r.gpNet + r.jpNet + r.qiNet + r.sgNet) / 12;
     let yearRepay = 0, paidMonth = null;
     let bal = loanBal;
     for (let m = 1; m <= 12; m++) {
       if (bal <= 0) break;
       const mRepay = Math.min(mTotal, bal);
       bal = Math.max(bal - mRepay, 0);
+      if (bal < 0.000001) bal = 0;
       yearRepay += mRepay;
       if (bal === 0 && paidMonth === null) paidMonth = m;
     }
     loanBal = bal;
-    planRows.push({ yr: r.yr, age: r.age, mSchd, mJepq, mGpiq, mQqqi, mTotal, mRepay: yearRepay / 12, mSurplus: mTotal - yearRepay / 12, yearRepay, loanBal, paidMonth });
+    planRows.push({ yr: r.yr, age: r.age, mSchd, mJepq, mGpiq, mQqqi, mOther, mTotal, mRepay: yearRepay / 12, mSurplus: mTotal - yearRepay / 12, yearRepay, loanBal, paidMonth });
   }
   const paidRow = planRows.find(r => r.loanBal === 0);
   document.getElementById('repayTable').innerHTML =
-    `<thead><tr><th>나이</th><th>연도</th><th>SCHD 월</th><th>JEPQ 월</th><th>GPIQ+IQQ 월</th><th>월 배당합계</th><th>월 상환</th><th>연말 가수금 잔액</th></tr></thead><tbody>` +
+    `<thead><tr><th>나이</th><th>연도</th><th>SCHD 월</th><th>JEPQ 월</th><th>GPIQ·JEPI·IQQ·SGOV 월</th><th>월 배당합계</th><th>월 상환</th><th>연말 가수금 잔액</th></tr></thead><tbody>` +
     planRows.map(r => {
       const done = r.loanBal === 0;
       const {row, lbl} = get5yr(r.age);
       const rowStyle = done ? 'background:#dcfce7' : row;
       const balCell  = done ? `<b style="color:#14532d;font-size:12px">완납 ✓ ${r.paidMonth}월</b>` : eok(r.loanBal);
-      return `<tr style="${rowStyle}"><td style="${lbl}">${lbl?`<b style="font-size:13px">${r.age}세</b>`:r.age+'세'}</td><td style="${lbl}">${lbl?`<b>${r.yr}</b>`:r.yr}</td><td>${eok(r.mSchd)}</td><td>${eok(r.mJepq)}</td><td>${eok(r.mGpiq+r.mQqqi)}</td><td style="${lbl};font-size:12px">${eok(r.mTotal)}</td><td>${eok(r.mRepay)}</td><td>${balCell}</td></tr>`;
+      return `<tr style="${rowStyle}"><td style="${lbl}">${lbl?`<b style="font-size:13px">${r.age}세</b>`:r.age+'세'}</td><td style="${lbl}">${lbl?`<b>${r.yr}</b>`:r.yr}</td><td>${eok(r.mSchd)}</td><td>${eok(r.mJepq)}</td><td>${eok(r.mOther)}</td><td style="${lbl};font-size:12px">${eok(r.mTotal)}</td><td>${eok(r.mRepay)}</td><td>${balCell}</td></tr>`;
     }).join('') + '</tbody>';
   document.getElementById('repayResult').innerHTML = paidRow
-    ? `<div style="background:#dcfce7;border:1px solid #a7f3d0;border-radius:10px;padding:11px 15px;font-size:12.5px;color:#14532d;font-weight:700">🎉 가수금 완납 예상: ${paidRow.yr}년 ${paidRow.paidMonth}월 (만${paidRow.age}세) &nbsp;·&nbsp; 2027년 1월부터 ${Math.round((paidRow.yr - 2027)*12 + paidRow.paidMonth)}개월 소요</div>`
+    ? `<div style="background:#dcfce7;border:1px solid #a7f3d0;border-radius:10px;padding:11px 15px;font-size:12.5px;color:#14532d;font-weight:700">🎉 가수금 완납 예상: ${paidRow.yr}년 ${paidRow.paidMonth}월 (만${paidRow.age}세) &nbsp;·&nbsp; ${START_YEAR}년 1월부터 ${Math.round((paidRow.yr - START_YEAR)*12 + paidRow.paidMonth)}개월 소요</div>`
     : `<div style="background:#fee2e2;border-radius:10px;padding:10px 14px;font-size:12px;color:#7f1d1d">⚠️ 시뮬레이션 기간 내 완납 미도달 — 상환액 또는 투자원금을 조정하세요.</div>`;
 }
 
@@ -1214,18 +1238,19 @@ function switchMT(id, el){
   document.getElementById('mt-'+id).classList.add('active');
 }
 function saveManualRecord(){
-  const rec = { id: Date.now(), year: +mYear.value, month: +mMonth.value, schd: +mSchd.value||0, jepq: +mJepq.value||0, gpiq: +mGpiq.value||0, qqqi: +mQqqi.value||0, repay: +mRepay.value||0, usd: +mUsd.value||1380 };
-  if (!rec.year || rec.month<1 || rec.month>12) { toast('연도/월을 확인하세요'); return; }
+  const rec = { id: Date.now(), year: +mYear.value, month: +mMonth.value, schd: +mSchd.value||0, jepq: +mJepq.value||0, gpiq: +mGpiq.value||0, jepi: +mJepi.value||0, sgov: +mSgov.value||0, qqqi: +mQqqi.value||0, repay: +mRepay.value||0, usd: +mUsd.value||1380 };
+  if (!Number.isInteger(rec.year) || rec.year < 1900 || !Number.isInteger(rec.month) || rec.month<1 || rec.month>12 || ['schd','jepq','gpiq','jepi','sgov','qqqi','repay','usd'].some(k=>!Number.isFinite(rec[k]) || rec[k]<0)) { toast('연도/월을 확인하세요'); return; }
   manual.unshift(rec); saveLocal(false); renderManualList(); toast('수동 기록 저장 완료');
 }
 function renderManualList(){
   const el = document.getElementById('manualList');
   if (!el) return;
   el.innerHTML = manual.length ? manual.slice(0,20).map(r => {
-    const totalDiv = (r.schd||0)+(r.jepq||0)+(r.gpiq||0)+(r.qqqi||0);
+    const totalDiv = (r.schd||0)+(r.jepq||0)+(r.gpiq||0)+(r.jepi||0)+(r.sgov||0)+(r.qqqi||0);
     return `<div class="milestone"><div class="badge">${r.month}월</div><div><b>${r.year}년</b><div class="note">배당합계 ${eok(totalDiv)} · 상환 ${eok(r.repay)}</div></div></div>`;
   }).join('') : '기록 없음';
 }
+function escapeHtml(value) { return String(value ?? '').replace(/[&<>"']/g, ch => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[ch])); }
 function saveMemo(){
   const title = memoTitle.value.trim(), content = memoContent.value.trim();
   if (!title) { toast('제목을 입력하세요'); return; }
@@ -1237,25 +1262,50 @@ function renderMemoList(){
   if (!el) return;
   el.innerHTML = memos.length ? memos.slice(0,5).map(m => `
     <div class="card" style="background:var(--pg);border-left:3px solid var(--green);padding:10px;margin-bottom:6px">
-      <b style="font-size:11.5px;color:var(--green)">${m.title}</b>
-      <div class="note" style="margin-top:3px">${m.content}</div>
+      <b style="font-size:11.5px;color:var(--green)">${escapeHtml(m.title)}</b>
+      <div class="note" style="margin-top:3px">${escapeHtml(m.content)}</div>
       <div style="font-size:9px;color:#999;margin-top:4px">${new Date(m.createdAt).toLocaleString('ko-KR')}</div>
     </div>`).join('') : '';
 }
 
 var STORAGE_KEY = 'corp_etf_sim_v5';
-function saveLocal(show=true){
-  localStorage.setItem(STORAGE_KEY, JSON.stringify({ params, manual, memos, acctHoldings, savedAt: new Date().toISOString() }));
+function saveLocal(show=true, push=true){
+  localStorage.setItem(STORAGE_KEY, JSON.stringify({ params, manual, memos, acctHoldings, scenario: currentScenario, currentPlan, savedAt: new Date().toISOString() }));
   if (show) toast('이 기기에 저장 완료');
-  scheduleAutoPush();
+  if (push) scheduleAutoPush();
+}
+function normalizePayload(d) {
+  if (!d || typeof d !== 'object' || Array.isArray(d) || !d.params || typeof d.params !== 'object') throw new Error('백업 데이터 형식 오류');
+  const next = structuredClone(defaults);
+  for (const key of Object.keys(defaults)) {
+    if (key === 'shareholders' || d.params[key] === undefined) continue;
+    const v = d.params[key];
+    if (typeof v !== 'number' || !Number.isFinite(v) || (/Growth|Change/.test(key) ? v <= -1 : v < 0) || (key === 'usTax' && v > 1)) throw new Error('가정값 오류');
+    next[key] = v;
+  }
+  for (const key of Object.keys(defaults.shareholders)) {
+    const v = d.params.shareholders?.[key] ?? defaults.shareholders[key];
+    if (typeof v !== 'number' || !Number.isFinite(v) || v < 0 || v > 1) throw new Error('지분 오류');
+    next.shareholders[key] = v;
+  }
+  if (Object.values(next.shareholders).reduce((a,b)=>a+b,0)>1.000001) throw new Error('지분 합계 오류');
+  for (const key of ['manual','memos']) if (d[key] !== undefined && !Array.isArray(d[key])) throw new Error('기록 형식 오류');
+  if (d.acctHoldings !== undefined && (!d.acctHoldings || typeof d.acctHoldings !== 'object' || Array.isArray(d.acctHoldings))) throw new Error('보유수량 형식 오류');
+  for (const holding of Object.values(d.acctHoldings || {})) {
+    if (!holding || typeof holding !== 'object') throw new Error('보유수량 오류');
+    for (const key of ['qty','avg','manual']) if (holding[key] !== undefined && (typeof holding[key] !== 'number' || !Number.isFinite(holding[key]) || holding[key] < 0)) throw new Error('보유수량 오류');
+  }
+  return {...d, params:next};
 }
 function loadLocal(){
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return;
-    const d = JSON.parse(raw);
+    const d = normalizePayload(JSON.parse(raw));
     if (d.params) params = { ...structuredClone(defaults), ...d.params, shareholders: { ...defaults.shareholders, ...(d.params.shareholders||{}) } };
-    manual = d.manual || []; memos = d.memos || [];
+    manual = Array.isArray(d.manual) ? d.manual : []; memos = Array.isArray(d.memos) ? d.memos : [];
+    if (SCENARIOS[d.scenario]) currentScenario = d.scenario;
+    if (PLANS[d.currentPlan]) currentPlan = d.currentPlan;
     if (d.acctHoldings) { acctHoldings = d.acctHoldings; localStorage.setItem('acctHoldings_v2', JSON.stringify(acctHoldings)); }
     if (d.savedAt) document.getElementById('saveStatus').textContent = '이 기기 저장: ' + new Date(d.savedAt).toLocaleString('ko-KR');
   } catch(e) { console.warn(e); }
@@ -1278,16 +1328,18 @@ async function copyFullCode(){
 // URL 공유 — 계좌현황 포함 전체 데이터를 링크에 담아 카톡 전송
 function shareURL() {
   // 계좌 입력 중인 값도 반영
+  if (ACCT_ETFS.some(e => ['qty','avg','manual'].some(k => {const v = Number(document.getElementById('acct_'+k+'_'+e.key)?.value || 0); return !Number.isFinite(v) || v < 0;}))) {toast('보유수량과 가격은 0 이상이어야 합니다');return;}
   ACCT_ETFS.forEach(e => {
     if (!acctHoldings[e.key]) acctHoldings[e.key] = {};
     acctHoldings[e.key].qty    = _acctGet(e.key,'qty');
     acctHoldings[e.key].avg    = _acctGet(e.key,'avg');
     acctHoldings[e.key].manual = _acctGet(e.key,'manual');
   });
-  const payload = { params, manual, memos, acctHoldings, scenario: currentScenario, sharedAt: new Date().toISOString(), v:'share1' };
+  const payload = { params, manual, memos, acctHoldings, scenario: currentScenario, currentPlan, sharedAt: new Date().toISOString(), v:'share1' };
   try {
     const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(payload))));
     const url = location.origin + location.pathname + '#share=' + encoded;
+    if (!navigator.clipboard?.writeText) {showShareModal(url);return;}
     navigator.clipboard.writeText(url).then(() => {
       toast('📤 공유링크 복사 완료! 카카오톡으로 본인에게 전송 후 모바일에서 열기');
     }).catch(() => {
@@ -1323,7 +1375,7 @@ function applyShareURL() {
   if (!hash.startsWith('#share=')) return false;
   try {
     const encoded = hash.slice(7);
-    const payload = JSON.parse(decodeURIComponent(escape(atob(encoded))));
+    const payload = normalizePayload(JSON.parse(decodeURIComponent(escape(atob(encoded)))));
     if (!payload.v || payload.v !== 'share1') return false;
     if (payload.params)      params = { ...structuredClone(defaults), ...payload.params, shareholders: { ...defaults.shareholders, ...(payload.params.shareholders||{}) } };
     if (payload.manual)      manual = payload.manual;
@@ -1333,6 +1385,7 @@ function applyShareURL() {
       localStorage.setItem('acctHoldings_v2', JSON.stringify(acctHoldings));
     }
     if (payload.scenario && SCENARIOS[payload.scenario]) currentScenario = payload.scenario;
+    if (PLANS[payload.currentPlan]) currentPlan = payload.currentPlan;
     saveLocal(false);
     history.replaceState(null, '', location.pathname); // URL 해시 제거
     const t = payload.sharedAt ? new Date(payload.sharedAt).toLocaleString('ko-KR') : '방금';
@@ -1345,7 +1398,7 @@ function applyShareURL() {
 }
 
 function exportData(){
-  const data = { params, manual, memos, exportedAt: new Date().toISOString(), version:'v8', note:'유앤김 법인 ETF 시뮬레이터 v8 백업 (SCHD+JEPQ+GPIQ+IQQ)' };
+  const data = { params, manual, memos, acctHoldings, scenario: currentScenario, currentPlan, exportedAt: new Date().toISOString(), version:'v8.2', note:'유앤김 법인 ETF 시뮬레이터 v8.2 백업 (6종목·계좌수량 포함)' };
   const blob = new Blob([JSON.stringify(data,null,2)], { type:'application/json' });
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a'); a.href=url; a.download=`corp-sim-v5-${new Date().toISOString().slice(0,10)}.json`;
@@ -1357,10 +1410,13 @@ function importData(input){
   const reader = new FileReader();
   reader.onload = e => {
     try {
-      const d = JSON.parse(e.target.result);
+      const d = normalizePayload(JSON.parse(e.target.result));
       if (d.params) params = { ...structuredClone(defaults), ...d.params, shareholders: { ...defaults.shareholders, ...(d.params.shareholders||{}) } };
-      manual = d.manual || []; memos = d.memos || [];
-      saveLocal(false); rows = simulate(); renderAll(); toast('백업 파일 불러오기 완료');
+      manual = Array.isArray(d.manual) ? d.manual : []; memos = Array.isArray(d.memos) ? d.memos : [];
+    if (SCENARIOS[d.scenario]) currentScenario = d.scenario;
+    if (PLANS[d.currentPlan]) currentPlan = d.currentPlan;
+      if (d.acctHoldings) { acctHoldings = d.acctHoldings; localStorage.setItem('acctHoldings_v2', JSON.stringify(acctHoldings)); }
+      saveLocal(false); rows = simulate(); renderAll(); renderAccountInputs(); toast('백업 파일 불러오기 완료');
     } catch(err) { toast('파일을 읽을 수 없습니다'); }
   };
   reader.readAsText(file); input.value='';
@@ -1419,6 +1475,7 @@ function _acctGet(key, field) {
   return acctHoldings[key]?.[field] || 0;
 }
 function saveAccountHoldings() {
+  if (ACCT_ETFS.some(e => ['qty','avg','manual'].some(k => {const v = Number(document.getElementById('acct_'+k+'_'+e.key)?.value || 0); return !Number.isFinite(v) || v < 0;}))) {toast('보유수량과 가격은 0 이상이어야 합니다');return;}
   ACCT_ETFS.forEach(e => {
     if (!acctHoldings[e.key]) acctHoldings[e.key] = {};
     acctHoldings[e.key].qty    = _acctGet(e.key,'qty');
@@ -1427,7 +1484,7 @@ function saveAccountHoldings() {
   });
   localStorage.setItem('acctHoldings_v2', JSON.stringify(acctHoldings));
   saveLocal(false);          // savedAt 갱신 → 타임스탬프 비교 정상화
-  scheduleAutoSync();        // Gist 자동 업로드 (3초 디바운스)
+  // saveLocal에서 동기화 예약
   toast('보유 수량 저장 완료 ✓ · 클라우드 동기화 중...');
   renderAccountTable();
 }
@@ -1440,7 +1497,7 @@ function renderAccountInputs() {
     const lnk = ACCT_LINKS[e.ticker] || {};
     const liveP = livePrices[e.ticker];
     const liveBadge = liveP
-      ? `<span style="font-size:10px;color:${liveP.chg>=0?'#16a34a':'#dc2626'};font-weight:700">${liveP.chg>=0?'▲':'▼'}${Math.abs(liveP.chg).toFixed(2)}% 실시간</span>`
+      ? `<span style="font-size:10px;color:${liveP.chg>=0?'#16a34a':'#dc2626'};font-weight:700">${liveP.chg>=0?'▲':'▼'}${Math.abs(liveP.chg).toFixed(2)}% · ${liveP.source === 'cache' ? '캐시' : '조회값'} ${liveP.asOf ? new Date(liveP.asOf).toLocaleString('ko-KR') : '기준시각 미상'}</span>`
       : `<span style="font-size:10px;color:var(--muted2)">미조회</span>`;
     const c = ACCT_COLORS[e.key];
     return `<div style="background:var(--card2);border-radius:11px;padding:14px 15px;border:1px solid var(--line);border-top:3px solid ${c}">
@@ -1481,7 +1538,7 @@ async function fetchYahooTicker(ticker) {
     const price = meta.regularMarketPrice || meta.chartPreviousClose;
     if (!price) throw new Error('no price');
     const prev  = meta.previousClose || meta.chartPreviousClose || price;
-    return { price, prev, chg: prev ? Math.round((price - prev) / prev * 10000) / 100 : 0 };
+    return { price, prev, source: 'Yahoo', asOf: meta.regularMarketTime ? new Date(meta.regularMarketTime * 1000).toISOString() : null, chg: prev ? Math.round((price - prev) / prev * 10000) / 100 : 0 };
   }
 
   // 1차: Cloudflare Worker (사용자가 설정한 경우)
@@ -1540,6 +1597,8 @@ async function fetchLivePrices() {
   } catch(e) {}
 
   // 종목별 실시간 조회 (병렬)
+  ACCT_ETFS.forEach(e => { if(!acctHoldings[e.key])acctHoldings[e.key]={}; ['qty','avg','manual'].forEach(k=>acctHoldings[e.key][k]=_acctGet(e.key,k)); });
+  livePrices = {};
   const failed = [];
   await Promise.all(ACCT_ETFS.map(async e => {
     const r = await fetchYahooTicker(e.ticker);
@@ -1557,7 +1616,7 @@ async function fetchLivePrices() {
         const MAP = { SCHD:'SCHD', JEPQ:'JEPQ', GPIQ:'GPIQ', JEPI:'JEPI', IQQ:'IQQ', SGOV:'SGOV' };
         failed.forEach(ticker => {
           const d = data[MAP[ticker] || ticker];
-          if (d && d.price) livePrices[ticker] = { price: d.price, chg: d.chg || 0, prev: d.prev || d.price };
+          if (d && d.price) livePrices[ticker] = { price: d.price, chg: d.chg || 0, prev: d.prev || d.price, source:'cache', asOf: d.updatedAt || (data.errors?.includes(ticker) ? null : data.updatedAt) || null };
         });
       }
     } catch(e) {}
@@ -1570,9 +1629,9 @@ async function fetchLivePrices() {
   const total   = ACCT_ETFS.length;
   const rateStr = liveRate ? Math.round(liveRate).toLocaleString('ko-KR') + '원' : '—';
   const timeStr = lastFetchTime.toLocaleString('ko-KR', {month:'numeric', day:'numeric', hour:'2-digit', minute:'2-digit'});
-  const failNote = failed.length ? ` <span style="color:var(--amber)">(캐시사용: ${failed.join(', ')})</span>` : '';
+  const failNote = failed.length ? ` <span style="color:var(--amber)">(직접조회 실패: ${failed.join(', ')} · 캐시는 종목별 기준시각 확인)</span>` : '';
   if (st) {
-    st.innerHTML   = `✅ ${cnt}/${total}종목 · USD/KRW ${rateStr} · ${timeStr}${failNote}`;
+    st.innerHTML   = `✅ ${cnt}/${total}종목 · USD/KRW ${rateStr} · 조회 ${timeStr}${failNote}`;
     st.style.color = cnt === total ? '#16a34a' : 'var(--amber)';
   }
   renderAccountKpis(); renderAccountInputs(); renderAccountTable();
@@ -1580,13 +1639,13 @@ async function fetchLivePrices() {
 
 function renderAccountKpis() {
   const timeStr = lastFetchTime ? `${lastFetchTime.getHours()}:${String(lastFetchTime.getMinutes()).padStart(2,'0')}` : '—';
-  const rateCard = card('USD/KRW 환율', liveRate ? liveRate.toLocaleString('ko-KR',{maximumFractionDigits:1})+'원' : '—', `Yahoo Finance · ${timeStr}`);
+  const rateCard = card('USD/KRW 환율', liveRate ? liveRate.toLocaleString('ko-KR',{maximumFractionDigits:1})+'원' : '—', `환율 조회 · ${timeStr}`);
   const etfCards = ACCT_ETFS.map(e => {
     const p = livePrices[e.ticker];
     if (!p) return card(e.label, '—', '수동입력 필요');
     const chgStr = (p.chg>=0?'+':'')+p.chg.toFixed(2)+'%';
     const priceStr = e.currency === 'USD' ? '$'+p.price.toFixed(2) : p.price.toLocaleString('ko-KR')+'원';
-    return card(e.label, priceStr, chgStr, p.chg>=0?'ok':'bad');
+    return card(e.label, priceStr, chgStr + ' · ' + (p.source === 'cache' ? '캐시' : '조회값') + ' · ' + (p.asOf ? new Date(p.asOf).toLocaleString('ko-KR') : '기준시각 미상'), p.chg>=0?'ok':'bad');
   });
   document.getElementById('acctKpis').innerHTML = [rateCard, ...etfCards].join('');
 }
@@ -1610,7 +1669,7 @@ function renderAccountTable() {
     const gainPct    = costVal > 0 ? gain/costVal*100 : 0;
     const simAsset   = simRow?.[e.simAsset] || 0;
     const simAnnDiv  = simRow?.[e.simDiv]   || 0;
-    const actualDiv  = actualVal * e.divRate;
+    const actualDiv  = actualVal * params[e.key+'DivRate'] * (e.key === 'sgov' ? 1 : (1-params.usTax));
     const diff       = actualVal - simAsset;
     const diffPct    = simAsset > 0 ? diff/simAsset*100 : 0;
     totalActual    += actualVal; totalCost += costVal; totalGain += gain;
@@ -1621,7 +1680,7 @@ function renderAccountTable() {
       ? (e.currency==='USD' ? `$${rawPrice.toFixed(2)}<br><span style="font-size:10px;color:var(--muted2)">${(rawPrice*rate).toLocaleString('ko-KR',{maximumFractionDigits:0})}원</span>` : rawPrice.toLocaleString('ko-KR')+'원')
       : (manual ? `<span style="color:var(--amber)">수동 ${e.currency==='USD'?'$':'₩'}${rawPrice.toFixed(2)}</span>` : '<span style="color:var(--muted2)">—</span>');
     const chgBadge   = lp ? `<br><span style="font-size:10px;color:${lp.chg>=0?'#16a34a':'var(--red)'}">${lp.chg>=0?'▲':'▼'}${Math.abs(lp.chg).toFixed(2)}%</span>` : '';
-    return `<tr><td><b style="color:var(--ebony)">${e.label}</b><br><span style="font-size:10px;color:var(--muted2)">${e.ticker}</span></td><td>${priceDisp}${chgBadge}</td><td>${qty ? qty.toLocaleString('ko-KR',{maximumFractionDigits:3}) : '<span style="color:var(--muted2)">—</span>'}</td><td><b>${eok(actualVal)}</b></td><td>${eok(costVal)}</td><td style="color:${gainColor};font-weight:700">${gain>=0?'+':''}${eok(gain)}<br><span style="font-size:10px">${gainPct>=0?'+':''}${gainPct.toFixed(1)}%</span></td><td style="color:#6366f1;font-weight:700">${eok(actualDiv)}<br><span style="font-size:10px;color:var(--muted2)">/년 예상</span></td><td>${eok(simAsset)}<br><span style="font-size:10px;color:var(--muted2)">${nowYr}년 시뮬</span></td><td>${eok(simAnnDiv)}<br><span style="font-size:10px;color:var(--muted2)">/년 시뮬</span></td><td style="color:${diffColor};font-weight:700">${diff>=0?'+':''}${eok(diff)}<br><span style="font-size:10px">${diffPct>=0?'+':''}${diffPct.toFixed(1)}%</span></td></tr>`;
+    return `<tr><td><b style="color:var(--ebony)">${e.label}</b><br><span style="font-size:10px;color:var(--muted2)">${e.ticker}</span></td><td>${priceDisp}${chgBadge}</td><td>${qty ? qty.toLocaleString('ko-KR',{maximumFractionDigits:3}) : '<span style="color:var(--muted2)">—</span>'}</td><td><b>${eok(actualVal)}</b></td><td>${eok(costVal)}</td><td style="color:${gainColor};font-weight:700">${gain>=0?'+':''}${eok(gain)}<br><span style="font-size:10px">${gainPct>=0?'+':''}${gainPct.toFixed(1)}%</span></td><td style="color:#6366f1;font-weight:700">${eok(actualDiv)}<br><span style="font-size:10px;color:var(--muted2)">/년 예상(세후)</span></td><td>${eok(simAsset)}<br><span style="font-size:10px;color:var(--muted2)">${nowYr}년 시뮬</span></td><td>${eok(simAnnDiv)}<br><span style="font-size:10px;color:var(--muted2)">/년 시뮬</span></td><td style="color:${diffColor};font-weight:700">${diff>=0?'+':''}${eok(diff)}<br><span style="font-size:10px">${diffPct>=0?'+':''}${diffPct.toFixed(1)}%</span></td></tr>`;
   });
   const totalGainPct = totalCost  > 0 ? totalGain/totalCost*100   : 0;
   const totalDiff    = totalActual - totalSimAsset;
@@ -1634,7 +1693,7 @@ function renderAccountTable() {
       <span style="font-size:12px">평가금액 <b>${eok(totalActual)}</b></span>
       <span style="font-size:12px">매입금액 <b>${eok(totalCost)}</b></span>
       <span style="font-size:12px;color:${sumGainColor};font-weight:800">손익 ${totalGain>=0?'+':''}${eok(totalGain)} (${totalGainPct>=0?'+':''}${totalGainPct.toFixed(1)}%)</span>
-      <span style="font-size:12px;color:#6366f1;font-weight:700">예상연배당 ${eok(totalActualDiv)}</span>
+      <span style="font-size:12px;color:#6366f1;font-weight:700">예상연배당(세후) ${eok(totalActualDiv)}</span>
       <span style="font-size:12px;color:var(--muted)">→ 예상월배당 ${eok(totalActualDiv/12)}</span>
       <span style="font-size:12px;color:${sumDiffColor};font-weight:700">시뮬대비 ${totalDiff>=0?'+':''}${eok(totalDiff)} (${totalDiffPct>=0?'+':''}${totalDiffPct.toFixed(1)}%)</span>
     </div>`;
@@ -1655,102 +1714,22 @@ function renderAccountTable() {
 // GitHub Gist 클라우드 동기화 (단순화 버전)
 // 토큰 1회 입력 → 자동 Gist 탐색/생성 → 모든 기기 연동
 // ══════════════════════════════════════════════
-// ===== ☁️ Cloudflare Workers KV 자동 동기화 =====
-const CF_URL  = 'https://corp-etf-sync.yjjn2005.workers.dev';
-const CF_SEC  = ['Kp9mX','v2rLq','W8nHdT'].join('');
-let autoPushTimer = null, autoPushInflight = false;
-let autoPullTimer = null, autoPullInflight = false;
-const PULL_INTERVAL_MS = 60000;
-
-function setSyncStatus(msg) {
-  var el = document.getElementById('syncStatus');
-  if (el) el.textContent = msg;
-}
-
-async function cfFetch(method, body) {
-  const opts = { method, headers: { 'X-Secret': CF_SEC, 'Cache-Control': 'no-cache' } };
-  if (body !== undefined) { opts.headers['Content-Type'] = 'application/json'; opts.body = JSON.stringify(body); }
-  const res = await fetch(CF_URL + '?t=' + Date.now(), opts);
-  if (!res.ok) throw new Error(res.status + ' ' + res.statusText);
-  return res.json();
-}
-
-async function doAutoPush() {
-  if (autoPushInflight) return;
-  autoPushInflight = true;
-  try {
-    await cfFetch('PUT', buildSyncPayload());
-    setSyncStatus('☁️ 동기화 완료 · ' + new Date().toLocaleString('ko-KR'));
-    console.log('[CF Push] 업로드 완료');
-  } catch(e) {
-    setSyncStatus('⚠️ 동기화 실패 — ' + e.message);
-    console.warn('[CF Push] 실패', e.message);
-  } finally { autoPushInflight = false; }
-}
-
-function scheduleAutoPush() {
-  clearTimeout(autoPushTimer);
-  autoPushTimer = setTimeout(doAutoPush, 2000);
-}
-
-async function doAutoPull(silent) {
-  if (autoPullInflight) return;
-  autoPullInflight = true;
-  try {
-    const remote = await cfFetch('GET');
-    if (!remote || !remote.params) { scheduleAutoPush(); return; }
-    const remoteAt = remote.savedAt || '';
-    const localRaw = localStorage.getItem(STORAGE_KEY);
-    const localAt  = localRaw ? (JSON.parse(localRaw).savedAt || '') : '';
-    if (remoteAt > localAt) {
-      applySyncPayload(remote);
-      saveLocal(false);
-      recalc(); renderAll();
-      if (!silent) toast('☁️ 최신 데이터 동기화 완료');
-      setSyncStatus('☁️ 서버 최신 · ' + new Date(remoteAt).toLocaleString('ko-KR'));
-    } else if (localAt > remoteAt) {
-      scheduleAutoPush();
-    } else {
-      setSyncStatus('☁️ 동기화 완료 · ' + new Date().toLocaleString('ko-KR'));
-    }
-  } catch(e) {
-    console.warn('[CF Pull] 실패', e.message);
-    if (!silent) toast('☁️ 동기화 실패: ' + e.message);
-  } finally { autoPullInflight = false; }
-}
-
-function startAutoPull() {
-  clearInterval(autoPullTimer);
-  autoPullTimer = setInterval(() => doAutoPull(true), PULL_INTERVAL_MS);
-}
-
-localStorage.removeItem('githubToken');
-localStorage.removeItem('githubGistId');
-
-function syncNow() {
-  var btn = document.getElementById('btnSyncNow');
-  if (btn) { btn.textContent = '동기화 중... ⏳'; btn.disabled = true; }
-  setSyncStatus('☁️ 동기화 중…');
-  doAutoPull(false).then(() => doAutoPush()).finally(() => {
-    if (btn) { btn.textContent = '☁️ 지금 동기화'; btn.disabled = false; }
-  });
-}
-
-document.addEventListener('visibilitychange', function() {
-  if (document.visibilityState === 'visible') setTimeout(() => doAutoPull(true), 300);
-});
-window.addEventListener('focus', () => doAutoPull(true));
+// 동기화는 공개 인증키 노출로 일시 중단. 로그인 보호 적용 후 별도 복구 필요.
+function buildSyncPayload() { return {params, manual, memos, acctHoldings, scenario: currentScenario, currentPlan, savedAt: new Date().toISOString()}; }
+function setSyncStatus(msg) { const el=document.getElementById('syncStatus'); if(el)el.textContent=msg; }
+function scheduleAutoPush() { setSyncStatus('⚠️ 보안 동기화 준비 중 · 이 기기에만 저장됩니다'); const el=document.getElementById('syncStatus'); if(el)el.style.color='#D4A84E'; }
+function syncNow() { scheduleAutoPush(); toast('공개 인증키 노출로 동기화를 중단했습니다. 백업 내보내기로 데이터를 보관하세요.'); }
 // 공유링크 우선 적용 → 없으면 로컬 로드
 const _fromShare = applyShareURL();
 if (!_fromShare) loadLocal();
 recalc();
 renderAll();
 renderAccountInputs(); renderAccountKpis(); // 기본 활성 탭(계좌현황)이 로드 시에도 즉시 렌더링되도록 보정
-if (!_fromShare) autoLoadGist();
+// 삭제된 Gist 부팅 호출 제거
 
 // ─── 추가매수 툴 ──────────────────────────────────────────────────────────────
 // 5종목 비율: JEPQ 22.2% / GPIQ 22.2% / JEPI 33.3% / IQQ 11.1% / SGOV 11.1% (SCHD 고정)
-var BUY_RATIOS = { schd:0, jepq:.2222, gpiq:.2222, jepi:.3333, qqqi:.1111, sgov:.1111 };
+var BUY_RATIOS = { schd:0, jepq:2/9, gpiq:2/9, jepi:3/9, qqqi:1/9, sgov:1/9 };
 var BUY_ETFS = [
   { key:'schd', ticker:'SCHD', label:'SCHD' },
   { key:'jepq', ticker:'JEPQ', label:'JEPQ' },
@@ -1861,7 +1840,7 @@ function renderBuyModal() {
   presets.forEach(function(ps){
     var v=ps[0], lb=ps[1];
     var active = v===_buyAmount;
-    html += '<button id="buyAmt_'+v+'" onclick="setBuyAmount('+v+')" style="'+btnStyle+';background:'+(active?'#1e4d8c':'rgba(255,255,255,.07)')+';color:'+(active?'#cfe4ff':'rgba(255,255,255,.7)')+';border-color:'+(active?'rgba(100,160,255,.5)':'rgba(255,255,255,.15)')+';font-weight:'+(active?'700':'600')+'">'+lb+'</button>';
+    html += '<button id="buyAmt_'+v+'" onclick="setBuyAmount('+v+')" style="'+btnStyle+';background:'+(active?'#1e4d8c':'var(--card2)')+';color:'+(active?'#cfe4ff':'var(--text)')+';border-color:'+(active?'rgba(100,160,255,.5)':'var(--line2)')+';font-weight:'+(active?'700':'600')+'">'+lb+'</button>';
   });
   html += '<div style="display:flex;align-items:center;gap:4px">';
   html += '<input id="buyAmtCustom" type="number" min="0.1" step="0.1" value="'+(Math.round(_buyAmount/10000000)/10)+'" placeholder="직접입력(억)"';
@@ -1870,7 +1849,7 @@ function renderBuyModal() {
   html += '</div></div>';
 
   // ── 시세 현황 (이미 조회된 livePrices 사용) ──
-  var hasPrices = BUY_ETFS.some(function(e){ return prices[e.ticker]; });
+  var hasPrices = BUY_ETFS.filter(e => BUY_RATIOS[e.key] > 0).every(function(e){ return prices[e.ticker]; });
   html += '<div style="margin-bottom:12px;padding:8px 10px;background:rgba(255,255,255,.04);border-radius:7px;border:1px solid var(--line);font-size:11px">';
   if (hasPrices) {
     html += '<span style="color:var(--muted)">적용환율: <b style="color:var(--text)">1 USD = '+w(fx)+'원</b>'+(liveRate?' <span style="color:#16a34a">● 실시간</span>':' <span style="color:var(--amber)">기본값</span>')+'</span><br><span style="color:var(--muted)">현재가: ';
@@ -1948,7 +1927,9 @@ function renderBuyModal() {
 function loadAcctHoldings() {
   try {
     var raw = localStorage.getItem('acctHoldings_v2');
-    return raw ? JSON.parse(raw) : {};
+    const d = raw ? JSON.parse(raw) : {};
+    if (!d || typeof d !== 'object' || Array.isArray(d)) return {};
+    return d;
   } catch(e) { return {}; }
 }
 
@@ -1957,11 +1938,11 @@ function applyBuyToAccount() {
   var fx = liveRate || 1380;
 
   // 시세 확인
-  var hasPrices = BUY_ETFS.some(function(e){
+  var hasPrices = BUY_ETFS.filter(e => BUY_RATIOS[e.key] > 0).every(function(e){
     return BUY_RATIOS[e.key] > 0 && livePrices && livePrices[e.ticker];
   });
   if (!hasPrices) {
-    alert('시세가 조회되지 않았습니다.\n계좌현황 탭의 🔄 실시간 시세 조회 버튼을 먼저 클릭하세요.');
+    alert('모든 매수 대상 종목의 시세가 필요합니다.\n계좌현황 탭의 🔄 실시간 시세 조회 버튼을 먼저 클릭하세요.');
     return;
   }
   if (!confirm('SCHD 이외 5종목(JEPQ/GPIQ/JEPI/IQQ/SGOV)의 기존 수량·평균가를 초기화하고\n추가매수 수량과 현재가를 자동 입력합니다. 계속할까요?')) return;
@@ -1992,7 +1973,6 @@ function applyBuyToAccount() {
 
   localStorage.setItem('acctHoldings_v2', JSON.stringify(acctHoldings));
   if (typeof saveLocal === 'function') saveLocal(false);
-  if (typeof scheduleAutoSync === 'function') scheduleAutoSync();
   renderAccountInputs();
   closeBuyModal();
   toast('실계좌 반영 완료: ' + applied.join(', ') + ' ✓');
@@ -2009,7 +1989,6 @@ function resetNonSchdHoldings() {
   });
   localStorage.setItem('acctHoldings_v2', JSON.stringify(acctHoldings));
   if (typeof saveLocal === 'function') saveLocal(false);
-  if (typeof scheduleAutoSync === 'function') scheduleAutoSync();
   renderAccountInputs();
   renderBuyModal();
   toast('SCHD 제외 5종목 초기화 완료 ✓');
@@ -2055,13 +2034,7 @@ async function exportToCashflow(){
   }
 }
 
-// ===== CF KV 부팅 동기화 =====
-(function bootSync() {
-  setSyncStatus('☁️ 서버 연결 중…');
-  // 실패 시 3초 후 1회 재시도
-  doAutoPull(true).catch(() => setTimeout(() => doAutoPull(true), 3000));
-  startAutoPull();
-})();
+scheduleAutoPush();
 </script>
 
 <!-- ─── 추가매수 모달 ──────────────────── -->
@@ -2082,4 +2055,3 @@ async function exportToCashflow(){
 </div>
 
 </body></html>
-
