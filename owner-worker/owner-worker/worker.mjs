@@ -25,13 +25,14 @@ function validData(d){
  return true;
 }
 async function initDB(db){await db.prepare('CREATE TABLE IF NOT EXISTS owner_state (id TEXT PRIMARY KEY, revision INTEGER NOT NULL, data TEXT NOT NULL, updated_at TEXT NOT NULL)').run();await db.prepare('CREATE TABLE IF NOT EXISTS state_history (id INTEGER PRIMARY KEY AUTOINCREMENT, revision INTEGER, data TEXT, updated_at TEXT)').run();}
-async function serveApp(){const r=await fetch('https://yjjn2005.github.io/corp-etf-sim/owner-app.html',{cf:{cacheTtl:0}});const text=await r.text();const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))).map(x=>x.toString(16).padStart(2,'0')).join('');if(!r.ok||digest!=='ad848fd0c7391aa87b66ec8582610f8aa601a4aeb423999349f784cb04d9b5d2')return json({error:'App source validation failed'},503);return new Response(text,{headers:{...headers,'Content-Type':'text/html; charset=utf-8'}});}
+async function serveApp(){const r=await fetch('https://yjjn2005.github.io/corp-etf-sim/owner-app.html',{cf:{cacheTtl:0}});const text=await r.text();const digest=Array.from(new Uint8Array(await crypto.subtle.digest('SHA-256',new TextEncoder().encode(text)))).map(x=>x.toString(16).padStart(2,'0')).join('');if(!r.ok||digest!='dbce403384be2f8f6f57b0be0e3373e34c3734952019317aba01a2f5749f0eb1')return json({error:'App source validation failed'},503);return new Response(text,{headers:{...headers,'Content-Type':'text/html; charset=utf-8'}});}
 export default {async fetch(request,env){
  try{await verifyOwner(request);}catch{return json({error:'Owner login required'},403);}
  const url=new URL(request.url);
  if(request.method==='GET'&&url.pathname==='/')return await serveApp();
  if(request.method==='GET'&&url.pathname==='/prices.json'){const r=await fetch('https://yjjn2005.github.io/corp-etf-sim/prices.json',{cf:{cacheTtl:0}});return new Response(await r.text(),{status:r.status,headers:{...headers,'Content-Type':'application/json'}});}
- if(url.pathname!=='/api/state')return json({error:'Not found'},404);
+ if(request.method==='GET'&&url.pathname==='/api/account-snapshot'){if(!env.DB)return json({error:'Storage unavailable'},503);try{const r=await env.DB.prepare('SELECT data FROM account_snapshot WHERE id=?').bind(OWNER).first();return r?json(JSON.parse(r.data)):json({error:'Account snapshot not found'},404);}catch{return json({error:'Account snapshot unavailable'},503);}}
+if(url.pathname!=='/api/state')return json({error:'Not found'},404);
  if(!env.DB)return json({error:'Storage unavailable'},503);
  try{
  await initDB(env.DB);
