@@ -212,7 +212,7 @@ th:first-child{background:rgba(7,17,32,.05);z-index:2}
       <div>
         <h1>유앤김 법인 자금운용 시뮬레이터</h1>
         <p>시뮬레이터 v9.5 · 만60세(2026)→만100세(2066) · 6종목(SCHD·JEPQ·GPIQ·JEPI·IQQ·SGOV)</p>
-        <div id="updateStamp" style="font-size:12px;color:#F0D99A;font-weight:800;margin-top:5px">최종 업데이트: 2026-10-12</div>
+        <div id="updateStamp" style="font-size:12px;color:#F0D99A;font-weight:800;margin-top:5px">최종 업데이트: 2026-11-24</div>
         <div class="status" id="saveStatus">저장 데이터 없음</div>
         <div class="status" id="syncStatus" style="color:rgba(100,200,130,.55)"></div>
       </div>
@@ -388,7 +388,7 @@ th:first-child{background:rgba(7,17,32,.05);z-index:2}
     </div>
   </section>
 
-  <div class="footer">© 유앤김 자산관리 · corp-etf-sim v9.2 · SCHD + JEPQ + GPIQ + JEPI + IQQ + SGOV · 2026~2066 · 투자·배당 가정에 따른 참고용 계산 · 최종 업데이트: 2026-10-12</div>
+  <div class="footer">© 유앤김 자산관리 · corp-etf-sim v9.2 · SCHD + JEPQ + GPIQ + JEPI + IQQ + SGOV · 2026~2066 · 투자·배당 가정에 따른 참고용 계산 · 최종 업데이트: 2026-11-24</div>
 </main>
 
 <!-- 수동입력 모달 -->
@@ -2112,4 +2112,5 @@ scheduleAutoPush();
 
 </div>
 
+<!-- INSTINCT-URLCOPY-v3 --><div id="inst-urlcopy-box" style="margin:26px 12px 96px;padding:12px;border-top:1px solid rgba(0,0,0,.09);display:flex;flex-direction:column;gap:8px;align-items:center;font-family:inherit;-webkit-tap-highlight-color:transparent"><div style="font-size:12px;line-height:1.4;color:rgba(60,60,70,.8);word-break:break-all;text-align:center" id="inst-urlcopy-addr"></div><button type="button" id="inst-urlcopy-btn" aria-label="앱 주소 복사" style="font-family:inherit;display:inline-flex;align-items:center;gap:5px;padding:8px 14px;font-size:13px;font-weight:600;line-height:1;border-radius:999px;border:1px solid rgba(120,120,130,.35);background:rgba(255,255,255,.94);color:#1a1a1f;box-shadow:0 1px 6px rgba(0,0,0,.12);cursor:pointer"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M10 13a5 5 0 0 0 7.5.5l3-3a5 5 0 0 0-7-7l-1.7 1.7"/><path d="M14 11a5 5 0 0 0-7.5-.5l-3 3a5 5 0 0 0 7 7l1.7-1.7"/></svg><span>앱 주소 복사</span></button><div id="inst-urlcopy-date" style="font-size:11px;color:rgba(60,60,70,.6)"></div><div id="inst-urlcopy-toast" style="position:fixed;left:50%;bottom:110px;transform:translateX(-50%);background:rgba(20,20,25,.92);color:#fff;font-size:13px;padding:8px 14px;border-radius:10px;display:none;z-index:2147483001;white-space:nowrap"></div></div><script>(function(){var D=document;var box=D.getElementById('inst-urlcopy-box');if(!box)return;var addr=D.getElementById('inst-urlcopy-addr');addr.textContent=location.host+location.pathname;var u=location.origin+location.pathname;var t=D.getElementById('inst-urlcopy-toast');function ok(){t.textContent='앱 주소가 복사되었습니다';t.style.display='block';setTimeout(function(){t.style.display='none'},1600)}function legacy(){var ta=D.createElement('textarea');ta.value=u;ta.style.cssText='position:fixed;opacity:0';D.body.appendChild(ta);ta.focus();ta.select();var d=false;try{d=D.execCommand('copy')}catch(e){}ta.remove();if(d)ok();else{try{window.prompt('주소를 길게 눌러 복사하세요',u)}catch(e){}}}D.getElementById('inst-urlcopy-btn').onclick=function(){if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(u).then(ok,legacy)}else legacy()};var _dark=false;try{var _bg='';var _el=D.body;for(var _i=0;_i<3&&_el;_i++){var _c=getComputedStyle(_el).backgroundColor;if(_c&&_c!=='rgba(0, 0, 0, 0)'&&_c!=='transparent'){_bg=_c;break}_el=_el.parentElement}if(_bg){var _m=_bg.match(/[\d.]+/g);if(_m&&_m.length>=3){var _a=_m.length>3?parseFloat(_m[3]):1;var _lum=(0.2126*_m[0]+0.7152*_m[1]+0.0722*_m[2])/255*_a;_dark=_lum<0.45}}}catch(e){}if(_dark){addr.style.color='rgba(255,255,255,.85)';addr.style.background='rgba(255,255,255,.1)';D.getElementById('inst-urlcopy-date').style.color='rgba(255,255,255,.65)'}var hasDate=/최종\s*(업데이트|수정일|갱신)/.test(D.body?D.body.innerText||'':'');if(!hasDate){D.getElementById('inst-urlcopy-date').textContent='최종 업데이트 2026-11-24'}else{D.getElementById('inst-urlcopy-date').style.display='none'}})();</script>
 </body></html>
